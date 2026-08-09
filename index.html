@@ -42,7 +42,7 @@
   }
 
   *{ box-sizing: border-box; }
-  html,body{ height:100%; margin:0; }
+  html,body{ height:100%; margin:0; overflow-x:hidden; }
   body{
     background: var(--paper);
     color: var(--ink);
@@ -601,13 +601,6 @@
     gap: 10px;
   }
   .forecast-static-label{ font-size: 12.5px; color: var(--ink-soft); }
-  .forecast-static-hint{
-    display:block;
-    font-size: 10px;
-    color: var(--ink-soft);
-    opacity: 0.75;
-    margin-top: 2px;
-  }
   .forecast-static .forecast-slider-val{
     color: var(--brass-deep);
     font-weight: 600;
@@ -701,27 +694,6 @@
     margin: 0 0 12px;
     max-width: 46ch;
   }
-  .backup-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
-  .backup-btn{
-    display:inline-block;
-    padding: 11px 16px;
-    background: var(--brass);
-    color: var(--ink);
-    border: 1px solid var(--brass-deep);
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    cursor:pointer;
-  }
-  .backup-btn:hover{ background: var(--brass-deep); color: var(--paper); }
-  .backup-btn-outline{
-    background: transparent;
-    color: var(--ink);
-    border: 1px solid var(--ink);
-  }
-  .backup-btn-outline:hover{ background: var(--ink); color: var(--paper); }
-  .backup-btn:focus-within{ outline: 2px solid var(--brass); outline-offset: 2px; }
   .backup-msg{
     font-size: 11px;
     color: var(--ok);
@@ -744,6 +716,7 @@
 
   /* ---------- Belegansicht ---------- */
   .receipt-btn{
+    display: block; /* wichtig für <label class="receipt-btn">, die sonst inline bleiben und width:100% ignorieren würden */
     width: 100%;
     margin-top: 26px;
     padding: 12px 20px;
@@ -755,6 +728,8 @@
     letter-spacing:0.08em;
     text-transform:uppercase;
     cursor:pointer;
+    text-align: center;
+    box-sizing: border-box;
   }
   .receipt-btn:hover{ background: var(--ink); color: var(--paper); }
 
@@ -1100,18 +1075,21 @@
     </div>
   </details>
 
-  <div class="backup-box">
-    <p class="backup-hint">Alle Monate lokal sichern oder eine gesicherte Datei wieder einlesen.</p>
-    <div class="backup-actions">
-      <button type="button" class="backup-btn" id="export-btn">Sichern (Datei speichern)</button>
-      <label class="backup-btn backup-btn-outline" for="import-file">Wiederherstellen</label>
-      <input type="file" id="import-file" accept="application/json,.json" hidden>
-    </div>
-    <div class="backup-msg" id="backup-msg" role="status"></div>
-  </div>
+  <details class="section">
+    <summary class="section-summary">Einstellungen</summary>
+    <div class="section-body">
+      <div class="backup-box">
+        <p class="backup-hint">Alle Monate lokal sichern oder eine gesicherte Datei wieder einlesen.</p>
+        <button type="button" class="receipt-btn" id="export-btn">Sichern (Datei speichern)</button>
+        <label class="receipt-btn" for="import-file">Wiederherstellen</label>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <div class="backup-msg" id="backup-msg" role="status"></div>
+      </div>
 
-  <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
-  <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+      <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
+      <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+    </div>
+  </details>
 </div>
 
 <!-- Detailansicht eines einzelnen offenen Monats. Wird nur über einen Klick
@@ -1123,7 +1101,6 @@
   </div>
   <p class="eyebrow">Monatsbudget</p>
   <h1>Budget im Blick</h1>
-  <p class="sub">Gehalt festlegen, Fixkosten abhaken, Ausgaben eintragen — alles wird lokal auf diesem Gerät gespeichert.</p>
 
   <!-- Gehalt: variiert monatlich. Gespeichert = fixierte Zeile mit Löschen-Button.
        Noch nicht gespeichert / nach Löschen = Schieberegler zum Einstellen. -->
@@ -1172,8 +1149,6 @@
   <details class="section">
     <summary class="section-summary">Sonstige Ausgaben</summary>
     <div class="section-body">
-      <p class="categories-hint">Text, Kategorie und Betrag eintragen — erscheint sofort in der Liste oben, gruppiert nach Kategorie mit Zwischen- und Gesamtsumme.</p>
-
       <div class="cat-list" id="cat-list"></div>
       <div class="cat-grand-total">
         <span>Gesamtsumme</span>
@@ -1198,8 +1173,6 @@
   <details class="section">
     <summary class="section-summary">Sparen</summary>
     <div class="section-body">
-      <p class="categories-hint">Unterkategorie und Betrag eintragen — erscheint sofort in der Liste oben, gruppiert mit Zwischen- und Gesamtsumme. „Auflösung Rücklagen" erhöht dein Verbleibend, da das Geld ins Budget zurückfließt.</p>
-
       <div class="cat-list" id="sav-list"></div>
       <div class="cat-grand-total">
         <span>Gesamtsumme</span>
@@ -1238,7 +1211,6 @@
       <div class="forecast-static">
         <span class="forecast-static-label">
           Restliche Fixkosten
-          <span class="forecast-static-hint">noch nicht abgehakt — fließt automatisch ein</span>
         </span>
         <span class="forecast-slider-val" id="forecast-fixed-rest">0,00 €</span>
       </div>
@@ -1291,8 +1263,6 @@
   <details class="section">
     <summary class="section-summary">Kreditkarte</summary>
     <div class="section-body">
-      <p class="categories-hint">Restsaldo laut Kreditkarte eintragen. Der Gesamtsaldo ist fest auf 2.000 € gesetzt. Verbraucht (Gesamtsaldo − Restsaldo) wird mit den erfassten „Sonstigen Ausgaben" abgeglichen.</p>
-
       <div class="forecast-row">
         <span class="forecast-row-label">Gesamtsaldo</span>
         <span class="forecast-row-value" id="card-total">–</span>
