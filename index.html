@@ -6,6 +6,14 @@
 <meta name="color-scheme" content="light">
 <title>Kontor — Monatsbudget</title>
 
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kontor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+
 <!--
   Schriften über <link> statt @import: @import in CSS blockiert das Rendering
   zusätzlich, weil der Browser erst das CSS parsen muss, bevor er den Font-Request
@@ -97,7 +105,7 @@
     max-width: 46ch;
   }
 
-  /* ---------- Monatsauswahl ---------- */
+  /* ---------- Monatsauswahl (Übersicht: Hinzufügen-Zeile) ---------- */
   .month-row{
     display:flex;
     align-items:center;
@@ -110,7 +118,7 @@
     text-transform: uppercase;
     color: var(--ink-soft);
   }
-  #month-select{
+  #month-select, .add-month-row select{
     font-family:'IBM Plex Mono', monospace;
     font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 8px 12px;
@@ -120,9 +128,101 @@
     cursor:pointer;
     outline:none;
   }
-  #month-select:focus-visible{
+  #month-select:focus-visible, .add-month-row select:focus-visible{
     border-color: var(--brass);
     box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+
+  /* ---------- Übersichtsseite: Monat hinzufügen ---------- */
+  .add-month-row{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .add-month-row select{ flex: 1 1 120px; min-width: 0; }
+  .add-month-row button{
+    flex: 1 1 auto;
+    padding: 9px 16px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .add-month-row button:hover{ background: var(--brass-deep); }
+
+  /* ---------- Übersichtsseite: Monatslisten ---------- */
+  .month-list{
+    list-style:none;
+    margin: 0 0 4px;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .month-list li{ border-bottom: 1px solid var(--line); }
+  .month-list-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    padding: 13px 2px;
+    background:none;
+    border:none;
+    color: var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    text-align:left;
+    cursor:pointer;
+  }
+  .month-list-item::after{
+    content:"→";
+    color: var(--brass-deep);
+    flex-shrink:0;
+    margin-left: 10px;
+  }
+  .month-list-item:hover{ color: var(--brass-deep); }
+  .month-list-item:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: -2px;
+  }
+  .month-list-empty{
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 10px 2px 14px;
+    list-style:none;
+  }
+
+  /* ---------- Zurück-Button (Detailansicht → Übersicht) ---------- */
+  .back-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .back-btn{
+    width: 32px; height: 32px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    color: var(--ink);
+    font-size: 15px;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .back-btn:hover{ background: var(--ink); color: var(--paper); }
+  .back-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .current-month-label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0;
   }
 
   /* ---------- Gehalt (Schieberegler + Speichern) ---------- */
@@ -529,6 +629,30 @@
     width:100%;
     accent-color: var(--brass);
     cursor:pointer;
+  }
+
+  .forecast-note{ margin-top: 20px; }
+  .forecast-note label{
+    display:block;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .forecast-note textarea{
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    resize: vertical;
+    line-height:1.5;
+  }
+  .forecast-note textarea:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
   }
 
   /* ---------- Ein-/ausklappbare Bereiche ---------- */
@@ -945,16 +1069,61 @@
 </div>
 
 <!-- Erst nach erfolgreichem Login sichtbar (JS entfernt das hidden-Attribut). -->
+<!-- Übersichtsseite: erster Screen nach dem Login. Zeigt alle angelegten
+     Monate, getrennt in offen (bearbeitbar, max. 3 gleichzeitig) und
+     abgeschlossen (nur noch Belegansicht, schreibgeschützt). -->
+<div class="sheet" id="overview-screen" hidden>
+  <p class="eyebrow">Monatsbudget</p>
+  <h1>Deine Monate</h1>
+  <p class="sub">Monat und Jahr wählen und hinzufügen — maximal 3 Monate gleichzeitig offen. Zum Bearbeiten auf einen offenen Monat tippen.</p>
+
+  <div class="add-month-row">
+    <label class="visually-hidden" for="add-month-select">Monat</label>
+    <select id="add-month-select"></select>
+    <label class="visually-hidden" for="add-year-select">Jahr</label>
+    <select id="add-year-select"></select>
+    <button type="button" id="add-month-btn">Hinzufügen</button>
+  </div>
+  <div class="cat-error" id="add-month-error" role="alert"></div>
+
+  <details class="section" open>
+    <summary class="section-summary">Offene Monate</summary>
+    <div class="section-body">
+      <ul class="month-list" id="open-month-list"></ul>
+    </div>
+  </details>
+
+  <details class="section" open>
+    <summary class="section-summary">Abgeschlossene Monate</summary>
+    <div class="section-body">
+      <ul class="month-list" id="closed-month-list"></ul>
+    </div>
+  </details>
+
+  <div class="backup-box">
+    <p class="backup-hint">Alle Monate lokal sichern oder eine gesicherte Datei wieder einlesen.</p>
+    <div class="backup-actions">
+      <button type="button" class="backup-btn" id="export-btn">Sichern (Datei speichern)</button>
+      <label class="backup-btn backup-btn-outline" for="import-file">Wiederherstellen</label>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </div>
+    <div class="backup-msg" id="backup-msg" role="status"></div>
+  </div>
+
+  <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
+  <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+</div>
+
+<!-- Detailansicht eines einzelnen offenen Monats. Wird nur über einen Klick
+     auf einen Eintrag in der Übersicht erreicht (siehe openMonthDetail). -->
 <div class="sheet" id="sheet" hidden>
+  <div class="back-row">
+    <button type="button" class="back-btn" id="back-to-overview-btn" aria-label="Zurück zur Übersicht" title="Zurück zur Übersicht">←</button>
+    <p class="current-month-label" id="current-month-label"></p>
+  </div>
   <p class="eyebrow">Monatsbudget</p>
   <h1>Budget im Blick</h1>
   <p class="sub">Gehalt festlegen, Fixkosten abhaken, Ausgaben eintragen — alles wird lokal auf diesem Gerät gespeichert.</p>
-
-  <!-- Monatsauswahl: jeder Monat hat einen eigenen, getrennten Datensatz. -->
-  <div class="month-row">
-    <label for="month-select" class="month-label">Monat</label>
-    <select id="month-select"></select>
-  </div>
 
   <!-- Gehalt: variiert monatlich. Gespeichert = fixierte Zeile mit Löschen-Button.
        Noch nicht gespeichert / nach Löschen = Schieberegler zum Einstellen. -->
@@ -988,7 +1157,7 @@
   </div>
 
   <!-- ============ BEREICH 1: FIXKOSTEN ============ -->
-  <details class="section" open>
+  <details class="section">
     <summary class="section-summary">Fixkosten</summary>
     <div class="section-body">
       <ul class="costs" id="cost-list"></ul>
@@ -1000,7 +1169,7 @@
   </details>
 
   <!-- ============ BEREICH 2: SONSTIGE AUSGABEN ============ -->
-  <details class="section" open>
+  <details class="section">
     <summary class="section-summary">Sonstige Ausgaben</summary>
     <div class="section-body">
       <p class="categories-hint">Text, Kategorie und Betrag eintragen — erscheint sofort in der Liste oben, gruppiert nach Kategorie mit Zwischen- und Gesamtsumme.</p>
@@ -1026,7 +1195,7 @@
   </details>
 
   <!-- ============ BEREICH 3: SPAREN ============ -->
-  <details class="section" open>
+  <details class="section">
     <summary class="section-summary">Sparen</summary>
     <div class="section-body">
       <p class="categories-hint">Unterkategorie und Betrag eintragen — erscheint sofort in der Liste oben, gruppiert mit Zwischen- und Gesamtsumme. „Auflösung Rücklagen" erhöht dein Verbleibend, da das Geld ins Budget zurückfließt.</p>
@@ -1050,7 +1219,7 @@
   </details>
 
   <!-- ============ BEREICH 4: FORECAST ============ -->
-  <details class="section" open>
+  <details class="section">
     <summary class="section-summary">Forecast</summary>
     <div class="section-body">
       <!-- Basis ist das echte "Verbleibend" von oben — bewusst klein/dezent. -->
@@ -1088,7 +1257,7 @@
           <span id="fc-konsum-label">Konsum</span>
           <span class="forecast-slider-val" id="fc-konsum-val">0,00 €</span>
         </div>
-        <input type="range" id="fc-konsum" min="0" max="500" step="5" value="0"
+        <input type="range" id="fc-konsum" min="0" max="2000" step="5" value="0"
                aria-labelledby="fc-konsum-label">
       </div>
 
@@ -1100,11 +1269,26 @@
         <input type="range" id="fc-sprit" min="0" max="300" step="5" value="0"
                aria-labelledby="fc-sprit-label">
       </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-sonstiges-label">Sonstiges</span>
+          <span class="forecast-slider-val" id="fc-sonstiges-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-sonstiges" min="0" max="1000" step="5" value="0"
+               aria-labelledby="fc-sonstiges-label">
+      </div>
+
+      <div class="forecast-note">
+        <label for="forecast-note">Notizen</label>
+        <textarea id="forecast-note" rows="5" maxlength="2000"
+                  placeholder="Freie Notizen zur Planung dieses Monats…"></textarea>
+      </div>
     </div>
   </details>
 
   <!-- ============ BEREICH 5: KREDITKARTE ============ -->
-  <details class="section" open>
+  <details class="section">
     <summary class="section-summary">Kreditkarte</summary>
     <div class="section-body">
       <p class="categories-hint">Restsaldo laut Kreditkarte eintragen. Der Gesamtsaldo ist fest auf 2.000 € gesetzt. Verbraucht (Gesamtsaldo − Restsaldo) wird mit den erfassten „Sonstigen Ausgaben" abgeglichen.</p>
@@ -1142,19 +1326,7 @@
 
   <button type="button" class="receipt-btn" id="receipt-btn">Belegansicht</button>
   <button type="button" class="receipt-btn" id="chart-btn">Diagrammansicht</button>
-
-  <div class="backup-box">
-    <p class="backup-hint">Alle Monate lokal sichern oder eine gesicherte Datei wieder einlesen.</p>
-    <div class="backup-actions">
-      <button type="button" class="backup-btn" id="export-btn">Sichern (Datei speichern)</button>
-      <label class="backup-btn backup-btn-outline" for="import-file">Wiederherstellen</label>
-      <input type="file" id="import-file" accept="application/json,.json" hidden>
-    </div>
-    <div class="backup-msg" id="backup-msg" role="status"></div>
-  </div>
-
-  <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
-  <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+  <button type="button" class="receipt-btn" id="close-month-btn">Monat abschließen</button>
 </div>
 
 <!-- PIN-ändern-Overlay: gleiche Optik wie Beleg/Diagramm. -->
@@ -1264,12 +1436,17 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     { name: 'BU',        cents: 8500 }
   ];
 
+  // 'konsum_cat' statt 'konsum', damit der Key sich vom gleichnamigen
+  // Forecast-Regler unterscheidet — beides heißt in der Anzeige "Konsum",
+  // ist aber Unterschiedliches: echte Buchung vs. Prognose.
   const categoryDefs = [
-    { key: 'lebensmittel', name: 'Lebensmittel / Drogerie' },
-    { key: 'supplemente',  name: 'Supplemente' },
-    { key: 'zva',          name: 'ZVA' },
-    { key: 'sprit',        name: 'Sprit' },
-    { key: 'autokosten',   name: 'Autokosten' }
+    { key: 'einkauf',      name: 'Einkauf' },
+    { key: 'benzin',       name: 'Benzin' },
+    { key: 'gesundheit',   name: 'Gesundheit' },
+    { key: 'eltern',       name: 'Eltern' },
+    { key: 'konsum_cat',   name: 'Konsum' },
+    { key: 'jahresfix',    name: 'Jahresfix' },
+    { key: 'kfz_sonstige', name: 'sonstige KFZ-Ausgaben' }
   ];
 
   const savingDefs = [
@@ -1278,10 +1455,12 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     { key: 'aufloesung', name: 'Auflösung Rücklagen' }
   ];
 
-  const MONTHS = ['August','September','Oktober','November','Dezember','Januar',
-                  'Februar','März','April','Mai','Juni','Juli'];
+  // Echte Kalenderreihenfolge (kein fiktives Geschäftsjahr mehr), da Monat
+  // und Jahr beim Anlegen eines Monats jetzt getrennt gewählt werden.
+  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli',
+                  'August','September','Oktober','November','Dezember'];
 
-  const STORAGE_KEY = 'kontor_budget_by_month';
+  const STORAGE_KEY = 'kontor_budget_v2';
 
   // Grenzwerte. Werden beim Import erzwungen, damit manipulierte oder kaputte
   // Dateien keine unsinnigen Werte in die App bringen.
@@ -1290,7 +1469,10 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   const AMOUNT_MAX_CENTS = 100000000; // 1.000.000 € pro Einzeleintrag
   const MAX_ENTRIES_PER_KEY = 500;   // begrenzt Speicher- und Renderaufwand
   const MAX_TEXT_LENGTH = 80;
+  const MAX_NOTE_LENGTH = 2000;      // Forecast-Notizfeld
   const MAX_IMPORT_BYTES = 2 * 1024 * 1024; // 2 MB
+  const MAX_MONTH_ENTRIES = 500;     // Sicherheitsobergrenze für Anzahl Monate
+  const MAX_OPEN_MONTHS = 3;         // gleichzeitig bearbeitbare Monate
 
   // Fester Gesamtsaldo der Kreditkarte — bewusst keine Nutzereinstellung,
   // sondern eine Konstante, wie vorgegeben.
@@ -1299,8 +1481,9 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   // Obergrenzen der Forecast-Regler, passend zu den max-Attributen im HTML.
   const FC_DEFS = [
     { key: 'lebensmittel', maxCents: 80000 },
-    { key: 'konsum',       maxCents: 50000 },
-    { key: 'sprit',        maxCents: 30000 }
+    { key: 'konsum',       maxCents: 200000 },
+    { key: 'sprit',        maxCents: 30000 },
+    { key: 'sonstiges',    maxCents: 100000 }
   ];
   const fcKeys = FC_DEFS.map(d => d.key);
   // Direktes Nachschlagen der Obergrenze, damit beim Ziehen eines Reglers nicht
@@ -1314,6 +1497,19 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
      wiederholte DOM-Abfragen.
      --------------------------------------------------------------------------- */
   const el = {
+    overviewScreen:  document.getElementById('overview-screen'),
+    sheet:           document.getElementById('sheet'),
+    backToOverviewBtn: document.getElementById('back-to-overview-btn'),
+    currentMonthLabel: document.getElementById('current-month-label'),
+    closeMonthBtn:   document.getElementById('close-month-btn'),
+
+    addMonthSelect:  document.getElementById('add-month-select'),
+    addYearSelect:   document.getElementById('add-year-select'),
+    addMonthBtn:     document.getElementById('add-month-btn'),
+    addMonthError:   document.getElementById('add-month-error'),
+    openMonthList:   document.getElementById('open-month-list'),
+    closedMonthList: document.getElementById('closed-month-list'),
+
     costList:        document.getElementById('cost-list'),
     balance:         document.getElementById('balance'),
     checkedCount:    document.getElementById('checked-count'),
@@ -1334,7 +1530,6 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     savAddBtn:       document.getElementById('sav-add-btn'),
     savError:        document.getElementById('sav-error'),
 
-    monthSelect:     document.getElementById('month-select'),
     salaryFixed:      document.getElementById('salary-fixed'),
     salaryFixedValue: document.getElementById('salary-fixed-value'),
     salaryDeleteBtn:  document.getElementById('salary-delete-btn'),
@@ -1346,6 +1541,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     forecastBase:    document.getElementById('forecast-base'),
     forecastResult:  document.getElementById('forecast-result'),
     forecastRest:    document.getElementById('forecast-fixed-rest'),
+    forecastNote:    document.getElementById('forecast-note'),
 
     cardTotal:       document.getElementById('card-total'),
     cardRestsaldo:   document.getElementById('card-restsaldo'),
@@ -1422,6 +1618,12 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     return Math.min(Math.max(value, min), max);
   }
 
+  // Eindeutiger Schlüssel eines Monats-Eintrags, z. B. "2026-08".
+  function monthKey(year, monthIndex){
+    const mm = monthIndex + 1;
+    return year + '-' + (mm < 10 ? '0' + mm : String(mm));
+  }
+
   /* ---------------------------------------------------------------------------
      4. DATENMODELL + VALIDIERUNG
      Jeder Monat hat: salary (Cent oder null), checked[], categories{}, saving{},
@@ -1444,6 +1646,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       categories,
       saving,
       forecast,
+      forecastNote: '',
       // Restsaldo der Kreditkarte, vom Nutzer eingetragen (Cent) — null = noch
       // nicht erfasst. Der Gesamtsaldo selbst ist eine feste Konstante
       // (CARD_TOTAL_CENTS), wird also nicht pro Monat gespeichert.
@@ -1475,26 +1678,14 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     return out;
   }
 
-  function sanitizeMonth(raw){
+  function sanitizeMonthData(raw){
     const month = emptyMonthData();
     if(!raw || typeof raw !== 'object') return month;
 
-    // Gehalt liegt bereits in Cent vor (so speichert die App es auch) —
-    // KEINE Umrechnung mehr nötig. Die frühere Version nahm fälschlich an,
-    // "salary" sei in Euro und multiplizierte nochmal mit 100, wodurch der
-    // Wert bei jedem Neuladen künstlich auf das Maximum hochgerechnet und
-    // gekappt wurde — das war der Grund, warum Gehaltsänderungen "verloren"
-    // gingen.
+    // Gehalt liegt bereits in Cent vor (so speichert die App es auch).
     let salaryCents = null;
     if(Number.isFinite(raw.salary)){
       salaryCents = Math.round(raw.salary);
-      // Sicherheitsnetz für sehr alte Sicherungsdateien, in denen das Gehalt
-      // noch in Euro stand: ein Wert, der als Cent unrealistisch klein wäre,
-      // als Euro gelesen aber genau passt, wird als Euro interpretiert.
-      if(salaryCents < SALARY_MIN_CENTS &&
-         salaryCents * 100 >= SALARY_MIN_CENTS && salaryCents * 100 <= SALARY_MAX_CENTS){
-        salaryCents = salaryCents * 100;
-      }
     }
     if(salaryCents !== null){
       month.salary = clamp(salaryCents, SALARY_MIN_CENTS, SALARY_MAX_CENTS);
@@ -1517,8 +1708,6 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       month.saving[def.key] = sanitizeEntries(rawSav[def.key], false);
     });
 
-    // Forecast-Regler liegen ebenfalls bereits in Cent vor — gleicher Fix
-    // wie beim Gehalt, kein x100 mehr.
     const rawFc = (raw.forecast && typeof raw.forecast === 'object') ? raw.forecast : {};
     FC_DEFS.forEach(def => {
       let cents = null;
@@ -1526,29 +1715,62 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       month.forecast[def.key] = cents === null ? 0 : clamp(cents, 0, def.maxCents);
     });
 
-    // Kreditkarten-Restsaldo: Cent (neu) oder Euro (alt), auf sinnvollen
-    // Bereich begrenzt (0 bis zum Betrags-Maximum).
+    month.forecastNote = typeof raw.forecastNote === 'string'
+      ? raw.forecastNote.slice(0, MAX_NOTE_LENGTH) : '';
+
+    // Kreditkarten-Restsaldo: auf sinnvollen Bereich begrenzt (0 bis zum
+    // Gesamtsaldo).
     const rawCard = (raw.card && typeof raw.card === 'object') ? raw.card : {};
     let cardCents = null;
     if(Number.isFinite(rawCard.restsaldoCents)) cardCents = Math.round(rawCard.restsaldoCents);
-    else if(Number.isFinite(rawCard.restsaldo)) cardCents = Math.round(rawCard.restsaldo * 100);
     if(cardCents !== null){
-      // Restsaldo kann logisch nicht größer als der Gesamtsaldo sein.
       month.card.restsaldoCents = clamp(cardCents, 0, CARD_TOTAL_CENTS);
     }
 
     return month;
   }
 
-  // Nur bekannte Monatsnamen werden übernommen — alles andere wird verworfen.
+  // Prüft und normiert einen einzelnen Monats-Eintrag (Jahr, Monat, Status,
+  // Zeitstempel + die eigentlichen Budget-Daten). Der Schlüssel wird immer
+  // aus year/monthIndex neu gebildet statt aus der rohen Datei übernommen —
+  // so kann eine manipulierte Datei keinen Eintrag unter falschem Schlüssel
+  // einschleusen.
+  function sanitizeMonthEntry(raw){
+    if(!raw || typeof raw !== 'object') return null;
+    const monthIndex = Number.isInteger(raw.monthIndex) && raw.monthIndex >= 0 && raw.monthIndex <= 11
+      ? raw.monthIndex : null;
+    const year = Number.isInteger(raw.year) && raw.year >= 2000 && raw.year <= 2100
+      ? raw.year : null;
+    if(monthIndex === null || year === null) return null;
+
+    const status = raw.status === 'closed' ? 'closed' : 'open';
+    return {
+      year, monthIndex, monthName: MONTHS[monthIndex],
+      status,
+      createdAt: Number.isFinite(raw.createdAt) ? raw.createdAt : Date.now(),
+      closedAt: status === 'closed'
+        ? (Number.isFinite(raw.closedAt) ? raw.closedAt : Date.now())
+        : null,
+      data: sanitizeMonthData(raw.data)
+    };
+  }
+
+  // Nur gültige Monats-Einträge werden übernommen — alles andere (inkl. des
+  // alten Datenformats ohne Jahr) wird verworfen.
   function sanitizeAll(raw){
-    const clean = Object.create(null);
-    if(!raw || typeof raw !== 'object') return clean;
-    MONTHS.forEach(m => {
-      if(Object.prototype.hasOwnProperty.call(raw, m)){
-        clean[m] = sanitizeMonth(raw[m]);
+    const clean = { monthEntries: Object.create(null) };
+    if(!raw || typeof raw !== 'object' || !raw.monthEntries || typeof raw.monthEntries !== 'object'){
+      return clean;
+    }
+    let count = 0;
+    for(const rawKey of Object.keys(raw.monthEntries)){
+      if(count >= MAX_MONTH_ENTRIES) break;
+      const entry = sanitizeMonthEntry(raw.monthEntries[rawKey]);
+      if(entry){
+        clean.monthEntries[monthKey(entry.year, entry.monthIndex)] = entry;
+        count++;
       }
-    });
+    }
     return clean;
   }
 
@@ -1562,16 +1784,18 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   function loadAll(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return Object.create(null);
+      if(!raw) return { monthEntries: Object.create(null) };
       return sanitizeAll(JSON.parse(raw));
     }catch(err){
       // Kaputte oder unlesbare Daten: mit leerem Stand starten.
-      return Object.create(null);
+      return { monthEntries: Object.create(null) };
     }
   }
 
   let allData = loadAll();
-  let currentMonth = MONTHS[0];
+  // Schlüssel (z. B. "2026-08") des Monats, der gerade in der Detailansicht
+  // oder Belegansicht offen ist. null, solange die Übersicht sichtbar ist.
+  let currentMonthKey = null;
 
   // Schreibvorgänge werden gebündelt: Beim Ziehen eines Reglers feuert 'input'
   // dutzendfach pro Sekunde. Ohne Bündelung würde jedes Mal das gesamte
@@ -1603,10 +1827,18 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     if(document.visibilityState === 'hidden' && saveTimer !== null) saveAll(true);
   });
 
-  // Liefert die Daten eines Monats und legt sie bei Bedarf an.
-  function getMonthData(month){
-    if(!allData[month]) allData[month] = emptyMonthData();
-    return allData[month];
+  // Liefert die Budget-Daten eines Monats-Eintrags. Wird nur aufgerufen,
+  // während currentMonthKey auf einen tatsächlich existierenden, über die
+  // Übersicht angelegten Eintrag zeigt (siehe openMonthDetail).
+  function getMonthData(key){
+    return allData.monthEntries[key].data;
+  }
+  function getMonthEntry(key){
+    return allData.monthEntries[key];
+  }
+  function countOpenMonths(){
+    return Object.keys(allData.monthEntries)
+      .filter(k => allData.monthEntries[k].status === 'open').length;
   }
 
   /* ---------------------------------------------------------------------------
@@ -1622,7 +1854,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   }
 
   function computeTotals(){
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
 
     let fixedPaid = 0;    // abgehakte Fixkosten
     let fixedRest = 0;    // noch offene Fixkosten
@@ -1755,11 +1987,11 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   }
 
   function renderCatList(){
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
     renderGroupedList(categoryDefs, m.categories, el.catList, el.catGrandTotal, true, 'cat');
   }
   function renderSavList(){
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
     renderGroupedList(savingDefs, m.saving, el.savList, el.savGrandTotal, false, 'sav');
   }
 
@@ -1793,7 +2025,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
 
     // --- Kreditkarte: Verbraucht (fester Gesamtsaldo − Restsaldo) gegen die
     // tatsächlich erfassten "Sonstigen Ausgaben" abgleichen. ---
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
     el.cardTotal.textContent = formatCents(CARD_TOTAL_CENTS);
     el.cardCatTotal.textContent = formatCents(t.categoryTotal);
 
@@ -1813,17 +2045,30 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
      8. AUFBAU DER STATISCHEN OBERFLÄCHE (einmalig beim Start)
      --------------------------------------------------------------------------- */
 
-  // Monats-Dropdown
-  (function buildMonthSelect(){
-    const fragment = document.createDocumentFragment();
-    MONTHS.forEach(m => {
+  // Hinzufügen-Zeile der Übersicht: Monat (Kalenderreihenfolge) + Jahr,
+  // vorbelegt mit dem heutigen Monat/Jahr.
+  (function buildAddMonthSelects(){
+    const today = new Date();
+    const monthFragment = document.createDocumentFragment();
+    MONTHS.forEach((name, idx) => {
       const opt = document.createElement('option');
-      opt.value = m;
-      opt.textContent = m;
-      fragment.appendChild(opt);
+      opt.value = String(idx);
+      opt.textContent = name;
+      monthFragment.appendChild(opt);
     });
-    el.monthSelect.appendChild(fragment);
-    el.monthSelect.value = currentMonth;
+    el.addMonthSelect.appendChild(monthFragment);
+    el.addMonthSelect.value = String(today.getMonth());
+
+    const yearFragment = document.createDocumentFragment();
+    const currentYear = today.getFullYear();
+    for(let y = currentYear - 1; y <= currentYear + 3; y++){
+      const opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearFragment.appendChild(opt);
+    }
+    el.addYearSelect.appendChild(yearFragment);
+    el.addYearSelect.value = String(currentYear);
   })();
 
   // Kategorie-Dropdowns
@@ -1870,19 +2115,126 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   })();
 
   /* ---------------------------------------------------------------------------
-     9. EREIGNISSE
+     9. NAVIGATION / ÜBERSICHT
+     Nach dem Login ist die Übersicht der Startbildschirm. Von dort aus wird
+     entweder ein offener Monat editierbar geöffnet (sheet) oder bei einem
+     abgeschlossenen Monat direkt die schreibgeschützte Belegansicht gezeigt —
+     ein editierbares "sheet" existiert für abgeschlossene Monate gar nicht.
+     --------------------------------------------------------------------------- */
+
+  // Anzeigename des aktuell geöffneten Monats, z. B. "August 2026".
+  function currentMonthLabelText(){
+    const entry = currentMonthKey ? allData.monthEntries[currentMonthKey] : null;
+    return entry ? entry.monthName + ' ' + entry.year : '';
+  }
+
+  function showOverview(){
+    el.sheet.hidden = true;
+    el.overviewScreen.hidden = false;
+    currentMonthKey = null;
+    renderOverview();
+  }
+
+  function renderMonthListItems(listEl, entries, emptyText){
+    const fragment = document.createDocumentFragment();
+    if(entries.length === 0){
+      const li = document.createElement('li');
+      li.className = 'month-list-empty';
+      li.textContent = emptyText;
+      fragment.appendChild(li);
+    } else {
+      entries.forEach(entry => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'month-list-item';
+        btn.textContent = entry.monthName + ' ' + entry.year;
+        btn.dataset.key = monthKey(entry.year, entry.monthIndex);
+        li.appendChild(btn);
+        fragment.appendChild(li);
+      });
+    }
+    listEl.replaceChildren(fragment);
+  }
+
+  function renderOverview(){
+    const entries = Object.keys(allData.monthEntries)
+      .map(k => allData.monthEntries[k])
+      .sort((a, b) => a.year - b.year || a.monthIndex - b.monthIndex);
+    renderMonthListItems(el.openMonthList, entries.filter(e => e.status === 'open'),
+      'Noch keine offenen Monate.');
+    renderMonthListItems(el.closedMonthList, entries.filter(e => e.status === 'closed'),
+      'Noch keine abgeschlossenen Monate.');
+  }
+
+  function openMonthDetail(key){
+    const entry = allData.monthEntries[key];
+    if(!entry) return;
+    currentMonthKey = key;
+    el.overviewScreen.hidden = true;
+    if(entry.status === 'closed'){
+      // Abgeschlossene Monate sind nur noch über die Belegansicht einsehbar —
+      // keine Bearbeitung mehr möglich.
+      openReceipt(true);
+    } else {
+      el.sheet.hidden = false;
+      renderMonth();
+    }
+  }
+
+  function handleMonthListClick(e){
+    const btn = e.target.closest('.month-list-item');
+    if(!btn) return;
+    openMonthDetail(btn.dataset.key);
+  }
+  el.openMonthList.addEventListener('click', handleMonthListClick);
+  el.closedMonthList.addEventListener('click', handleMonthListClick);
+
+  function handleAddMonth(){
+    const monthIndex = Number(el.addMonthSelect.value);
+    const year = Number(el.addYearSelect.value);
+    if(!Number.isInteger(monthIndex) || monthIndex < 0 || monthIndex > 11 || !Number.isInteger(year)){
+      el.addMonthError.textContent = 'Ungültige Auswahl.';
+      return;
+    }
+    const key = monthKey(year, monthIndex);
+    if(allData.monthEntries[key]){
+      el.addMonthError.textContent = 'Dieser Monat ist bereits vorhanden.';
+      return;
+    }
+    if(countOpenMonths() >= MAX_OPEN_MONTHS){
+      el.addMonthError.textContent = 'Es können maximal 3 Monate gleichzeitig offen sein. Bitte zuerst einen Monat abschließen.';
+      return;
+    }
+    el.addMonthError.textContent = '';
+    allData.monthEntries[key] = {
+      year, monthIndex, monthName: MONTHS[monthIndex],
+      status: 'open', createdAt: Date.now(), closedAt: null,
+      data: emptyMonthData()
+    };
+    saveAll(true);
+    renderOverview();
+  }
+  el.addMonthBtn.addEventListener('click', handleAddMonth);
+
+  function handleCloseMonth(){
+    const entry = allData.monthEntries[currentMonthKey];
+    if(!entry) return;
+    if(!confirm('Monat abschließen? Danach sind keine Änderungen mehr möglich.')) return;
+    entry.status = 'closed';
+    entry.closedAt = Date.now();
+    saveAll(true);
+    showOverview();
+  }
+  el.closeMonthBtn.addEventListener('click', handleCloseMonth);
+  el.backToOverviewBtn.addEventListener('click', showOverview);
+
+  /* ---------------------------------------------------------------------------
+     10. EREIGNISSE
      Für die Listen wird Event-Delegation genutzt: ein Listener am Container
      statt einer pro Zeile. Das spart Speicher und muss beim Neuaufbau der
      Liste nicht erneut angehängt werden.
      --------------------------------------------------------------------------- */
-
-  // --- Monatswechsel ---
-  el.monthSelect.addEventListener('change', () => {
-    const value = el.monthSelect.value;
-    if(MONTHS.indexOf(value) === -1) return;  // unerwarteten Wert ignorieren
-    currentMonth = value;
-    renderMonth();
-  });
 
   // --- Gehalt ---
   el.salarySlider.addEventListener('input', () => {
@@ -1905,7 +2257,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   el.salarySaveBtn.addEventListener('click', () => {
     const cents = clamp(Math.round(Number(el.salarySlider.value) * 100),
                         SALARY_MIN_CENTS, SALARY_MAX_CENTS);
-    getMonthData(currentMonth).salary = cents;
+    getMonthData(currentMonthKey).salary = cents;
     saveAll(true);
     refreshTotals();
     // Regler-Fenster verschwindet sofort, Gehalt steht als fixierte Zeile
@@ -1914,7 +2266,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   });
 
   el.salaryDeleteBtn.addEventListener('click', () => {
-    getMonthData(currentMonth).salary = null;
+    getMonthData(currentMonthKey).salary = null;
     saveAll(true);
     refreshTotals();
     // Regler wieder einblenden, damit ein neues Gehalt eingestellt werden kann.
@@ -1934,7 +2286,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       return;
     }
     el.cardError.textContent = '';
-    getMonthData(currentMonth).card.restsaldoCents = cents;
+    getMonthData(currentMonthKey).card.restsaldoCents = cents;
     saveAll(true);
     refreshTotals();
   }
@@ -1949,7 +2301,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     if(!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
     const idx = Number(target.dataset.index);
     if(!Number.isInteger(idx) || idx < 0 || idx >= items.length) return;
-    getMonthData(currentMonth).checked[idx] = target.checked;
+    getMonthData(currentMonthKey).checked[idx] = target.checked;
     saveAll();
     refreshTotals();
   });
@@ -1973,7 +2325,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       el.catError.textContent = 'Unbekannte Kategorie.';
       return;
     }
-    const list = getMonthData(currentMonth).categories[key];
+    const list = getMonthData(currentMonthKey).categories[key];
     if(list.length >= MAX_ENTRIES_PER_KEY){
       el.catError.textContent = 'Maximale Anzahl Einträge in dieser Kategorie erreicht.';
       return;
@@ -2013,7 +2365,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       el.savError.textContent = 'Unbekannte Unterkategorie.';
       return;
     }
-    const list = getMonthData(currentMonth).saving[key];
+    const list = getMonthData(currentMonthKey).saving[key];
     if(list.length >= MAX_ENTRIES_PER_KEY){
       el.savError.textContent = 'Maximale Anzahl Einträge erreicht.';
       return;
@@ -2043,7 +2395,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     const idx = Number(btn.dataset.idx);
     if(!Number.isInteger(idx) || idx < 0) return;
 
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
     const list = scope === 'cat' ? m.categories[key]
                : scope === 'sav' ? m.saving[key]
                : null;
@@ -2057,15 +2409,22 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   el.catList.addEventListener('click', handleRemoveClick);
   el.savList.addEventListener('click', handleRemoveClick);
 
-  // --- Forecast-Regler ---
+  // --- Forecast-Regler --- (Liste enthält jetzt auch 'sonstiges', Schleife
+  // bleibt unverändert generisch)
   fcKeys.forEach(k => {
     fcSliders[k].addEventListener('input', () => {
       const cents = clamp(Math.round(Number(fcSliders[k].value) * 100), 0, FC_MAX[k]);
       fcVals[k].textContent = formatCents(cents);
-      getMonthData(currentMonth).forecast[k] = cents;
+      getMonthData(currentMonthKey).forecast[k] = cents;
       saveAll();          // gebündelt, siehe writeStorage
       refreshTotals();
     });
+  });
+
+  // --- Forecast-Notizfeld (freier Text, kein Geldbetrag) ---
+  el.forecastNote.addEventListener('input', () => {
+    getMonthData(currentMonthKey).forecastNote = el.forecastNote.value.slice(0, MAX_NOTE_LENGTH);
+    saveAll();
   });
 
   /* ---------------------------------------------------------------------------
@@ -2079,7 +2438,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
 
   el.exportBtn.addEventListener('click', () => {
     try{
-      const payload = { version: 2, exportedAt: new Date().toISOString(), data: allData };
+      const payload = { version: 3, exportedAt: new Date().toISOString(), data: allData };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -2118,11 +2477,11 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
         const parsed = JSON.parse(String(reader.result));
         const rawData = (parsed && typeof parsed === 'object' && parsed.data) ? parsed.data : parsed;
         const clean = sanitizeAll(rawData);   // fremde Daten werden hier gefiltert
-        if(Object.keys(clean).length === 0) throw new Error('keine gültigen Monatsdaten');
+        if(Object.keys(clean.monthEntries).length === 0) throw new Error('keine gültigen Monatsdaten');
 
         allData = clean;
         saveAll(true);
-        renderMonth();
+        showOverview();
         showBackupMsg('Sicherung wurde eingelesen.', false);
       }catch(err){
         showBackupMsg('Diese Datei enthält keine gültige Sicherung.', true);
@@ -2133,11 +2492,13 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   });
 
   /* ---------------------------------------------------------------------------
-     11. MONAT ANZEIGEN
-     Wird beim Start, bei Monatswechsel, nach Reset und nach Import aufgerufen.
+     12. MONAT ANZEIGEN
+     Wird beim Öffnen eines offenen Monats aus der Übersicht aufgerufen.
      --------------------------------------------------------------------------- */
   function renderMonth(){
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
+
+    el.currentMonthLabel.textContent = currentMonthLabelText();
 
     // Checkboxen auf den gespeicherten Stand setzen.
     const boxes = el.costList.querySelectorAll('input[type="checkbox"]');
@@ -2164,6 +2525,9 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       fcVals[k].textContent = formatCents(m.forecast[k]);
     });
 
+    // Notizfeld auf gespeicherten Text.
+    el.forecastNote.value = m.forecastNote || '';
+
     // Kreditkarten-Restsaldo auf gespeicherten Wert (oder leer, wenn noch
     // nichts erfasst wurde).
     el.cardRestsaldo.value = m.card.restsaldoCents === null
@@ -2174,14 +2538,16 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   }
 
   /* ---------------------------------------------------------------------------
-     12. BELEGANSICHT
+     13. BELEGANSICHT
      Baut einen kassenbon-artigen Überblick: zuerst was wirklich passiert ist
      (abgehakte Fixkosten + eingetragene Ausgaben/Sparen), danach was noch
      offen bzw. nur simuliert ist (offene Fixkosten + Forecast-Regler).
      Auch hier ausschließlich DOM-API/textContent, kein innerHTML.
+     Wird auch für abgeschlossene Monate genutzt — dort ist es die einzige
+     noch zugängliche Ansicht (siehe openMonthDetail).
      --------------------------------------------------------------------------- */
 
-  const FC_LABELS = { lebensmittel: 'Lebensmittel', konsum: 'Konsum', sprit: 'Sprit' };
+  const FC_LABELS = { lebensmittel: 'Lebensmittel', konsum: 'Konsum', sprit: 'Sprit', sonstiges: 'Sonstiges' };
 
   function addReceiptSectionTitle(container, text){
     const h = document.createElement('p');
@@ -2225,13 +2591,13 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   }
 
   function buildReceipt(){
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
     const t = computeTotals();
     const frag = document.createDocumentFragment();
 
     const monthLine = document.createElement('p');
     monthLine.className = 'receipt-month';
-    monthLine.textContent = currentMonth;
+    monthLine.textContent = currentMonthLabelText();
     frag.appendChild(monthLine);
 
     // --- Einnahmen ---
@@ -2290,7 +2656,12 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     el.receiptBody.replaceChildren(frag);
   }
 
-  function openReceipt(){
+  // returnToOverview=true, wenn der Beleg direkt aus der Übersicht für einen
+  // abgeschlossenen Monat geöffnet wurde — dann führt Schließen zurück zur
+  // Übersicht statt zum (in diesem Fall gar nicht sichtbaren) sheet.
+  let receiptReturnsToOverview = false;
+  function openReceipt(returnToOverview){
+    receiptReturnsToOverview = !!returnToOverview;
     buildReceipt();
     el.receiptOverlay.hidden = false;
     document.body.style.overflow = 'hidden'; // verhindert Hintergrund-Scrollen
@@ -2299,10 +2670,15 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   function closeReceipt(){
     el.receiptOverlay.hidden = true;
     document.body.style.overflow = '';
-    el.receiptBtn.focus();
+    if(receiptReturnsToOverview){
+      receiptReturnsToOverview = false;
+      showOverview();
+    } else {
+      el.receiptBtn.focus();
+    }
   }
 
-  el.receiptBtn.addEventListener('click', openReceipt);
+  el.receiptBtn.addEventListener('click', () => openReceipt(false));
   el.receiptClose.addEventListener('click', closeReceipt);
   // Klick auf den abgedunkelten Hintergrund (nicht auf die Karte selbst) schließt.
   el.receiptOverlay.addEventListener('click', (e) => {
@@ -2313,7 +2689,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   });
 
   /* ---------------------------------------------------------------------------
-     13. DIAGRAMMANSICHT
+     14. DIAGRAMMANSICHT
      Zwei Tortendiagramme: "Ist-Ausgaben" (nur echte Buchungen) und
      "Ist + Forecast" (zusätzlich offene Fixkosten + Forecast-Regler).
      Reine SVG-Erzeugung ohne externe Bibliothek — jedes Segment wird als
@@ -2323,18 +2699,25 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
 
-  // Eine Farbe je Kategorie — bewusst gedeckte, zum Rest der Seite passende Töne.
+  // Eine Farbe je Kategorie — bewusst gedeckte, zum Rest der Seite passende
+  // Töne. 'fc_*' sind die Farben der Forecast-Regler-Segmente in "Ist +
+  // Forecast" — eigene Palette, damit sie sich von den echten Kategorien
+  // unterscheiden lassen.
   const SLICE_COLORS = {
-    fixedPaid:     '#14202b', // ink
-    fixedRest:     '#a8783f', // brass
-    lebensmittel:  '#5b7a5e',
-    supplemente:   '#7d6a9c',
-    zva:           '#3f7f93',
-    sprit:         '#b5543a',
-    autokosten:    '#c2a23a',
-    konsum:        '#a3455c',
-    sparen:        '#3c6e4f',
-    ruecklagen:    '#6f5b3e'
+    fixed:          '#14202b', // ink — abgehakte + offene Fixkosten zusammen
+    einkauf:        '#5b7a5e',
+    benzin:         '#b5543a',
+    gesundheit:     '#3f7f93',
+    eltern:         '#7d6a9c',
+    konsum_cat:     '#a3455c',
+    jahresfix:      '#c2a23a',
+    kfz_sonstige:   '#8a7355',
+    sparen:         '#3c6e4f',
+    ruecklagen:     '#6f5b3e',
+    fc_lebensmittel:'#8fae7a',
+    fc_konsum:      '#d98b7c',
+    fc_sprit:       '#e0a458',
+    fc_sonstiges:   '#9fa8c4'
   };
 
   function polarToCartesian(cx, cy, r, angleDeg){
@@ -2414,14 +2797,16 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     });
   }
 
-  // Stellt für beide Diagramme die Segmente zusammen. Bei "Ist + Forecast"
-  // fließen die Forecast-Regler Lebensmittel/Sprit in die gleichnamige
-  // Kategorie ein (Gesamtbetrag inkl. Planung); Konsum hat kein Ist-Gegenstück
-  // und erscheint als eigenes Segment. "Auflösung Rücklagen" ist eine
-  // Einnahme, keine Ausgabe, und taucht daher bewusst in keinem der beiden
-  // Ausgaben-Diagramme auf.
+  // Stellt für beide Diagramme die Segmente zusammen. "Ist-Ausgaben" zeigt nur
+  // echte Buchungen. "Ist + Forecast" fasst abgehakte und offene Fixkosten zu
+  // einem gemeinsamen Segment zusammen und zeigt zusätzlich alle vier
+  // Forecast-Regler als eigene "(Forecast)"-Segmente — keiner der neuen
+  // Kategorienamen entspricht mehr eindeutig einem Regler, daher werden sie
+  // bewusst nicht mehr in eine Kategorie eingerechnet, sondern konsequent
+  // separat ausgewiesen. "Auflösung Rücklagen" ist eine Einnahme, keine
+  // Ausgabe, und taucht daher bewusst in keinem der beiden Diagramme auf.
   function computeChartSlices(){
-    const m = getMonthData(currentMonth);
+    const m = getMonthData(currentMonthKey);
     const t = computeTotals();
 
     function push(list, label, cents, color){
@@ -2429,7 +2814,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     }
 
     const real = [];
-    push(real, 'Fixkosten (abgehakt)', t.fixedPaid, SLICE_COLORS.fixedPaid);
+    push(real, 'Fixkosten (abgehakt)', t.fixedPaid, SLICE_COLORS.fixed);
     categoryDefs.forEach(def => {
       push(real, def.name, sumEntries(m.categories[def.key]), SLICE_COLORS[def.key]);
     });
@@ -2437,17 +2822,15 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     push(real, 'Rücklagen', sumEntries(m.saving.ruecklagen), SLICE_COLORS.ruecklagen);
 
     const withForecast = [];
-    push(withForecast, 'Fixkosten (abgehakt)', t.fixedPaid, SLICE_COLORS.fixedPaid);
-    push(withForecast, 'Fixkosten (offen)', t.fixedRest, SLICE_COLORS.fixedRest);
+    push(withForecast, 'Fixkosten', t.fixedPaid + t.fixedRest, SLICE_COLORS.fixed);
     categoryDefs.forEach(def => {
-      let cents = sumEntries(m.categories[def.key]);
-      if(def.key === 'lebensmittel') cents += m.forecast.lebensmittel;
-      if(def.key === 'sprit') cents += m.forecast.sprit;
-      push(withForecast, def.name, cents, SLICE_COLORS[def.key]);
+      push(withForecast, def.name, sumEntries(m.categories[def.key]), SLICE_COLORS[def.key]);
     });
-    push(withForecast, 'Konsum (Forecast)', m.forecast.konsum, SLICE_COLORS.konsum);
     push(withForecast, 'Sparen', sumEntries(m.saving.sparen), SLICE_COLORS.sparen);
     push(withForecast, 'Rücklagen', sumEntries(m.saving.ruecklagen), SLICE_COLORS.ruecklagen);
+    FC_DEFS.forEach(def => {
+      push(withForecast, FC_LABELS[def.key] + ' (Forecast)', m.forecast[def.key], SLICE_COLORS['fc_' + def.key]);
+    });
 
     return { real, withForecast };
   }
@@ -2493,7 +2876,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
 
     const monthLine = document.createElement('p');
     monthLine.className = 'receipt-month'; // gleiche Optik wie im Beleg
-    monthLine.textContent = currentMonth;
+    monthLine.textContent = currentMonthLabelText();
     frag.appendChild(monthLine);
 
     buildChartSection(frag, 'Ist-Ausgaben', real);
@@ -2524,7 +2907,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   });
 
   /* ---------------------------------------------------------------------------
-     14. CLOUD-BRÜCKE
+     15. CLOUD-BRÜCKE
      Bewusst schmale Schnittstelle nach außen: der Login-/Sync-Code (außerhalb
      dieser IIFE, siehe unten) darf den Datenstand ersetzen (nach Laden aus der
      Cloud), einen Schnappschuss zum Hochladen abrufen, und den Start der
@@ -2534,19 +2917,26 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     replaceAllData(newData){
       allData = sanitizeAll(newData);
       writeStorage();   // sofort lokal spiegeln
-      renderMonth();
+      // Nur die aktuell sichtbare Ansicht aktualisieren — während des Logins
+      // ist noch nichts sichtbar, dann übernimmt start() gleich danach das
+      // erste Rendern.
+      if(currentMonthKey && allData.monthEntries[currentMonthKey] && !el.sheet.hidden){
+        renderMonth();
+      } else if(!el.overviewScreen.hidden){
+        renderOverview();
+      }
     },
     getSnapshot(){
       return JSON.parse(JSON.stringify(allData));
     },
     start(){
-      renderMonth();
+      renderOverview();
     }
   };
 })();
 
 /* =============================================================================
-   15. LOGIN + CLOUD-SYNC (außerhalb der App-IIFE, damit Firebase-Importe aus
+   16. LOGIN + CLOUD-SYNC (außerhalb der App-IIFE, damit Firebase-Importe aus
    dem Modul-Kopf direkt nutzbar sind). Ablauf:
    1. Nutzer gibt 6-stellige PIN ein.
    2. Zuerst wird ein Login versucht (Rückkehrer). Schlägt das fehl, wird
@@ -2558,6 +2948,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
    ============================================================================= */
 (function(){
   const sheetEl = document.getElementById('sheet');
+  const overviewEl = document.getElementById('overview-screen');
   const lockOverlay = document.getElementById('lock-overlay');
   const lockPin = document.getElementById('lock-pin');
   const lockSubmit = document.getElementById('lock-submit');
@@ -2825,7 +3216,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       lockStatus.textContent = '';
       lockSubmit.disabled = false;
       lockOverlay.hidden = true;
-      sheetEl.hidden = false;
+      overviewEl.hidden = false;
       window.__budgetCloud.start();
     } else {
       // Abgemeldet: alle offenen Fenster schließen und die Scroll-Sperre
@@ -2836,6 +3227,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
         if(ov) ov.hidden = true;
       });
       sheetEl.hidden = true;
+      overviewEl.hidden = true;
       lockOverlay.hidden = false;
       lockSubmit.disabled = false;
       lockStatus.textContent = '';
