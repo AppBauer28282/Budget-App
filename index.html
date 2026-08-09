@@ -888,6 +888,27 @@
     min-height: 16px;
     margin: 6px 0 0;
   }
+
+  /* PIN-Eingabefelder im "PIN ändern"-Fenster — schmaler als der große
+     Lock-Screen-Eingang, aber gleiche Grundoptik. */
+  .pin-change-input{
+    display:block;
+    width: 100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 18px;
+    letter-spacing: 0.3em;
+    text-align:center;
+    padding: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    margin-bottom: 10px;
+  }
+  .pin-change-input:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
 </style>
 </head>
 <body>
@@ -1132,7 +1153,37 @@
     <div class="backup-msg" id="backup-msg" role="status"></div>
   </div>
 
+  <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
   <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+</div>
+
+<!-- PIN-ändern-Overlay: gleiche Optik wie Beleg/Diagramm. -->
+<div class="receipt-overlay" id="pin-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+    <div class="receipt-head">
+      <h2 id="pin-title">PIN ändern</h2>
+      <button type="button" class="receipt-close" id="pin-close" aria-label="Fenster schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <p class="categories-hint">Aktuelle PIN zur Bestätigung, danach zweimal die neue 6-stellige PIN eingeben.</p>
+
+      <label class="visually-hidden" for="pin-current">Aktuelle PIN</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+             id="pin-current" placeholder="Aktuelle PIN" class="pin-change-input">
+
+      <label class="visually-hidden" for="pin-new">Neue PIN</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+             id="pin-new" placeholder="Neue PIN" class="pin-change-input">
+
+      <label class="visually-hidden" for="pin-new-repeat">Neue PIN wiederholen</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+             id="pin-new-repeat" placeholder="Neue PIN wiederholen" class="pin-change-input">
+
+      <button type="button" class="salary-save-btn" id="pin-change-btn">PIN ändern</button>
+      <p class="lock-error" id="pin-change-error" role="alert"></p>
+      <p class="lock-status" id="pin-change-status"></p>
+    </div>
+  </div>
 </div>
 
 <!-- Beleg-Overlay: wird per JS befüllt und ein-/ausgeblendet. -->
@@ -1428,10 +1479,14 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     const month = emptyMonthData();
     if(!raw || typeof raw !== 'object') return month;
 
-    // Gehalt: Cent (neu) oder Euro (alt), auf erlaubten Bereich begrenzt.
+    // Gehalt liegt bereits in Cent vor (so speichert die App es auch) —
+    // KEINE Umrechnung mehr nötig. Die frühere Version nahm fälschlich an,
+    // "salary" sei in Euro und multiplizierte nochmal mit 100, wodurch der
+    // Wert bei jedem Neuladen künstlich auf das Maximum hochgerechnet und
+    // gekappt wurde — das war der Grund, warum Gehaltsänderungen "verloren"
+    // gingen.
     let salaryCents = null;
-    if(Number.isFinite(raw.salaryCents)) salaryCents = Math.round(raw.salaryCents);
-    else if(Number.isFinite(raw.salary)) salaryCents = Math.round(raw.salary * 100);
+    if(Number.isFinite(raw.salary)) salaryCents = Math.round(raw.salary);
     if(salaryCents !== null){
       month.salary = clamp(salaryCents, SALARY_MIN_CENTS, SALARY_MAX_CENTS);
     }
@@ -1453,11 +1508,12 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       month.saving[def.key] = sanitizeEntries(rawSav[def.key], false);
     });
 
+    // Forecast-Regler liegen ebenfalls bereits in Cent vor — gleicher Fix
+    // wie beim Gehalt, kein x100 mehr.
     const rawFc = (raw.forecast && typeof raw.forecast === 'object') ? raw.forecast : {};
     FC_DEFS.forEach(def => {
       let cents = null;
-      if(Number.isFinite(rawFc[def.key + 'Cents'])) cents = Math.round(rawFc[def.key + 'Cents']);
-      else if(Number.isFinite(rawFc[def.key])) cents = Math.round(rawFc[def.key] * 100);
+      if(Number.isFinite(rawFc[def.key])) cents = Math.round(rawFc[def.key]);
       month.forecast[def.key] = cents === null ? 0 : clamp(cents, 0, def.maxCents);
     });
 
@@ -2501,13 +2557,32 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
 
   const budgetDocRef = (uid) => db.collection('budget').doc(uid);
 
+  // Zeitstempel des letzten LOKALEN Speicherns — getrennt von localStorage
+  // für die eigentlichen Budget-Daten, damit wir beim nächsten Öffnen
+  // vergleichen können: ist der Cloud-Stand wirklich neuer, oder nur älter
+  // als das, was gerade erst lokal gespeichert wurde (aber der Cloud-Upload
+  // hat es evtl. nicht mehr rechtzeitig geschafft, bevor die Seite
+  // geschlossen/in den Hintergrund geschickt wurde)?
+  const LOCAL_UPDATED_KEY = 'kontor_budget_updated_at';
+  function getLocalUpdatedAt(){
+    const raw = localStorage.getItem(LOCAL_UPDATED_KEY);
+    const n = raw ? parseInt(raw, 10) : 0;
+    return Number.isFinite(n) ? n : 0;
+  }
+  function setLocalUpdatedAt(ts){
+    try{ localStorage.setItem(LOCAL_UPDATED_KEY, String(ts)); }catch(e){}
+  }
+
   // Wird von writeStorage() (innerhalb der App-IIFE) bei jeder Änderung
-  // aufgerufen — pusht den aktuellen Stand in die Cloud. Rein lokales
-  // Speichern läuft unabhängig davon immer sofort weiter.
+  // aufgerufen — pusht den aktuellen Stand samt Zeitstempel in die Cloud.
+  // Rein lokales Speichern bleibt davon unberührt und läuft immer sofort,
+  // unabhängig davon, ob der Cloud-Push klappt.
   window.__onLocalSave = function(data){
+    const ts = Date.now();
+    setLocalUpdatedAt(ts);
     if(!auth.currentUser) return;
-    budgetDocRef(auth.currentUser.uid).set(data)
-      .catch(() => { /* nächste Änderung versucht es erneut */ });
+    budgetDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: data })
+      .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
   };
 
   async function unlock(){
@@ -2520,10 +2595,27 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     lockSubmit.disabled = true;
     lockStatus.textContent = 'Anmelden…';
 
+    // Nur bei diesen Fehlercodes ist "kein Konto / falsches Passwort" die
+    // plausible Ursache — dann lohnt sich der Versuch, ein neues Konto
+    // anzulegen. Bei jedem anderen Fehler (z. B. zu viele Versuche, Netzwerk)
+    // zeigen wir den echten Grund, statt pauschal "Falsche PIN" zu behaupten.
+    const credentialErrorCodes = [
+      'auth/user-not-found', 'auth/wrong-password',
+      'auth/invalid-credential', 'auth/invalid-login-credentials'
+    ];
+
     try{
       // Fall A: Konto existiert schon (Rückkehrer) — normaler Login.
       await auth.signInWithEmailAndPassword(FIXED_EMAIL, pin);
     }catch(signInErr){
+      if(!credentialErrorCodes.includes(signInErr.code)){
+        // Kein Anmeldedaten-Problem, sondern etwas anderes — echten Grund zeigen.
+        lockSubmit.disabled = false;
+        lockStatus.textContent = '';
+        lockError.textContent = 'Anmeldung fehlgeschlagen: ' +
+          (signInErr.code || signInErr.message || 'unbekannter Fehler');
+        return;
+      }
       try{
         // Fall B: allererstes Mal — Konto mit dieser PIN als Passwort anlegen.
         await auth.createUserWithEmailAndPassword(FIXED_EMAIL, pin);
@@ -2537,7 +2629,7 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
         } else if(createErr.code === 'auth/network-request-failed'){
           lockError.textContent = 'Keine Internetverbindung — beim allerersten Mal zwingend nötig.';
         } else {
-          lockError.textContent = 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.';
+          lockError.textContent = 'Anmeldung fehlgeschlagen: ' + (createErr.code || 'unbekannt');
         }
         return;
       }
@@ -2561,17 +2653,142 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     signoutBtn.addEventListener('click', () => { auth.signOut(); });
   }
 
+  // --- PIN ändern ---
+  const changePinBtn = document.getElementById('change-pin-btn');
+  const pinOverlay = document.getElementById('pin-overlay');
+  const pinClose = document.getElementById('pin-close');
+  const pinCurrent = document.getElementById('pin-current');
+  const pinNew = document.getElementById('pin-new');
+  const pinNewRepeat = document.getElementById('pin-new-repeat');
+  const pinChangeBtn = document.getElementById('pin-change-btn');
+  const pinChangeError = document.getElementById('pin-change-error');
+  const pinChangeStatus = document.getElementById('pin-change-status');
+
+  function openPinChange(){
+    pinCurrent.value = '';
+    pinNew.value = '';
+    pinNewRepeat.value = '';
+    pinChangeError.textContent = '';
+    pinChangeStatus.textContent = '';
+    pinOverlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+    pinCurrent.focus();
+  }
+  function closePinChange(){
+    pinOverlay.hidden = true;
+    document.body.style.overflow = '';
+    changePinBtn.focus();
+  }
+
+  changePinBtn.addEventListener('click', openPinChange);
+  pinClose.addEventListener('click', closePinChange);
+  pinOverlay.addEventListener('click', (e) => {
+    if(e.target === pinOverlay) closePinChange();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && !pinOverlay.hidden) closePinChange();
+  });
+
+  // Nur Ziffern in den drei PIN-Feldern zulassen.
+  [pinCurrent, pinNew, pinNewRepeat].forEach(input => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(0, 6);
+    });
+  });
+
+  async function changePin(){
+    const cur = pinCurrent.value.trim();
+    const next = pinNew.value.trim();
+    const repeat = pinNewRepeat.value.trim();
+
+    if(!/^\d{6}$/.test(cur) || !/^\d{6}$/.test(next)){
+      pinChangeError.textContent = 'Bitte alle Felder mit 6 Ziffern ausfüllen.';
+      return;
+    }
+    if(next !== repeat){
+      pinChangeError.textContent = 'Neue PIN stimmt in beiden Feldern nicht überein.';
+      return;
+    }
+    if(next === cur){
+      pinChangeError.textContent = 'Neue PIN muss sich von der aktuellen unterscheiden.';
+      return;
+    }
+    if(!auth.currentUser){
+      pinChangeError.textContent = 'Nicht angemeldet.';
+      return;
+    }
+
+    pinChangeError.textContent = '';
+    pinChangeBtn.disabled = true;
+    pinChangeStatus.textContent = 'Wird geändert…';
+
+    try{
+      // Firebase verlangt für sicherheitsrelevante Änderungen wie ein neues
+      // Passwort eine frische Anmeldung — deshalb hier erst mit der
+      // aktuellen PIN erneut bestätigen, bevor die neue gesetzt wird.
+      const credential = firebase.auth.EmailAuthProvider.credential(FIXED_EMAIL, cur);
+      await auth.currentUser.reauthenticateWithCredential(credential);
+      await auth.currentUser.updatePassword(next);
+
+      pinChangeStatus.textContent = '';
+      pinChangeBtn.disabled = false;
+      pinChangeError.textContent = '';
+      pinCurrent.value = '';
+      pinNew.value = '';
+      pinNewRepeat.value = '';
+      pinChangeStatus.textContent = 'PIN erfolgreich geändert ✓';
+      setTimeout(closePinChange, 1200);
+    }catch(err){
+      pinChangeBtn.disabled = false;
+      pinChangeStatus.textContent = '';
+      if(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'){
+        pinChangeError.textContent = 'Aktuelle PIN ist falsch.';
+      } else if(err.code === 'auth/weak-password'){
+        pinChangeError.textContent = 'Neue PIN muss mindestens 6 Ziffern haben.';
+      } else if(err.code === 'auth/too-many-requests'){
+        pinChangeError.textContent = 'Zu viele Versuche — bitte kurz warten.';
+      } else {
+        pinChangeError.textContent = 'Fehlgeschlagen: ' + (err.code || err.message || 'unbekannt');
+      }
+    }
+  }
+
+  pinChangeBtn.addEventListener('click', changePin);
+  [pinCurrent, pinNew, pinNewRepeat].forEach(input => {
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); changePin(); }
+    });
+  });
+
   auth.onAuthStateChanged(async (user) => {
     if(user){
       lockStatus.textContent = 'Daten werden geladen…';
       try{
         const snap = await budgetDocRef(user.uid).get();
         if(snap.exists){
-          // Cloud-Stand ist führend, sobald er existiert.
-          window.__budgetCloud.replaceAllData(snap.data());
+          const cloud = snap.data();
+          const cloudUpdatedAt = Number(cloud.updatedAt) || 0;
+          const localUpdatedAt = getLocalUpdatedAt();
+
+          if(cloudUpdatedAt > localUpdatedAt){
+            // Cloud ist wirklich neuer (z. B. auf einem anderen Gerät
+            // geändert) — jetzt erst übernehmen.
+            window.__budgetCloud.replaceAllData(cloud.data);
+            setLocalUpdatedAt(cloudUpdatedAt);
+          } else {
+            // Lokal ist genauso aktuell oder neuer als die Cloud (z. B. weil
+            // der letzte Cloud-Push nicht mehr rechtzeitig durchkam) —
+            // lokalen Stand behalten und die Cloud damit nachziehen, statt
+            // frische Änderungen zu verlieren.
+            const ts = localUpdatedAt || Date.now();
+            await budgetDocRef(user.uid).set({ updatedAt: ts, data: window.__budgetCloud.getSnapshot() });
+            setLocalUpdatedAt(ts);
+          }
         } else {
           // Allererster Login: aktuellen lokalen Stand als Startpunkt hochladen.
-          await budgetDocRef(user.uid).set(window.__budgetCloud.getSnapshot());
+          const ts = Date.now();
+          setLocalUpdatedAt(ts);
+          await budgetDocRef(user.uid).set({ updatedAt: ts, data: window.__budgetCloud.getSnapshot() });
         }
       }catch(err){
         lockError.textContent = 'Cloud gerade nicht erreichbar — arbeite lokal weiter.';
