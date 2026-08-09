@@ -1486,7 +1486,16 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
     // gekappt wurde — das war der Grund, warum Gehaltsänderungen "verloren"
     // gingen.
     let salaryCents = null;
-    if(Number.isFinite(raw.salary)) salaryCents = Math.round(raw.salary);
+    if(Number.isFinite(raw.salary)){
+      salaryCents = Math.round(raw.salary);
+      // Sicherheitsnetz für sehr alte Sicherungsdateien, in denen das Gehalt
+      // noch in Euro stand: ein Wert, der als Cent unrealistisch klein wäre,
+      // als Euro gelesen aber genau passt, wird als Euro interpretiert.
+      if(salaryCents < SALARY_MIN_CENTS &&
+         salaryCents * 100 >= SALARY_MIN_CENTS && salaryCents * 100 <= SALARY_MAX_CENTS){
+        salaryCents = salaryCents * 100;
+      }
+    }
     if(salaryCents !== null){
       month.salary = clamp(salaryCents, SALARY_MIN_CENTS, SALARY_MAX_CENTS);
     }
@@ -2577,7 +2586,14 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
   // aufgerufen — pusht den aktuellen Stand samt Zeitstempel in die Cloud.
   // Rein lokales Speichern bleibt davon unberührt und läuft immer sofort,
   // unabhängig davon, ob der Cloud-Push klappt.
+  // Während Daten AUS der Cloud geladen werden, soll das dadurch ausgelöste
+  // lokale Speichern nicht sofort wieder in die Cloud zurückgeschrieben
+  // werden — sonst überschreibt das Laden den Zeitstempel mit "jetzt" und
+  // die Vergleichslogik unten wird sinnlos.
+  let suppressCloudPush = false;
+
   window.__onLocalSave = function(data){
+    if(suppressCloudPush) return;
     const ts = Date.now();
     setLocalUpdatedAt(ts);
     if(!auth.currentUser) return;
@@ -2623,7 +2639,11 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
         lockSubmit.disabled = false;
         lockStatus.textContent = '';
         if(createErr.code === 'auth/email-already-in-use'){
-          lockError.textContent = 'Falsche PIN.';
+          // Konto existiert, Login schlug aber fehl → PIN passt nicht.
+          // Der technische Code des ursprünglichen Login-Fehlers wird
+          // mitangezeigt, damit man z. B. eine Sperre nach zu vielen
+          // Versuchen von einer wirklich falschen PIN unterscheiden kann.
+          lockError.textContent = 'Falsche PIN. (' + (signInErr.code || 'kein Code') + ')';
         } else if(createErr.code === 'auth/weak-password'){
           lockError.textContent = 'PIN muss mindestens 6 Ziffern haben.';
         } else if(createErr.code === 'auth/network-request-failed'){
@@ -2766,23 +2786,31 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       try{
         const snap = await budgetDocRef(user.uid).get();
         if(snap.exists){
-          const cloud = snap.data();
-          const cloudUpdatedAt = Number(cloud.updatedAt) || 0;
+          const raw = snap.data() || {};
+          // Zwei Formate möglich: neu = { updatedAt, data }, alt = Daten
+          // liegen direkt oben (aus einer früheren Version ohne Zeitstempel).
+          const isNewFormat = raw.data && typeof raw.data === 'object';
+          const cloudPayload = isNewFormat ? raw.data : raw;
+          const cloudUpdatedAt = Number(raw.updatedAt) || 0;
           const localUpdatedAt = getLocalUpdatedAt();
 
-          if(cloudUpdatedAt > localUpdatedAt){
-            // Cloud ist wirklich neuer (z. B. auf einem anderen Gerät
-            // geändert) — jetzt erst übernehmen.
-            window.__budgetCloud.replaceAllData(cloud.data);
-            setLocalUpdatedAt(cloudUpdatedAt);
+          // WICHTIG: Hat dieses Gerät noch nie selbst gespeichert
+          // (localUpdatedAt === 0), gewinnt IMMER die Cloud. Sonst würde ein
+          // frisch hinzugefügtes Gerät mit leerem lokalen Stand die echten
+          // Daten in der Cloud überschreiben — genau das ließ Häkchen und
+          // Werte scheinbar "zurückspringen".
+          const cloudWins = localUpdatedAt === 0 || cloudUpdatedAt > localUpdatedAt;
+
+          if(cloudWins){
+            suppressCloudPush = true;
+            window.__budgetCloud.replaceAllData(cloudPayload);
+            suppressCloudPush = false;
+            setLocalUpdatedAt(cloudUpdatedAt || Date.now());
           } else {
-            // Lokal ist genauso aktuell oder neuer als die Cloud (z. B. weil
-            // der letzte Cloud-Push nicht mehr rechtzeitig durchkam) —
-            // lokalen Stand behalten und die Cloud damit nachziehen, statt
+            // Lokal ist nachweislich neuer — Cloud damit nachziehen, statt
             // frische Änderungen zu verlieren.
-            const ts = localUpdatedAt || Date.now();
+            const ts = localUpdatedAt;
             await budgetDocRef(user.uid).set({ updatedAt: ts, data: window.__budgetCloud.getSnapshot() });
-            setLocalUpdatedAt(ts);
           }
         } else {
           // Allererster Login: aktuellen lokalen Stand als Startpunkt hochladen.
@@ -2800,6 +2828,13 @@ const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
       sheetEl.hidden = false;
       window.__budgetCloud.start();
     } else {
+      // Abgemeldet: alle offenen Fenster schließen und die Scroll-Sperre
+      // aufheben, damit der Sperrbildschirm nicht blockiert dargestellt wird.
+      document.body.style.overflow = '';
+      ['receipt-overlay','chart-overlay','pin-overlay'].forEach(id => {
+        const ov = document.getElementById(id);
+        if(ov) ov.hidden = true;
+      });
       sheetEl.hidden = true;
       lockOverlay.hidden = false;
       lockSubmit.disabled = false;
