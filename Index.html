@@ -1,0 +1,2598 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Kontor — Monatsbudget</title>
+
+<!--
+  Schriften über <link> statt @import: @import in CSS blockiert das Rendering
+  zusätzlich, weil der Browser erst das CSS parsen muss, bevor er den Font-Request
+  startet. preconnect öffnet die Verbindung schon vorab.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  /* =========================================================
+     DESIGN-TOKENS
+     Zentrale Farb- und Linienwerte. Änderungen hier wirken
+     sich auf die gesamte Seite aus.
+     ========================================================= */
+  :root{
+    --ink: #14202b;
+    --ink-soft: #3c4a56;
+    --paper: #eef0ea;
+    --paper-2: #e2e4dc;
+    --brass: #a8783f;
+    --brass-deep: #7f5a2e;
+    --line: rgba(20,32,43,0.16);
+    --error: #9c3b2e;
+    --ok: #3c6e4f;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding: 48px 20px;
+    position:relative;
+    min-height:100%;
+  }
+
+  /* Dekoratives Raster im Hintergrund. pointer-events:none, damit es
+     keine Klicks abfängt. */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity:0.35;
+    pointer-events:none;
+  }
+
+  .sheet{
+    position:relative;
+    width:100%;
+    max-width: 560px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -20px rgba(20,32,43,0.35);
+    padding: 44px 40px 36px;
+  }
+  /* Auf kleinen Displays (iPhone) weniger Innenabstand, damit mehr Platz
+     für Inhalte bleibt. */
+  @media (max-width: 520px){
+    body{ padding: 20px 12px; }
+    .sheet{ padding: 28px 20px 24px; }
+  }
+
+  .eyebrow{
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0 0 10px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: clamp(24px, 4vw, 30px);
+    margin: 0 0 8px;
+  }
+  .sub{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height:1.6;
+    margin: 0 0 30px;
+    max-width: 46ch;
+  }
+
+  /* ---------- Monatsauswahl ---------- */
+  .month-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .month-label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  #month-select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 8px 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    cursor:pointer;
+    outline:none;
+  }
+  #month-select:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+
+  /* ---------- Gehalt (Schieberegler + Speichern) ---------- */
+  .salary-box{
+    margin-bottom: 24px;
+    padding: 16px 18px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+  }
+  .salary-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .salary-label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .salary-value{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 20px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  #salary-slider{
+    width: 100%;
+    accent-color: var(--brass);
+    margin: 6px 0;
+    cursor:pointer;
+  }
+  .salary-range-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .salary-save-btn{
+    width:100%;
+    padding: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .salary-save-btn:hover{ background: var(--brass-deep); }
+
+  /* Fixierte Anzeige, wenn ein Gehalt gespeichert ist. */
+  .salary-fixed{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 2px 2px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .salary-fixed-label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .salary-fixed-right{ display:flex; align-items:center; gap: 10px; }
+  .salary-fixed-value{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 20px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  /* Kleiner roter Kreis-Button zum Löschen — bewusst auffällig, da destruktiv. */
+  .salary-delete-btn{
+    width: 24px; height: 24px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1.5px solid var(--error);
+    border-radius: 50%;
+    color: var(--error);
+    font-size: 12px;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .salary-delete-btn:hover{ background: var(--error); color: var(--paper); }
+  .salary-delete-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  /* ---------- Kopfzahl "Verbleibend" ---------- */
+  .balance{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 12px;
+    padding: 18px 20px;
+    background: var(--ink);
+    color: var(--paper);
+    margin-bottom: 28px;
+  }
+  .balance .label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(238,240,234,0.6);
+  }
+  .balance .amount{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 30px;
+    color: var(--paper);
+    white-space: nowrap;
+  }
+  /* Negativer Kontostand wird farblich hervorgehoben. */
+  .balance .amount.negative{ color: #d98b7c; }
+
+  /* ---------- Fixkosten-Liste ---------- */
+  ul.costs{
+    list-style:none;
+    margin: 0 0 8px;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  ul.costs li{ border-bottom: 1px solid var(--line); }
+  .cost-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    padding: 13px 2px;
+    cursor:pointer;
+  }
+  /* Eigene Checkbox-Optik, damit sie zum Design passt. */
+  .cost-row input[type="checkbox"]{
+    appearance:none;
+    -webkit-appearance:none;
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--ink-soft);
+    background: var(--paper);
+    cursor:pointer;
+    position:relative;
+    flex-shrink:0;
+    margin: 0;
+  }
+  .cost-row input[type="checkbox"]:checked{
+    background: var(--brass);
+    border-color: var(--brass-deep);
+  }
+  .cost-row input[type="checkbox"]:checked::after{
+    content:"";
+    position:absolute;
+    left:6px; top:2px;
+    width:5px; height:10px;
+    border: solid var(--ink);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .cost-row input[type="checkbox"]:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+  .cost-name{ flex:1; font-size: 13.5px; }
+  .cost-amount{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    margin-top: 18px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- Eintragslisten (Sonstige Ausgaben + Sparen) ---------- */
+  .categories-hint{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    line-height:1.55;
+    margin: 0 0 20px;
+    max-width: 48ch;
+  }
+  .cat-list{ margin-bottom: 18px; }
+  .cat-group{ margin-bottom: 26px; }
+  /* Trennlinie zwischen den Gruppen (nicht vor der ersten), zusätzlich zum
+     größeren Abstand — macht die Kategorie-Grenzen klarer erkennbar. */
+  .cat-group + .cat-group{
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .cat-group-name{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0 0 6px;
+  }
+  .cat-entry-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 8px;
+    font-size: 12.5px;
+    padding: 6px 2px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .cat-entry-text{
+    flex:1;
+    color: var(--ink);
+    overflow-wrap: anywhere; /* lange Wörter brechen um statt zu überlaufen */
+  }
+  .cat-entry-amount{
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  /* Beträge, die das Budget erhöhen (Auflösung Rücklagen), grün mit "+". */
+  .cat-entry-amount.income{ color: var(--ok); font-weight: 600; }
+  /* Gilt für BEIDE Listen (vorher fehlte die Regel für die Sparen-Liste). */
+  .cat-entry-remove{
+    background:none;
+    border:none;
+    color: var(--error);
+    font-size: 13px;
+    line-height:1;
+    cursor:pointer;
+    padding: 4px 2px 4px 8px;
+    flex-shrink:0;
+  }
+  .cat-subtotal{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    padding: 4px 2px 0;
+  }
+  .cat-empty{
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 4px 2px 14px;
+  }
+  .cat-grand-total{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .cat-grand-total-amount{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 17px;
+    white-space: nowrap;
+  }
+
+  /* Eingabezeile: umbruchfähig, damit sie auf schmalen Displays nicht überläuft. */
+  .cat-entry-row{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cat-entry-row input,
+  .cat-entry-row select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 9px 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+  }
+  .cat-entry-row input[type="text"]{ flex: 1 1 120px; min-width: 0; }
+  .cat-entry-row select{ flex: 1 1 130px; min-width: 0; }
+  .cat-entry-row input[type="number"]{ flex: 0 1 100px; min-width: 0; }
+  .cat-entry-row input:focus-visible,
+  .cat-entry-row select:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+  .cat-add-btn{
+    flex: 1 1 auto;
+    padding: 10px 18px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .cat-add-btn:hover{ background: var(--brass-deep); }
+  .cat-error{
+    font-size: 11px;
+    color: var(--error);
+    min-height: 14px;
+    margin-top: 6px;
+  }
+
+  /* ---------- Forecast ---------- */
+  .forecast-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .forecast-row-label{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  /* Bewusst klein und dezent (vorher zu groß/prominent). */
+  .forecast-row-value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight:500;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .forecast-row-value.negative{ color: var(--error); }
+
+  /* Ergebnis-Kachel statt Fließtext-Überschrift, damit sie sich klar von den
+     Abschnitts-Überschriften (Fixkosten, Sparen, …) unterscheidet. */
+  .forecast-result-box{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--brass);
+    padding: 14px 16px;
+    margin: 10px 0 20px;
+  }
+  .forecast-result-label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .forecast-result-value{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 21px;
+    color: var(--brass-deep);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .forecast-result-value.negative{ color: var(--error); }
+
+  .forecast-static{
+    margin-top: 16px;
+    padding: 10px 12px;
+    background: rgba(20,32,43,0.05);
+    border: 1px dashed var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 10px;
+  }
+  .forecast-static-label{ font-size: 12.5px; color: var(--ink-soft); }
+  .forecast-static-hint{
+    display:block;
+    font-size: 10px;
+    color: var(--ink-soft);
+    opacity: 0.75;
+    margin-top: 2px;
+  }
+  .forecast-static .forecast-slider-val{
+    color: var(--brass-deep);
+    font-weight: 600;
+  }
+  .forecast-slider{ margin-top: 16px; }
+  .forecast-slider-head{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .forecast-slider-val{
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .forecast-slider input[type="range"]{
+    width:100%;
+    accent-color: var(--brass);
+    cursor:pointer;
+  }
+
+  /* ---------- Ein-/ausklappbare Bereiche ---------- */
+  .section{ margin-top: 28px; }
+  .section summary.section-summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 17px;
+    color: var(--ink);
+  }
+  /* Standard-Dreieck des <details>-Elements in allen Browsern ausblenden. */
+  .section summary.section-summary::-webkit-details-marker{ display:none; }
+  .section summary.section-summary::marker{ content:""; }
+  /* Plus/Minus zeigt den Auf-/Zuklapp-Zustand an. */
+  .section summary.section-summary::after{
+    content: "＋";
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight:400;
+    color: var(--brass-deep);
+  }
+  .section[open] > summary.section-summary::after{ content: "－"; }
+  .section summary.section-summary:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+  .section-body{ padding-top: 18px; }
+
+  /* ---------- Zurücksetzen / Sicherung ---------- */
+  .backup-box{
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  .backup-hint{
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height:1.5;
+    margin: 0 0 12px;
+    max-width: 46ch;
+  }
+  .backup-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
+  .backup-btn{
+    display:inline-block;
+    padding: 11px 16px;
+    background: var(--brass);
+    color: var(--ink);
+    border: 1px solid var(--brass-deep);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .backup-btn:hover{ background: var(--brass-deep); color: var(--paper); }
+  .backup-btn-outline{
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+  }
+  .backup-btn-outline:hover{ background: var(--ink); color: var(--paper); }
+  .backup-btn:focus-within{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .backup-msg{
+    font-size: 11px;
+    color: var(--ok);
+    margin-top: 10px;
+    min-height: 14px;
+    line-height: 1.5;
+  }
+  .backup-msg.error{ color: var(--error); }
+
+  /* Nur für Screenreader sichtbar. */
+  .visually-hidden{
+    position:absolute;
+    width:1px; height:1px;
+    padding:0; margin:-1px;
+    overflow:hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border:0;
+  }
+
+  /* ---------- Belegansicht ---------- */
+  .receipt-btn{
+    width: 100%;
+    margin-top: 26px;
+    padding: 12px 20px;
+    background: transparent;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .receipt-btn:hover{ background: var(--ink); color: var(--paper); }
+
+  .receipt-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(20,32,43,0.55);
+    align-items:flex-start;
+    justify-content:center;
+    padding: 32px 16px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none; /* Standard: unsichtbar */
+  }
+  /* WICHTIG: display:flex nur, wenn das hidden-Attribut NICHT gesetzt ist.
+     Eine feste "display:flex"-Regel auf .receipt-overlay würde das
+     hidden-Attribut wirkungslos machen, da Autor-CSS die eingebaute
+     Browser-Regel [hidden]{display:none} unabhängig von der Spezifität
+     immer überschreibt — genau das war der Bug. */
+  .receipt-overlay:not([hidden]){
+    display:flex;
+  }
+  .receipt-card{
+    width:100%;
+    max-width: 380px;
+    background: #fbfaf6; /* leicht wärmeres Weiß, wirkt wie Bon-Papier */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink);
+  }
+  .receipt-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding: 16px 18px;
+    border-bottom: 1px dashed var(--line);
+    position: sticky;
+    top: 0;
+    background: #fbfaf6;
+  }
+  .receipt-head h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 18px;
+    margin: 0;
+  }
+  .receipt-close{
+    width: 26px; height: 26px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    color: var(--ink);
+    font-size: 12px;
+    cursor:pointer;
+    padding:0;
+    flex-shrink:0;
+  }
+  .receipt-close:hover{ background: var(--ink); color: var(--paper); }
+
+  .receipt-body{ padding: 18px; font-size: 12.5px; }
+
+  .receipt-month{
+    text-align:center;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+  }
+  .receipt-section-title{
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin: 18px 0 8px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .receipt-section-title:first-of-type{ border-top: none; padding-top: 0; margin-top: 0; }
+  .receipt-subgroup{
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 10px 0 4px;
+  }
+  .receipt-line{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    padding: 3px 0;
+  }
+  .receipt-line-label{ flex:1; overflow-wrap: anywhere; }
+  .receipt-line-amount{ white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .receipt-line-amount.income{ color: var(--ok); font-weight: 600; }
+  .receipt-empty-note{
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 3px 0;
+  }
+  .receipt-total-line{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+  }
+  .receipt-total-line.grand{
+    font-family:'Fraunces', serif;
+    font-size: 16px;
+    border-top: 2px double var(--ink);
+    padding-top: 12px;
+    margin-top: 16px;
+  }
+
+  /* ---------- Diagrammansicht (Tortendiagramme) ---------- */
+  .chart-section-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 15px;
+    margin: 0 0 14px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  /* Kein Trennstrich vor dem allerersten Abschnitt. */
+  .chart-section-title:first-of-type{ border-top:none; padding-top:0; }
+  .chart-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom: 16px;
+  }
+  .chart-svg{ display:block; }
+  .chart-legend{
+    display:flex;
+    flex-direction:column;
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+  .chart-legend-row{
+    display:grid;
+    grid-template-columns: 11px 1fr auto auto;
+    align-items:center;
+    gap: 8px;
+    font-size: 11.5px;
+  }
+  .chart-legend-swatch{
+    width: 11px; height: 11px;
+    border-radius: 2px;
+    flex-shrink:0;
+  }
+  .chart-legend-label{ color: var(--ink); overflow-wrap:anywhere; }
+  .chart-legend-pct{
+    color: var(--brass-deep);
+    font-weight:600;
+    font-variant-numeric: tabular-nums;
+    white-space:nowrap;
+  }
+  .chart-legend-amount{
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space:nowrap;
+  }
+  .chart-total-row{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    font-weight:600;
+    font-size: 12.5px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+  .chart-empty-note{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* ---------- PIN-Sperrbildschirm ---------- */
+  .lock-overlay{
+    position: fixed;
+    inset: 0;
+    background: var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+    z-index: 200;
+  }
+  .lock-overlay[hidden]{ display:none; }
+  .lock-card{
+    width: 100%;
+    max-width: 340px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -20px rgba(20,32,43,0.35);
+    padding: 36px 30px;
+    text-align:center;
+  }
+  .lock-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+  .lock-sub{
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin: 0 0 24px;
+  }
+  #lock-pin{
+    width: 100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 26px;
+    letter-spacing: 0.5em;
+    text-align:center;
+    padding: 12px 10px 12px 16px; /* extra links wegen letter-spacing */
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    margin-bottom: 16px;
+  }
+  #lock-pin:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+  .lock-submit-btn{
+    width:100%;
+    padding: 13px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .lock-submit-btn:hover{ background: var(--brass-deep); }
+  .lock-submit-btn:disabled{ opacity: 0.6; cursor: default; }
+  .lock-error{
+    font-size: 11.5px;
+    color: var(--error);
+    min-height: 16px;
+    margin: 12px 0 0;
+  }
+  .lock-status{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    min-height: 16px;
+    margin: 6px 0 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Globaler Fehler-Fänger, ganz am Anfang, damit JEDER Fehler beim Laden
+     (auch aus Firebase-Skripten oder dem Hauptcode) sichtbar auf dem
+     PIN-Bildschirm landet, statt lautlos zu verpuffen. Wichtig auf dem
+     iPhone, wo man keine Entwicklertools zur Hand hat. -->
+<script>
+  window.addEventListener('error', function(e){
+    var el = document.getElementById('lock-error');
+    if(el){
+      el.textContent = 'Technischer Fehler beim Laden: ' + (e.message || 'unbekannt') +
+        (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '');
+    }
+  });
+</script>
+
+<!-- PIN-Sperrbildschirm: sichtbar, bis Firebase-Login erfolgreich war. -->
+<div class="lock-overlay" id="lock-overlay">
+  <div class="lock-card">
+    <p class="eyebrow">Monatsbudget</p>
+    <h1 class="lock-title">Entsperren</h1>
+    <p class="lock-sub">6-stellige PIN eingeben. Beim allerersten Mal wird sie automatisch als deine PIN angelegt.</p>
+
+    <label class="visually-hidden" for="lock-pin">PIN</label>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+           id="lock-pin" placeholder="••••••" autocomplete="off">
+
+    <button type="button" class="lock-submit-btn" id="lock-submit">Weiter</button>
+    <p class="lock-error" id="lock-error" role="alert"></p>
+    <p class="lock-status" id="lock-status"></p>
+  </div>
+</div>
+
+<!-- Erst nach erfolgreichem Login sichtbar (JS entfernt das hidden-Attribut). -->
+<div class="sheet" id="sheet" hidden>
+  <p class="eyebrow">Monatsbudget</p>
+  <h1>Budget im Blick</h1>
+  <p class="sub">Gehalt festlegen, Fixkosten abhaken, Ausgaben eintragen — alles wird lokal auf diesem Gerät gespeichert.</p>
+
+  <!-- Monatsauswahl: jeder Monat hat einen eigenen, getrennten Datensatz. -->
+  <div class="month-row">
+    <label for="month-select" class="month-label">Monat</label>
+    <select id="month-select"></select>
+  </div>
+
+  <!-- Gehalt: variiert monatlich. Gespeichert = fixierte Zeile mit Löschen-Button.
+       Noch nicht gespeichert / nach Löschen = Schieberegler zum Einstellen. -->
+  <div class="salary-fixed" id="salary-fixed" hidden>
+    <span class="salary-fixed-label">Gehalt</span>
+    <span class="salary-fixed-right">
+      <span class="salary-fixed-value" id="salary-fixed-value">–</span>
+      <button type="button" class="salary-delete-btn" id="salary-delete-btn"
+              aria-label="Gehalt löschen und neu einstellen" title="Gehalt löschen">✕</button>
+    </span>
+  </div>
+
+  <div class="salary-box" id="salary-box">
+    <div class="salary-head">
+      <label for="salary-slider" class="salary-label">Gehalt diesen Monat</label>
+      <span class="salary-value" id="salary-value">–</span>
+    </div>
+    <input type="range" id="salary-slider" min="2000" max="8000" step="10" value="3250"
+           aria-label="Gehalt in Euro">
+    <div class="salary-range-labels">
+      <span>2.000 €</span>
+      <span>8.000 €</span>
+    </div>
+    <button type="button" class="salary-save-btn" id="salary-save-btn">Speichern</button>
+  </div>
+
+  <!-- Zentrale Kennzahl: Gehalt minus alle erfassten Ausgaben. -->
+  <div class="balance">
+    <span class="label">Verbleibend</span>
+    <span class="amount" id="balance" aria-live="polite">–</span>
+  </div>
+
+  <!-- ============ BEREICH 1: FIXKOSTEN ============ -->
+  <details class="section" open>
+    <summary class="section-summary">Fixkosten</summary>
+    <div class="section-body">
+      <ul class="costs" id="cost-list"></ul>
+      <div class="summary">
+        <span id="checked-count">0 von 6 angehakt</span>
+        <span id="spent-total">0,00 € ausgegeben</span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 2: SONSTIGE AUSGABEN ============ -->
+  <details class="section" open>
+    <summary class="section-summary">Sonstige Ausgaben</summary>
+    <div class="section-body">
+      <p class="categories-hint">Text, Kategorie und Betrag eintragen — erscheint sofort in der Liste oben, gruppiert nach Kategorie mit Zwischen- und Gesamtsumme.</p>
+
+      <div class="cat-list" id="cat-list"></div>
+      <div class="cat-grand-total">
+        <span>Gesamtsumme</span>
+        <span class="cat-grand-total-amount" id="cat-grand-total-amount">0,00 €</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="cat-text">Bezeichnung</label>
+        <input type="text" id="cat-text" maxlength="80" autocomplete="off" enterkeyhint="done">
+        <label class="visually-hidden" for="cat-select">Kategorie</label>
+        <select id="cat-select"></select>
+        <label class="visually-hidden" for="cat-amount">Betrag in Euro</label>
+        <input type="number" id="cat-amount" placeholder="€" step="0.01" min="0" max="1000000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="cat-add-btn">Hinzufügen</button>
+      </div>
+      <div class="cat-error" id="cat-error" role="alert"></div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 3: SPAREN ============ -->
+  <details class="section" open>
+    <summary class="section-summary">Sparen</summary>
+    <div class="section-body">
+      <p class="categories-hint">Unterkategorie und Betrag eintragen — erscheint sofort in der Liste oben, gruppiert mit Zwischen- und Gesamtsumme. „Auflösung Rücklagen" erhöht dein Verbleibend, da das Geld ins Budget zurückfließt.</p>
+
+      <div class="cat-list" id="sav-list"></div>
+      <div class="cat-grand-total">
+        <span>Gesamtsumme</span>
+        <span class="cat-grand-total-amount" id="sav-grand-total-amount">0,00 €</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="sav-select">Unterkategorie</label>
+        <select id="sav-select"></select>
+        <label class="visually-hidden" for="sav-amount">Betrag in Euro</label>
+        <input type="number" id="sav-amount" placeholder="€" step="0.01" min="0" max="1000000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="sav-add-btn">Hinzufügen</button>
+      </div>
+      <div class="cat-error" id="sav-error" role="alert"></div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 4: FORECAST ============ -->
+  <details class="section" open>
+    <summary class="section-summary">Forecast</summary>
+    <div class="section-body">
+      <!-- Basis ist das echte "Verbleibend" von oben — bewusst klein/dezent. -->
+      <div class="forecast-row">
+        <span class="forecast-row-label">Verbleibend</span>
+        <span class="forecast-row-value" id="forecast-base">–</span>
+      </div>
+
+      <!-- Ergebnis-Kachel, optisch klar getrennt von der Abschnitts-Überschrift. -->
+      <div class="forecast-result-box">
+        <span class="forecast-result-label">Forecast</span>
+        <span class="forecast-result-value" id="forecast-result" aria-live="polite">–</span>
+      </div>
+
+      <!-- Automatisch: Fixkosten, die noch nicht abgehakt sind, kommen sicher noch. -->
+      <div class="forecast-static">
+        <span class="forecast-static-label">
+          Restliche Fixkosten
+          <span class="forecast-static-hint">noch nicht abgehakt — fließt automatisch ein</span>
+        </span>
+        <span class="forecast-slider-val" id="forecast-fixed-rest">0,00 €</span>
+      </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-lebensmittel-label">Lebensmittel</span>
+          <span class="forecast-slider-val" id="fc-lebensmittel-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-lebensmittel" min="0" max="800" step="5" value="0"
+               aria-labelledby="fc-lebensmittel-label">
+      </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-konsum-label">Konsum</span>
+          <span class="forecast-slider-val" id="fc-konsum-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-konsum" min="0" max="500" step="5" value="0"
+               aria-labelledby="fc-konsum-label">
+      </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-sprit-label">Sprit</span>
+          <span class="forecast-slider-val" id="fc-sprit-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-sprit" min="0" max="300" step="5" value="0"
+               aria-labelledby="fc-sprit-label">
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 5: KREDITKARTE ============ -->
+  <details class="section" open>
+    <summary class="section-summary">Kreditkarte</summary>
+    <div class="section-body">
+      <p class="categories-hint">Restsaldo laut Kreditkarte eintragen. Der Gesamtsaldo ist fest auf 2.000 € gesetzt. Verbraucht (Gesamtsaldo − Restsaldo) wird mit den erfassten „Sonstigen Ausgaben" abgeglichen.</p>
+
+      <div class="forecast-row">
+        <span class="forecast-row-label">Gesamtsaldo</span>
+        <span class="forecast-row-value" id="card-total">–</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="card-restsaldo">Restsaldo in Euro</label>
+        <input type="number" id="card-restsaldo" placeholder="Restsaldo €" step="0.01" min="0" max="2000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="card-save-btn">Speichern</button>
+      </div>
+      <div class="cat-error" id="card-error" role="alert"></div>
+
+      <div class="forecast-row">
+        <span class="forecast-row-label">Verbraucht (Gesamtsaldo − Restsaldo)</span>
+        <span class="forecast-row-value" id="card-used">–</span>
+      </div>
+      <div class="forecast-row">
+        <span class="forecast-row-label">Sonstige Ausgaben (Ist)</span>
+        <span class="forecast-row-value" id="card-cat-total">–</span>
+      </div>
+
+      <div class="forecast-result-box">
+        <span class="forecast-result-label">Differenz</span>
+        <span class="forecast-result-value" id="card-diff" aria-live="polite">–</span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ VERWALTUNG ============ -->
+
+  <button type="button" class="receipt-btn" id="receipt-btn">Belegansicht</button>
+  <button type="button" class="receipt-btn" id="chart-btn">Diagrammansicht</button>
+
+  <div class="backup-box">
+    <p class="backup-hint">Alle Monate lokal sichern oder eine gesicherte Datei wieder einlesen.</p>
+    <div class="backup-actions">
+      <button type="button" class="backup-btn" id="export-btn">Sichern (Datei speichern)</button>
+      <label class="backup-btn backup-btn-outline" for="import-file">Wiederherstellen</label>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </div>
+    <div class="backup-msg" id="backup-msg" role="status"></div>
+  </div>
+
+  <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+</div>
+
+<!-- Beleg-Overlay: wird per JS befüllt und ein-/ausgeblendet. -->
+<div class="receipt-overlay" id="receipt-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="receipt-title">
+    <div class="receipt-head">
+      <h2 id="receipt-title">Beleg</h2>
+      <button type="button" class="receipt-close" id="receipt-close" aria-label="Beleg schließen">✕</button>
+    </div>
+    <div class="receipt-body" id="receipt-body"></div>
+  </div>
+</div>
+
+<!-- Diagramm-Overlay: gleiche Optik wie der Beleg (dieselben CSS-Klassen),
+     eigene IDs, damit JS es unabhängig steuern kann. -->
+<div class="receipt-overlay" id="chart-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="chart-title">
+    <div class="receipt-head">
+      <h2 id="chart-title">Diagramme</h2>
+      <button type="button" class="receipt-close" id="chart-close" aria-label="Diagramme schließen">✕</button>
+    </div>
+    <div class="receipt-body" id="chart-body"></div>
+  </div>
+</div>
+
+<!-- Firebase über die klassische "Compat"-Variante laden (normale <script>-Tags,
+     kein type="module"). Grund: Safari blockiert ES-Module oft, wenn die Seite
+     lokal per file:// geöffnet wird — die Compat-Skripte sind davon nicht
+     betroffen, weil sie ganz normal wie jedes andere <script src="..."> laden. -->
+<script src="https://www.gstatic.com/firebasejs/12.12.0/firebase-app-compat.js"
+        onerror="document.getElementById('lock-error').textContent='Firebase-Grundmodul (app-compat) konnte nicht geladen werden — Internetverbindung oder Blocker prüfen.'"></script>
+<script src="https://www.gstatic.com/firebasejs/12.12.0/firebase-auth-compat.js"
+        onerror="document.getElementById('lock-error').textContent='Firebase-Auth-Modul konnte nicht geladen werden — Internetverbindung oder Blocker prüfen.'"></script>
+<script src="https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore-compat.js"
+        onerror="document.getElementById('lock-error').textContent='Firebase-Firestore-Modul konnte nicht geladen werden — Internetverbindung oder Blocker prüfen.'"></script>
+
+<script>
+// Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
+// Security Rules + PIN-Login, nicht über diesen Config-Block).
+const firebaseConfig = {
+  apiKey: "AIzaSyCfZNnUjIYE7i2IacGcZB-p-WsE7yj2Q1I",
+  authDomain: "budget-app-208fd.firebaseapp.com",
+  projectId: "budget-app-208fd",
+  storageBucket: "budget-app-208fd.firebasestorage.app",
+  messagingSenderId: "1036779344395",
+  appId: "1:1036779344395:web:c2717b4b447aff5ef42d0e"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Für dich unsichtbare, feste Kennung: deine PIN wird als "Passwort" dieses
+// einen Kontos verwendet — siehe die Erklärung im Chat.
+const FIXED_EMAIL = 'nutzer@budget-app-208fd.firebaseapp.com';
+
+'use strict';
+/* =============================================================================
+   Gesamte Logik in einer IIFE (sofort ausgeführte Funktion): so landen keine
+   Variablen im globalen Namensraum und können nicht von außen überschrieben
+   werden. 'use strict' verhindert stille Fehler wie versehentliche Globals.
+   ============================================================================= */
+(function(){
+
+  /* ---------------------------------------------------------------------------
+     1. STAMMDATEN (Konstanten)
+     Diese Listen definieren, was die App kennt. Sie sind die einzige Quelle
+     der Wahrheit — Speicher-Daten werden beim Laden gegen sie geprüft.
+     --------------------------------------------------------------------------- */
+
+  // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
+  // (0.1 + 0.2 !== 0.3 in JavaScript). Gerechnet wird durchgängig in Cent.
+  const items = [
+    { name: 'Miete',     cents: 78500 },
+    { name: 'Strom',     cents: 7000 },
+    { name: 'Congstar',  cents: 2000 },
+    { name: 'Outfit',    cents: 3000 },
+    { name: 'Internet',  cents: 3500 },
+    { name: 'BU',        cents: 8500 }
+  ];
+
+  const categoryDefs = [
+    { key: 'lebensmittel', name: 'Lebensmittel / Drogerie' },
+    { key: 'supplemente',  name: 'Supplemente' },
+    { key: 'zva',          name: 'ZVA' },
+    { key: 'sprit',        name: 'Sprit' },
+    { key: 'autokosten',   name: 'Autokosten' }
+  ];
+
+  const savingDefs = [
+    { key: 'sparen',     name: 'Sparen' },
+    { key: 'ruecklagen', name: 'Rücklagen' },
+    { key: 'aufloesung', name: 'Auflösung Rücklagen' }
+  ];
+
+  const MONTHS = ['August','September','Oktober','November','Dezember','Januar',
+                  'Februar','März','April','Mai','Juni','Juli'];
+
+  const STORAGE_KEY = 'kontor_budget_by_month';
+
+  // Grenzwerte. Werden beim Import erzwungen, damit manipulierte oder kaputte
+  // Dateien keine unsinnigen Werte in die App bringen.
+  const SALARY_MIN_CENTS = 200000;   // 2.000 €
+  const SALARY_MAX_CENTS = 800000;   // 8.000 €
+  const AMOUNT_MAX_CENTS = 100000000; // 1.000.000 € pro Einzeleintrag
+  const MAX_ENTRIES_PER_KEY = 500;   // begrenzt Speicher- und Renderaufwand
+  const MAX_TEXT_LENGTH = 80;
+  const MAX_IMPORT_BYTES = 2 * 1024 * 1024; // 2 MB
+
+  // Fester Gesamtsaldo der Kreditkarte — bewusst keine Nutzereinstellung,
+  // sondern eine Konstante, wie vorgegeben.
+  const CARD_TOTAL_CENTS = 200000; // 2.000 €
+
+  // Obergrenzen der Forecast-Regler, passend zu den max-Attributen im HTML.
+  const FC_DEFS = [
+    { key: 'lebensmittel', maxCents: 80000 },
+    { key: 'konsum',       maxCents: 50000 },
+    { key: 'sprit',        maxCents: 30000 }
+  ];
+  const fcKeys = FC_DEFS.map(d => d.key);
+  // Direktes Nachschlagen der Obergrenze, damit beim Ziehen eines Reglers nicht
+  // bei jedem einzelnen Ereignis die Liste durchsucht werden muss.
+  const FC_MAX = {};
+  FC_DEFS.forEach(d => { FC_MAX[d.key] = d.maxCents; });
+
+  /* ---------------------------------------------------------------------------
+     2. DOM-REFERENZEN
+     Einmal am Anfang gesammelt statt bei jedem Aufruf neu zu suchen — spart
+     wiederholte DOM-Abfragen.
+     --------------------------------------------------------------------------- */
+  const el = {
+    costList:        document.getElementById('cost-list'),
+    balance:         document.getElementById('balance'),
+    checkedCount:    document.getElementById('checked-count'),
+    spentTotal:      document.getElementById('spent-total'),
+
+    catList:         document.getElementById('cat-list'),
+    catGrandTotal:   document.getElementById('cat-grand-total-amount'),
+    catText:         document.getElementById('cat-text'),
+    catSelect:       document.getElementById('cat-select'),
+    catAmount:       document.getElementById('cat-amount'),
+    catAddBtn:       document.getElementById('cat-add-btn'),
+    catError:        document.getElementById('cat-error'),
+
+    savList:         document.getElementById('sav-list'),
+    savGrandTotal:   document.getElementById('sav-grand-total-amount'),
+    savSelect:       document.getElementById('sav-select'),
+    savAmount:       document.getElementById('sav-amount'),
+    savAddBtn:       document.getElementById('sav-add-btn'),
+    savError:        document.getElementById('sav-error'),
+
+    monthSelect:     document.getElementById('month-select'),
+    salaryFixed:      document.getElementById('salary-fixed'),
+    salaryFixedValue: document.getElementById('salary-fixed-value'),
+    salaryDeleteBtn:  document.getElementById('salary-delete-btn'),
+    salaryBox:       document.getElementById('salary-box'),
+    salarySlider:    document.getElementById('salary-slider'),
+    salaryValue:     document.getElementById('salary-value'),
+    salarySaveBtn:   document.getElementById('salary-save-btn'),
+
+    forecastBase:    document.getElementById('forecast-base'),
+    forecastResult:  document.getElementById('forecast-result'),
+    forecastRest:    document.getElementById('forecast-fixed-rest'),
+
+    cardTotal:       document.getElementById('card-total'),
+    cardRestsaldo:   document.getElementById('card-restsaldo'),
+    cardSaveBtn:     document.getElementById('card-save-btn'),
+    cardError:       document.getElementById('card-error'),
+    cardUsed:        document.getElementById('card-used'),
+    cardCatTotal:    document.getElementById('card-cat-total'),
+    cardDiff:        document.getElementById('card-diff'),
+
+    exportBtn:       document.getElementById('export-btn'),
+    importFile:      document.getElementById('import-file'),
+    backupMsg:       document.getElementById('backup-msg'),
+
+    receiptBtn:      document.getElementById('receipt-btn'),
+    receiptOverlay:  document.getElementById('receipt-overlay'),
+    receiptClose:    document.getElementById('receipt-close'),
+    receiptBody:     document.getElementById('receipt-body'),
+
+    chartBtn:        document.getElementById('chart-btn'),
+    chartOverlay:    document.getElementById('chart-overlay'),
+    chartClose:      document.getElementById('chart-close'),
+    chartBody:       document.getElementById('chart-body')
+  };
+
+  const fcSliders = {};
+  const fcVals = {};
+  fcKeys.forEach(k => {
+    fcSliders[k] = document.getElementById('fc-' + k);
+    fcVals[k]    = document.getElementById('fc-' + k + '-val');
+  });
+
+  /* ---------------------------------------------------------------------------
+     3. HILFSFUNKTIONEN
+     --------------------------------------------------------------------------- */
+
+  // Formatiert Cent-Beträge als deutsche Euro-Angabe.
+  // Intl.NumberFormat wird einmal erzeugt statt bei jedem Aufruf neu (deutlich
+  // schneller, da die Erzeugung teuer ist und hunderte Male pro Render liefe).
+  const eurFormatter = new Intl.NumberFormat('de-DE', {
+    style: 'currency', currency: 'EUR',
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  });
+  function formatCents(cents){
+    return eurFormatter.format(cents / 100);
+  }
+
+  // Wandelt Benutzereingaben in Cent um. Akzeptiert Komma und Punkt.
+  // Gibt null zurück, wenn die Eingabe ungültig ist.
+  function parseAmountToCents(raw){
+    if(typeof raw !== 'string') return null;
+    const normalized = raw.trim().replace(/\s/g, '').replace(',', '.');
+    if(normalized === '') return null;
+    const value = Number(normalized);
+    if(!Number.isFinite(value) || value <= 0) return null;
+    const cents = Math.round(value * 100);
+    if(cents <= 0 || cents > AMOUNT_MAX_CENTS) return null;
+    return cents;
+  }
+
+  // Wie parseAmountToCents, aber 0 ist erlaubt (z. B. Kreditkarten-Restsaldo:
+  // "0 €" bedeutet gültig "Karte komplett ausgeschöpft", nicht "keine Eingabe").
+  function parseNonNegativeAmountToCents(raw){
+    if(typeof raw !== 'string') return null;
+    const normalized = raw.trim().replace(/\s/g, '').replace(',', '.');
+    if(normalized === '') return null;
+    const value = Number(normalized);
+    if(!Number.isFinite(value) || value < 0) return null;
+    const cents = Math.round(value * 100);
+    if(cents < 0 || cents > AMOUNT_MAX_CENTS) return null;
+    return cents;
+  }
+
+  function clamp(value, min, max){
+    return Math.min(Math.max(value, min), max);
+  }
+
+  /* ---------------------------------------------------------------------------
+     4. DATENMODELL + VALIDIERUNG
+     Jeder Monat hat: salary (Cent oder null), checked[], categories{}, saving{},
+     forecast{}. Alles, was aus localStorage oder einer Importdatei kommt, läuft
+     durch sanitize* — dadurch können fremde Dateien weder unbekannte Felder
+     einschleusen noch den Prototyp verändern (Prototype Pollution), da nur
+     bekannte Schlüssel kopiert werden.
+     --------------------------------------------------------------------------- */
+
+  function emptyMonthData(){
+    const categories = Object.create(null);
+    categoryDefs.forEach(c => { categories[c.key] = []; });
+    const saving = Object.create(null);
+    savingDefs.forEach(c => { saving[c.key] = []; });
+    const forecast = Object.create(null);
+    fcKeys.forEach(k => { forecast[k] = 0; });
+    return {
+      salary: null,
+      checked: new Array(items.length).fill(false),
+      categories,
+      saving,
+      forecast,
+      // Restsaldo der Kreditkarte, vom Nutzer eingetragen (Cent) — null = noch
+      // nicht erfasst. Der Gesamtsaldo selbst ist eine feste Konstante
+      // (CARD_TOTAL_CENTS), wird also nicht pro Monat gespeichert.
+      card: { restsaldoCents: null }
+    };
+  }
+
+  // Prüft eine Eintragsliste. withName=true → Einträge haben eine Bezeichnung.
+  function sanitizeEntries(rawList, withName){
+    const out = [];
+    if(!Array.isArray(rawList)) return out;
+    for(const raw of rawList){
+      if(out.length >= MAX_ENTRIES_PER_KEY) break;
+      if(!raw || typeof raw !== 'object') continue;
+
+      // Beträge dürfen als Cent (neu) oder Euro (alt) vorliegen.
+      let cents = null;
+      if(Number.isFinite(raw.cents)) cents = Math.round(raw.cents);
+      else if(Number.isFinite(raw.amount)) cents = Math.round(raw.amount * 100);
+      if(cents === null || cents <= 0 || cents > AMOUNT_MAX_CENTS) continue;
+
+      const entry = { cents };
+      if(withName){
+        const name = typeof raw.name === 'string' ? raw.name.trim().slice(0, MAX_TEXT_LENGTH) : '';
+        entry.name = name || 'Ohne Bezeichnung';
+      }
+      out.push(entry);
+    }
+    return out;
+  }
+
+  function sanitizeMonth(raw){
+    const month = emptyMonthData();
+    if(!raw || typeof raw !== 'object') return month;
+
+    // Gehalt: Cent (neu) oder Euro (alt), auf erlaubten Bereich begrenzt.
+    let salaryCents = null;
+    if(Number.isFinite(raw.salaryCents)) salaryCents = Math.round(raw.salaryCents);
+    else if(Number.isFinite(raw.salary)) salaryCents = Math.round(raw.salary * 100);
+    if(salaryCents !== null){
+      month.salary = clamp(salaryCents, SALARY_MIN_CENTS, SALARY_MAX_CENTS);
+    }
+
+    // Checkboxen: strikt auf echte true-Werte und die richtige Länge normiert.
+    if(Array.isArray(raw.checked)){
+      for(let i = 0; i < items.length; i++){
+        month.checked[i] = raw.checked[i] === true;
+      }
+    }
+
+    const rawCats = (raw.categories && typeof raw.categories === 'object') ? raw.categories : {};
+    categoryDefs.forEach(def => {
+      month.categories[def.key] = sanitizeEntries(rawCats[def.key], true);
+    });
+
+    const rawSav = (raw.saving && typeof raw.saving === 'object') ? raw.saving : {};
+    savingDefs.forEach(def => {
+      month.saving[def.key] = sanitizeEntries(rawSav[def.key], false);
+    });
+
+    const rawFc = (raw.forecast && typeof raw.forecast === 'object') ? raw.forecast : {};
+    FC_DEFS.forEach(def => {
+      let cents = null;
+      if(Number.isFinite(rawFc[def.key + 'Cents'])) cents = Math.round(rawFc[def.key + 'Cents']);
+      else if(Number.isFinite(rawFc[def.key])) cents = Math.round(rawFc[def.key] * 100);
+      month.forecast[def.key] = cents === null ? 0 : clamp(cents, 0, def.maxCents);
+    });
+
+    // Kreditkarten-Restsaldo: Cent (neu) oder Euro (alt), auf sinnvollen
+    // Bereich begrenzt (0 bis zum Betrags-Maximum).
+    const rawCard = (raw.card && typeof raw.card === 'object') ? raw.card : {};
+    let cardCents = null;
+    if(Number.isFinite(rawCard.restsaldoCents)) cardCents = Math.round(rawCard.restsaldoCents);
+    else if(Number.isFinite(rawCard.restsaldo)) cardCents = Math.round(rawCard.restsaldo * 100);
+    if(cardCents !== null){
+      // Restsaldo kann logisch nicht größer als der Gesamtsaldo sein.
+      month.card.restsaldoCents = clamp(cardCents, 0, CARD_TOTAL_CENTS);
+    }
+
+    return month;
+  }
+
+  // Nur bekannte Monatsnamen werden übernommen — alles andere wird verworfen.
+  function sanitizeAll(raw){
+    const clean = Object.create(null);
+    if(!raw || typeof raw !== 'object') return clean;
+    MONTHS.forEach(m => {
+      if(Object.prototype.hasOwnProperty.call(raw, m)){
+        clean[m] = sanitizeMonth(raw[m]);
+      }
+    });
+    return clean;
+  }
+
+  /* ---------------------------------------------------------------------------
+     5. SPEICHERN / LADEN
+     localStorage kann fehlschlagen (privater Modus, Speicher voll). Deshalb
+     sind alle Zugriffe abgesichert — die App läuft dann ohne Speicherung
+     weiter, statt mit einem Fehler stehenzubleiben.
+     --------------------------------------------------------------------------- */
+
+  function loadAll(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return Object.create(null);
+      return sanitizeAll(JSON.parse(raw));
+    }catch(err){
+      // Kaputte oder unlesbare Daten: mit leerem Stand starten.
+      return Object.create(null);
+    }
+  }
+
+  let allData = loadAll();
+  let currentMonth = MONTHS[0];
+
+  // Schreibvorgänge werden gebündelt: Beim Ziehen eines Reglers feuert 'input'
+  // dutzendfach pro Sekunde. Ohne Bündelung würde jedes Mal das gesamte
+  // Datenobjekt serialisiert und geschrieben — das ruckelt spürbar.
+  let saveTimer = null;
+  function writeStorage(){
+    saveTimer = null;
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+    }catch(err){
+      showBackupMsg('Speichern im Browser fehlgeschlagen (Speicher voll oder privater Modus). Bitte über "Sichern" eine Datei anlegen.', true);
+    }
+    // Cloud-Sync: außerhalb der IIFE gesetzter Hook, sobald eingeloggt (siehe
+    // unten "window.__onLocalSave"). Lokales Speichern bleibt davon unberührt
+    // und läuft immer sofort, unabhängig vom Internetzugang.
+    if(typeof window.__onLocalSave === 'function'){
+      try{ window.__onLocalSave(allData); }catch(e){}
+    }
+  }
+  function saveAll(immediate){
+    if(saveTimer !== null) clearTimeout(saveTimer);
+    if(immediate){ writeStorage(); return; }
+    saveTimer = setTimeout(writeStorage, 300);
+  }
+  // Sicherheitsnetz: Beim Verlassen/Ausblenden der Seite sofort schreiben,
+  // damit keine gebündelte Änderung verloren geht.
+  window.addEventListener('pagehide', () => { if(saveTimer !== null) saveAll(true); });
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'hidden' && saveTimer !== null) saveAll(true);
+  });
+
+  // Liefert die Daten eines Monats und legt sie bei Bedarf an.
+  function getMonthData(month){
+    if(!allData[month]) allData[month] = emptyMonthData();
+    return allData[month];
+  }
+
+  /* ---------------------------------------------------------------------------
+     6. BERECHNUNGEN
+     Alle Summen werden einmal pro Aktualisierung in einem Durchlauf berechnet
+     und weitergereicht, statt dieselben Werte mehrfach zu ermitteln.
+     --------------------------------------------------------------------------- */
+
+  function sumEntries(list){
+    let total = 0;
+    for(let i = 0; i < list.length; i++) total += list[i].cents;
+    return total;
+  }
+
+  function computeTotals(){
+    const m = getMonthData(currentMonth);
+
+    let fixedPaid = 0;    // abgehakte Fixkosten
+    let fixedRest = 0;    // noch offene Fixkosten
+    let checkedCount = 0;
+    for(let i = 0; i < items.length; i++){
+      if(m.checked[i]){ fixedPaid += items[i].cents; checkedCount++; }
+      else { fixedRest += items[i].cents; }
+    }
+
+    let categoryTotal = 0;
+    for(const def of categoryDefs) categoryTotal += sumEntries(m.categories[def.key]);
+
+    // Sparen/Rücklagen mindern das Verbleibend, "Auflösung Rücklagen" erhöht es
+    // wieder — das ist Geld, das aus den Rücklagen zurück ins Budget fließt.
+    let savingOut = 0;
+    let savingIn = 0;
+    for(const def of savingDefs){
+      const sum = sumEntries(m.saving[def.key]);
+      if(def.key === 'aufloesung') savingIn += sum;
+      else savingOut += sum;
+    }
+
+    let forecastSliders = 0;
+    for(const k of fcKeys) forecastSliders += m.forecast[k];
+
+    const spent = fixedPaid + categoryTotal + savingOut;
+    // Verbleibend ist null, solange kein Gehalt gespeichert wurde.
+    const remaining = m.salary === null ? null : m.salary - spent + savingIn;
+
+    return {
+      checkedCount, fixedPaid, fixedRest,
+      categoryTotal, savingOut, savingIn, spent, remaining,
+      forecastSliders,
+      // Forecast: vom echten Rest gehen die sicher kommenden Fixkosten und
+      // die simulierten Reglerbeträge ab.
+      forecast: remaining === null ? null : remaining - fixedRest - forecastSliders
+    };
+  }
+
+  /* ---------------------------------------------------------------------------
+     7. RENDERING
+     Benutzertexte werden ausschließlich über textContent gesetzt, nie über
+     innerHTML. Sonst könnte ein Text wie <img onerror=...> als HTML ausgeführt
+     werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
+     importierten Dateien stammen können.
+     --------------------------------------------------------------------------- */
+
+  // Baut eine Eintragszeile per DOM-API auf.
+  // isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung
+  // Rücklagen), statt es zu verringern — mit "+" und grüner Farbe sichtbar gemacht.
+  function buildEntryLine(scope, key, idx, entry, withName, isIncome){
+    const line = document.createElement('div');
+    line.className = 'cat-entry-line';
+
+    if(withName){
+      const text = document.createElement('span');
+      text.className = 'cat-entry-text';
+      text.textContent = entry.name;
+      line.appendChild(text);
+    }
+
+    const amount = document.createElement('span');
+    amount.className = 'cat-entry-amount' + (isIncome ? ' income' : '');
+    amount.textContent = (isIncome ? '+ ' : '') + formatCents(entry.cents);
+    line.appendChild(amount);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cat-entry-remove';
+    btn.dataset.scope = scope;   // 'cat' oder 'sav'
+    btn.dataset.key = key;
+    btn.dataset.idx = String(idx);
+    btn.setAttribute('aria-label', 'Eintrag entfernen');
+    btn.title = 'Entfernen';
+    btn.textContent = '✕';
+    line.appendChild(btn);
+
+    return line;
+  }
+
+  // Gemeinsame Renderfunktion für "Sonstige Ausgaben" und "Sparen".
+  // Aufbau erfolgt in einem DocumentFragment: der Baum wird komplett im
+  // Speicher zusammengesetzt und nur einmal eingehängt, statt bei jedem
+  // Element ein Neuzeichnen auszulösen.
+  function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope){
+    const fragment = document.createDocumentFragment();
+    let grandTotal = 0;
+    let hasEntries = false;
+
+    defs.forEach(def => {
+      const entries = dataObj[def.key];
+      const subtotal = sumEntries(entries);
+      grandTotal += subtotal;
+      if(entries.length === 0) return;  // leere Gruppen ausblenden
+      hasEntries = true;
+
+      const group = document.createElement('div');
+      group.className = 'cat-group';
+
+      const heading = document.createElement('p');
+      heading.className = 'cat-group-name';
+      heading.textContent = def.name;
+      group.appendChild(heading);
+
+      entries.forEach((entry, idx) => {
+        group.appendChild(buildEntryLine(scope, def.key, idx, entry, withName, def.key === 'aufloesung'));
+      });
+
+      const subtotalRow = document.createElement('div');
+      subtotalRow.className = 'cat-subtotal';
+      const subLabel = document.createElement('span');
+      subLabel.textContent = 'Zwischensumme ' + def.name;
+      const subValue = document.createElement('span');
+      subValue.textContent = formatCents(subtotal);
+      subtotalRow.append(subLabel, subValue);
+      group.appendChild(subtotalRow);
+
+      fragment.appendChild(group);
+    });
+
+    if(!hasEntries){
+      const empty = document.createElement('p');
+      empty.className = 'cat-empty';
+      empty.textContent = 'Noch keine Einträge diesen Monat.';
+      fragment.appendChild(empty);
+    }
+
+    listEl.replaceChildren(fragment);
+    totalEl.textContent = formatCents(grandTotal);
+  }
+
+  function renderCatList(){
+    const m = getMonthData(currentMonth);
+    renderGroupedList(categoryDefs, m.categories, el.catList, el.catGrandTotal, true, 'cat');
+  }
+  function renderSavList(){
+    const m = getMonthData(currentMonth);
+    renderGroupedList(savingDefs, m.saving, el.savList, el.savGrandTotal, false, 'sav');
+  }
+
+  // Aktualisiert alle abgeleiteten Anzeigen (Kopfzahl, Zusammenfassung, Forecast).
+  function refreshTotals(){
+    const t = computeTotals();
+
+    if(t.remaining === null){
+      el.balance.textContent = '–';
+      el.balance.classList.remove('negative');
+    } else {
+      el.balance.textContent = formatCents(t.remaining);
+      el.balance.classList.toggle('negative', t.remaining < 0);
+    }
+
+    el.checkedCount.textContent = t.checkedCount + ' von ' + items.length + ' angehakt';
+    // Enthält Fixkosten + sonstige Ausgaben + Sparen, passend zu "Verbleibend".
+    el.spentTotal.textContent = formatCents(t.spent) + ' gesamt';
+
+    el.forecastBase.textContent = t.remaining === null ? '–' : formatCents(t.remaining);
+    el.forecastBase.classList.toggle('negative', t.remaining !== null && t.remaining < 0);
+    el.forecastRest.textContent = formatCents(t.fixedRest);
+
+    if(t.forecast === null){
+      el.forecastResult.textContent = '–';
+      el.forecastResult.classList.remove('negative');
+    } else {
+      el.forecastResult.textContent = formatCents(t.forecast);
+      el.forecastResult.classList.toggle('negative', t.forecast < 0);
+    }
+
+    // --- Kreditkarte: Verbraucht (fester Gesamtsaldo − Restsaldo) gegen die
+    // tatsächlich erfassten "Sonstigen Ausgaben" abgleichen. ---
+    const m = getMonthData(currentMonth);
+    el.cardTotal.textContent = formatCents(CARD_TOTAL_CENTS);
+    el.cardCatTotal.textContent = formatCents(t.categoryTotal);
+
+    if(m.card.restsaldoCents === null){
+      el.cardUsed.textContent = '–';
+      el.cardDiff.textContent = '–';
+      el.cardDiff.classList.remove('negative');
+    } else {
+      const used = CARD_TOTAL_CENTS - m.card.restsaldoCents;
+      const diff = used - t.categoryTotal;
+      el.cardUsed.textContent = formatCents(used);
+      el.cardDiff.textContent = formatCents(diff);
+      el.cardDiff.classList.toggle('negative', diff < 0);
+    }
+  }
+  /* ---------------------------------------------------------------------------
+     8. AUFBAU DER STATISCHEN OBERFLÄCHE (einmalig beim Start)
+     --------------------------------------------------------------------------- */
+
+  // Monats-Dropdown
+  (function buildMonthSelect(){
+    const fragment = document.createDocumentFragment();
+    MONTHS.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      fragment.appendChild(opt);
+    });
+    el.monthSelect.appendChild(fragment);
+    el.monthSelect.value = currentMonth;
+  })();
+
+  // Kategorie-Dropdowns
+  function fillSelect(selectEl, defs){
+    const fragment = document.createDocumentFragment();
+    defs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.key;
+      opt.textContent = d.name;
+      fragment.appendChild(opt);
+    });
+    selectEl.appendChild(fragment);
+  }
+  fillSelect(el.catSelect, categoryDefs);
+  fillSelect(el.savSelect, savingDefs);
+
+  // Fixkosten-Liste
+  (function buildCostList(){
+    const fragment = document.createDocumentFragment();
+    items.forEach((item, i) => {
+      const li = document.createElement('li');
+      const label = document.createElement('label');
+      label.className = 'cost-row';
+      label.htmlFor = 'cost-' + i;
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'cost-' + i;
+      cb.dataset.index = String(i);
+
+      const name = document.createElement('span');
+      name.className = 'cost-name';
+      name.textContent = item.name;
+
+      const amount = document.createElement('span');
+      amount.className = 'cost-amount';
+      amount.textContent = formatCents(item.cents);
+
+      label.append(cb, name, amount);
+      li.appendChild(label);
+      fragment.appendChild(li);
+    });
+    el.costList.appendChild(fragment);
+  })();
+
+  /* ---------------------------------------------------------------------------
+     9. EREIGNISSE
+     Für die Listen wird Event-Delegation genutzt: ein Listener am Container
+     statt einer pro Zeile. Das spart Speicher und muss beim Neuaufbau der
+     Liste nicht erneut angehängt werden.
+     --------------------------------------------------------------------------- */
+
+  // --- Monatswechsel ---
+  el.monthSelect.addEventListener('change', () => {
+    const value = el.monthSelect.value;
+    if(MONTHS.indexOf(value) === -1) return;  // unerwarteten Wert ignorieren
+    currentMonth = value;
+    renderMonth();
+  });
+
+  // --- Gehalt ---
+  el.salarySlider.addEventListener('input', () => {
+    // Nur Anzeige aktualisieren; gespeichert wird erst per Klick auf Speichern.
+    const cents = Number(el.salarySlider.value) * 100;
+    el.salaryValue.textContent = formatCents(cents);
+  });
+
+  // Blendet zwischen Schieberegler (Bearbeiten) und fixierter Zeile (gespeichert) um.
+  function showSalaryFixed(cents){
+    el.salaryFixedValue.textContent = formatCents(cents);
+    el.salaryFixed.hidden = false;
+    el.salaryBox.hidden = true;
+  }
+  function showSalarySlider(){
+    el.salaryFixed.hidden = true;
+    el.salaryBox.hidden = false;
+  }
+
+  el.salarySaveBtn.addEventListener('click', () => {
+    const cents = clamp(Math.round(Number(el.salarySlider.value) * 100),
+                        SALARY_MIN_CENTS, SALARY_MAX_CENTS);
+    getMonthData(currentMonth).salary = cents;
+    saveAll(true);
+    refreshTotals();
+    // Regler-Fenster verschwindet sofort, Gehalt steht als fixierte Zeile
+    // direkt über "Verbleibend".
+    showSalaryFixed(cents);
+  });
+
+  el.salaryDeleteBtn.addEventListener('click', () => {
+    getMonthData(currentMonth).salary = null;
+    saveAll(true);
+    refreshTotals();
+    // Regler wieder einblenden, damit ein neues Gehalt eingestellt werden kann.
+    showSalarySlider();
+    el.salarySlider.focus();
+  });
+
+  // --- Kreditkarte: Restsaldo speichern ---
+  function saveCardRestsaldo(){
+    const cents = parseNonNegativeAmountToCents(el.cardRestsaldo.value);
+    if(cents === null){
+      el.cardError.textContent = 'Bitte einen gültigen Betrag eingeben.';
+      return;
+    }
+    if(cents > CARD_TOTAL_CENTS){
+      el.cardError.textContent = 'Restsaldo kann nicht größer als der Gesamtsaldo (2.000 €) sein.';
+      return;
+    }
+    el.cardError.textContent = '';
+    getMonthData(currentMonth).card.restsaldoCents = cents;
+    saveAll(true);
+    refreshTotals();
+  }
+  el.cardSaveBtn.addEventListener('click', saveCardRestsaldo);
+  el.cardRestsaldo.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); saveCardRestsaldo(); }
+  });
+
+  // --- Fixkosten abhaken ---
+  el.costList.addEventListener('change', (e) => {
+    const target = e.target;
+    if(!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
+    const idx = Number(target.dataset.index);
+    if(!Number.isInteger(idx) || idx < 0 || idx >= items.length) return;
+    getMonthData(currentMonth).checked[idx] = target.checked;
+    saveAll();
+    refreshTotals();
+  });
+
+  // --- Sonstige Ausgaben hinzufügen ---
+  function addCatEntry(){
+    const name = el.catText.value.trim().slice(0, MAX_TEXT_LENGTH);
+    const key = el.catSelect.value;
+    const cents = parseAmountToCents(el.catAmount.value);
+
+    if(!name){
+      el.catError.textContent = 'Bitte einen Text eingeben.';
+      return;
+    }
+    if(cents === null){
+      el.catError.textContent = 'Bitte einen gültigen Betrag eingeben.';
+      return;
+    }
+    // Kategorie gegen die bekannte Liste prüfen, statt dem Feld blind zu trauen.
+    if(!categoryDefs.some(d => d.key === key)){
+      el.catError.textContent = 'Unbekannte Kategorie.';
+      return;
+    }
+    const list = getMonthData(currentMonth).categories[key];
+    if(list.length >= MAX_ENTRIES_PER_KEY){
+      el.catError.textContent = 'Maximale Anzahl Einträge in dieser Kategorie erreicht.';
+      return;
+    }
+    el.catError.textContent = '';
+
+    // Jeder Eintrag bleibt eine eigene Zeile — kein Zusammenführen gleicher
+    // Bezeichnungen mehr, damit die Liste jede einzelne Buchung zeigt.
+    list.push({ name, cents });
+
+    saveAll(true);
+    renderCatList();
+    refreshTotals();
+
+    el.catText.value = '';
+    el.catAmount.value = '';
+    el.catText.focus();
+  }
+
+  el.catAddBtn.addEventListener('click', addCatEntry);
+  [el.catText, el.catAmount].forEach(input => {
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); addCatEntry(); }
+    });
+  });
+
+  // --- Sparen hinzufügen (ohne Bezeichnung) ---
+  function addSavEntry(){
+    const key = el.savSelect.value;
+    const cents = parseAmountToCents(el.savAmount.value);
+
+    if(cents === null){
+      el.savError.textContent = 'Bitte einen gültigen Betrag eingeben.';
+      return;
+    }
+    if(!savingDefs.some(d => d.key === key)){
+      el.savError.textContent = 'Unbekannte Unterkategorie.';
+      return;
+    }
+    const list = getMonthData(currentMonth).saving[key];
+    if(list.length >= MAX_ENTRIES_PER_KEY){
+      el.savError.textContent = 'Maximale Anzahl Einträge erreicht.';
+      return;
+    }
+    el.savError.textContent = '';
+
+    list.push({ cents });
+    saveAll(true);
+    renderSavList();
+    refreshTotals();
+
+    el.savAmount.value = '';
+    el.savAmount.focus();
+  }
+
+  el.savAddBtn.addEventListener('click', addSavEntry);
+  el.savAmount.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); addSavEntry(); }
+  });
+
+  // --- Einträge entfernen (ein Listener für beide Listen) ---
+  function handleRemoveClick(e){
+    const btn = e.target.closest('.cat-entry-remove');
+    if(!btn) return;
+    const scope = btn.dataset.scope;
+    const key = btn.dataset.key;
+    const idx = Number(btn.dataset.idx);
+    if(!Number.isInteger(idx) || idx < 0) return;
+
+    const m = getMonthData(currentMonth);
+    const list = scope === 'cat' ? m.categories[key]
+               : scope === 'sav' ? m.saving[key]
+               : null;
+    if(!list || idx >= list.length) return;
+
+    list.splice(idx, 1);
+    saveAll(true);
+    if(scope === 'cat') renderCatList(); else renderSavList();
+    refreshTotals();
+  }
+  el.catList.addEventListener('click', handleRemoveClick);
+  el.savList.addEventListener('click', handleRemoveClick);
+
+  // --- Forecast-Regler ---
+  fcKeys.forEach(k => {
+    fcSliders[k].addEventListener('input', () => {
+      const cents = clamp(Math.round(Number(fcSliders[k].value) * 100), 0, FC_MAX[k]);
+      fcVals[k].textContent = formatCents(cents);
+      getMonthData(currentMonth).forecast[k] = cents;
+      saveAll();          // gebündelt, siehe writeStorage
+      refreshTotals();
+    });
+  });
+
+  /* ---------------------------------------------------------------------------
+     10. SICHERN / WIEDERHERSTELLEN
+     --------------------------------------------------------------------------- */
+
+  function showBackupMsg(text, isError){
+    el.backupMsg.textContent = text;
+    el.backupMsg.className = isError ? 'backup-msg error' : 'backup-msg';
+  }
+
+  el.exportBtn.addEventListener('click', () => {
+    try{
+      const payload = { version: 2, exportedAt: new Date().toISOString(), data: allData };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'budget-sicherung.json'; // gleicher Name → iOS bietet "Ersetzen" an
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Object-URL erst nach dem Klick freigeben, damit der Download startet.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showBackupMsg('Datei erzeugt. Über "In Dateien sichern" im gewünschten Ordner ablegen (bei Nachfrage "Ersetzen" wählen).', false);
+    }catch(err){
+      showBackupMsg('Sicherung konnte nicht erstellt werden.', true);
+    }
+  });
+
+  el.importFile.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if(!file){ return; }
+
+    // Größenbegrenzung: verhindert, dass eine riesige Datei den Browser blockiert.
+    if(file.size > MAX_IMPORT_BYTES){
+      showBackupMsg('Datei ist zu groß (max. 2 MB).', true);
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      showBackupMsg('Datei konnte nicht gelesen werden.', true);
+      e.target.value = '';
+    };
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(String(reader.result));
+        const rawData = (parsed && typeof parsed === 'object' && parsed.data) ? parsed.data : parsed;
+        const clean = sanitizeAll(rawData);   // fremde Daten werden hier gefiltert
+        if(Object.keys(clean).length === 0) throw new Error('keine gültigen Monatsdaten');
+
+        allData = clean;
+        saveAll(true);
+        renderMonth();
+        showBackupMsg('Sicherung wurde eingelesen.', false);
+      }catch(err){
+        showBackupMsg('Diese Datei enthält keine gültige Sicherung.', true);
+      }
+      e.target.value = '';   // erlaubt erneutes Auswählen derselben Datei
+    };
+    reader.readAsText(file);
+  });
+
+  /* ---------------------------------------------------------------------------
+     11. MONAT ANZEIGEN
+     Wird beim Start, bei Monatswechsel, nach Reset und nach Import aufgerufen.
+     --------------------------------------------------------------------------- */
+  function renderMonth(){
+    const m = getMonthData(currentMonth);
+
+    // Checkboxen auf den gespeicherten Stand setzen.
+    const boxes = el.costList.querySelectorAll('input[type="checkbox"]');
+    for(let i = 0; i < boxes.length; i++) boxes[i].checked = m.checked[i] === true;
+
+    renderCatList();
+    renderSavList();
+
+    // Gehalt: je nach Monat entweder fixierte Zeile (gespeichert) oder
+    // Regler (noch nicht gespeichert) anzeigen.
+    if(m.salary === null){
+      el.salarySlider.value = String(SALARY_MIN_CENTS / 100 + 1250); // 3.250 € Startwert
+      el.salaryValue.textContent = 'noch nicht gespeichert';
+      showSalarySlider();
+    } else {
+      el.salarySlider.value = String(m.salary / 100);
+      el.salaryValue.textContent = formatCents(m.salary);
+      showSalaryFixed(m.salary);
+    }
+
+    // Forecast-Regler auf gespeicherte Werte.
+    fcKeys.forEach(k => {
+      fcSliders[k].value = String(m.forecast[k] / 100);
+      fcVals[k].textContent = formatCents(m.forecast[k]);
+    });
+
+    // Kreditkarten-Restsaldo auf gespeicherten Wert (oder leer, wenn noch
+    // nichts erfasst wurde).
+    el.cardRestsaldo.value = m.card.restsaldoCents === null
+      ? '' : String(m.card.restsaldoCents / 100);
+    el.cardError.textContent = '';
+
+    refreshTotals();
+  }
+
+  /* ---------------------------------------------------------------------------
+     12. BELEGANSICHT
+     Baut einen kassenbon-artigen Überblick: zuerst was wirklich passiert ist
+     (abgehakte Fixkosten + eingetragene Ausgaben/Sparen), danach was noch
+     offen bzw. nur simuliert ist (offene Fixkosten + Forecast-Regler).
+     Auch hier ausschließlich DOM-API/textContent, kein innerHTML.
+     --------------------------------------------------------------------------- */
+
+  const FC_LABELS = { lebensmittel: 'Lebensmittel', konsum: 'Konsum', sprit: 'Sprit' };
+
+  function addReceiptSectionTitle(container, text){
+    const h = document.createElement('p');
+    h.className = 'receipt-section-title';
+    h.textContent = text;
+    container.appendChild(h);
+  }
+  function addReceiptSubgroup(container, text){
+    const p = document.createElement('p');
+    p.className = 'receipt-subgroup';
+    p.textContent = text;
+    container.appendChild(p);
+  }
+  function addReceiptLine(container, label, cents, isIncome){
+    const line = document.createElement('div');
+    line.className = 'receipt-line';
+    const l = document.createElement('span');
+    l.className = 'receipt-line-label';
+    l.textContent = label;
+    const a = document.createElement('span');
+    a.className = 'receipt-line-amount' + (isIncome ? ' income' : '');
+    a.textContent = (isIncome ? '+ ' : '') + formatCents(cents);
+    line.append(l, a);
+    container.appendChild(line);
+  }
+  function addReceiptEmptyNote(container, text){
+    const p = document.createElement('p');
+    p.className = 'receipt-empty-note';
+    p.textContent = text;
+    container.appendChild(p);
+  }
+  function addReceiptTotal(container, label, cents, isGrand){
+    const line = document.createElement('div');
+    line.className = 'receipt-total-line' + (isGrand ? ' grand' : '');
+    const l = document.createElement('span');
+    l.textContent = label;
+    const a = document.createElement('span');
+    a.textContent = cents === null ? '–' : formatCents(cents);
+    line.append(l, a);
+    container.appendChild(line);
+  }
+
+  function buildReceipt(){
+    const m = getMonthData(currentMonth);
+    const t = computeTotals();
+    const frag = document.createDocumentFragment();
+
+    const monthLine = document.createElement('p');
+    monthLine.className = 'receipt-month';
+    monthLine.textContent = currentMonth;
+    frag.appendChild(monthLine);
+
+    // --- Einnahmen ---
+    addReceiptSectionTitle(frag, 'Einnahmen');
+    if(m.salary === null){
+      addReceiptEmptyNote(frag, 'Kein Gehalt gespeichert.');
+    } else {
+      addReceiptLine(frag, 'Gehalt', m.salary);
+    }
+
+    // --- Bereits passiert (echte Buchungen) ---
+    addReceiptSectionTitle(frag, 'Bereits passiert');
+
+    addReceiptSubgroup(frag, 'Fixkosten (abgehakt)');
+    items.forEach((item, i) => {
+      if(m.checked[i]) addReceiptLine(frag, item.name, item.cents);
+    });
+
+    addReceiptSubgroup(frag, 'Sonstige Ausgaben');
+    let anyCat = false;
+    categoryDefs.forEach(def => {
+      m.categories[def.key].forEach(entry => {
+        addReceiptLine(frag, def.name + ': ' + entry.name, entry.cents);
+        anyCat = true;
+      });
+    });
+    if(!anyCat) addReceiptEmptyNote(frag, 'Noch keine Einträge.');
+
+    addReceiptSubgroup(frag, 'Sparen');
+    let anySav = false;
+    savingDefs.forEach(def => {
+      m.saving[def.key].forEach(entry => {
+        addReceiptLine(frag, def.name, entry.cents, def.key === 'aufloesung');
+        anySav = true;
+      });
+    });
+    if(!anySav) addReceiptEmptyNote(frag, 'Noch keine Einträge.');
+
+    addReceiptTotal(frag, 'Verbleibend', t.remaining, false);
+
+    // --- Noch offen (Simulation) ---
+    addReceiptSectionTitle(frag, 'Noch offen (Simulation)');
+
+    addReceiptSubgroup(frag, 'Fixkosten (offen)');
+    items.forEach((item, i) => {
+      if(!m.checked[i]) addReceiptLine(frag, item.name, item.cents);
+    });
+
+    addReceiptSubgroup(frag, 'Forecast-Planung');
+    fcKeys.forEach(k => {
+      addReceiptLine(frag, FC_LABELS[k], m.forecast[k]);
+    });
+
+    addReceiptTotal(frag, 'Voraussichtlich verbleibend', t.forecast, true);
+
+    el.receiptBody.replaceChildren(frag);
+  }
+
+  function openReceipt(){
+    buildReceipt();
+    el.receiptOverlay.hidden = false;
+    document.body.style.overflow = 'hidden'; // verhindert Hintergrund-Scrollen
+    el.receiptClose.focus();
+  }
+  function closeReceipt(){
+    el.receiptOverlay.hidden = true;
+    document.body.style.overflow = '';
+    el.receiptBtn.focus();
+  }
+
+  el.receiptBtn.addEventListener('click', openReceipt);
+  el.receiptClose.addEventListener('click', closeReceipt);
+  // Klick auf den abgedunkelten Hintergrund (nicht auf die Karte selbst) schließt.
+  el.receiptOverlay.addEventListener('click', (e) => {
+    if(e.target === el.receiptOverlay) closeReceipt();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && !el.receiptOverlay.hidden) closeReceipt();
+  });
+
+  /* ---------------------------------------------------------------------------
+     13. DIAGRAMMANSICHT
+     Zwei Tortendiagramme: "Ist-Ausgaben" (nur echte Buchungen) und
+     "Ist + Forecast" (zusätzlich offene Fixkosten + Forecast-Regler).
+     Reine SVG-Erzeugung ohne externe Bibliothek — jedes Segment wird als
+     <path> per Trigonometrie berechnet. Gleiche Anzeigelogik wie der Beleg
+     (Overlay, nur per Button sichtbar).
+     --------------------------------------------------------------------------- */
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  // Eine Farbe je Kategorie — bewusst gedeckte, zum Rest der Seite passende Töne.
+  const SLICE_COLORS = {
+    fixedPaid:     '#14202b', // ink
+    fixedRest:     '#a8783f', // brass
+    lebensmittel:  '#5b7a5e',
+    supplemente:   '#7d6a9c',
+    zva:           '#3f7f93',
+    sprit:         '#b5543a',
+    autokosten:    '#c2a23a',
+    konsum:        '#a3455c',
+    sparen:        '#3c6e4f',
+    ruecklagen:    '#6f5b3e'
+  };
+
+  function polarToCartesian(cx, cy, r, angleDeg){
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  // Baut den Pfad eines einzelnen Tortenstücks zwischen zwei Winkeln (Grad).
+  function describeSlicePath(cx, cy, r, startAngle, endAngle){
+    const start = polarToCartesian(cx, cy, r, endAngle);
+    const end = polarToCartesian(cx, cy, r, startAngle);
+    const largeArcFlag = (endAngle - startAngle) <= 180 ? '0' : '1';
+    return ['M', cx, cy, 'L', start.x, start.y,
+            'A', r, r, 0, largeArcFlag, 0, end.x, end.y, 'Z'].join(' ');
+  }
+
+  // slices: [{ label, cents, color }] — nur Einträge mit cents > 0.
+  function buildPieSVG(slices, size){
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
+    svg.setAttribute('width', String(size));
+    svg.setAttribute('height', String(size));
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Tortendiagramm der Ausgabenverteilung');
+
+    const cx = size / 2, cy = size / 2, r = size / 2 - 2;
+    const total = slices.reduce((s, x) => s + x.cents, 0);
+
+    // Ein einzelnes Segment (100%) lässt sich nicht als Bogen zeichnen
+    // (Start- und Endpunkt wären identisch) — dafür einfach ein voller Kreis.
+    if(slices.length === 1 && total > 0){
+      const circle = document.createElementNS(SVG_NS, 'circle');
+      circle.setAttribute('cx', String(cx));
+      circle.setAttribute('cy', String(cy));
+      circle.setAttribute('r', String(r));
+      circle.style.fill = slices[0].color;
+      svg.appendChild(circle);
+      return svg;
+    }
+
+    let angle = 0;
+    slices.forEach(slice => {
+      const sweep = (slice.cents / total) * 360;
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', describeSlicePath(cx, cy, r, angle, angle + sweep));
+      path.style.fill = slice.color;
+      svg.appendChild(path);
+      angle += sweep;
+    });
+    return svg;
+  }
+
+  function buildChartLegend(container, slices, total){
+    slices.forEach(slice => {
+      const row = document.createElement('div');
+      row.className = 'chart-legend-row';
+
+      const swatch = document.createElement('span');
+      swatch.className = 'chart-legend-swatch';
+      swatch.style.background = slice.color;
+
+      const label = document.createElement('span');
+      label.className = 'chart-legend-label';
+      label.textContent = slice.label;
+
+      const pct = document.createElement('span');
+      pct.className = 'chart-legend-pct';
+      const percent = total > 0 ? (slice.cents / total * 100) : 0;
+      pct.textContent = percent.toFixed(1).replace('.', ',') + ' %';
+
+      const amount = document.createElement('span');
+      amount.className = 'chart-legend-amount';
+      amount.textContent = formatCents(slice.cents);
+
+      row.append(swatch, label, pct, amount);
+      container.appendChild(row);
+    });
+  }
+
+  // Stellt für beide Diagramme die Segmente zusammen. Bei "Ist + Forecast"
+  // fließen die Forecast-Regler Lebensmittel/Sprit in die gleichnamige
+  // Kategorie ein (Gesamtbetrag inkl. Planung); Konsum hat kein Ist-Gegenstück
+  // und erscheint als eigenes Segment. "Auflösung Rücklagen" ist eine
+  // Einnahme, keine Ausgabe, und taucht daher bewusst in keinem der beiden
+  // Ausgaben-Diagramme auf.
+  function computeChartSlices(){
+    const m = getMonthData(currentMonth);
+    const t = computeTotals();
+
+    function push(list, label, cents, color){
+      if(cents > 0) list.push({ label, cents, color });
+    }
+
+    const real = [];
+    push(real, 'Fixkosten (abgehakt)', t.fixedPaid, SLICE_COLORS.fixedPaid);
+    categoryDefs.forEach(def => {
+      push(real, def.name, sumEntries(m.categories[def.key]), SLICE_COLORS[def.key]);
+    });
+    push(real, 'Sparen', sumEntries(m.saving.sparen), SLICE_COLORS.sparen);
+    push(real, 'Rücklagen', sumEntries(m.saving.ruecklagen), SLICE_COLORS.ruecklagen);
+
+    const withForecast = [];
+    push(withForecast, 'Fixkosten (abgehakt)', t.fixedPaid, SLICE_COLORS.fixedPaid);
+    push(withForecast, 'Fixkosten (offen)', t.fixedRest, SLICE_COLORS.fixedRest);
+    categoryDefs.forEach(def => {
+      let cents = sumEntries(m.categories[def.key]);
+      if(def.key === 'lebensmittel') cents += m.forecast.lebensmittel;
+      if(def.key === 'sprit') cents += m.forecast.sprit;
+      push(withForecast, def.name, cents, SLICE_COLORS[def.key]);
+    });
+    push(withForecast, 'Konsum (Forecast)', m.forecast.konsum, SLICE_COLORS.konsum);
+    push(withForecast, 'Sparen', sumEntries(m.saving.sparen), SLICE_COLORS.sparen);
+    push(withForecast, 'Rücklagen', sumEntries(m.saving.ruecklagen), SLICE_COLORS.ruecklagen);
+
+    return { real, withForecast };
+  }
+
+  function buildChartSection(container, title, slices){
+    const heading = document.createElement('p');
+    heading.className = 'chart-section-title';
+    heading.textContent = title;
+    container.appendChild(heading);
+
+    const total = slices.reduce((s, x) => s + x.cents, 0);
+    if(slices.length === 0 || total <= 0){
+      const note = document.createElement('p');
+      note.className = 'chart-empty-note';
+      note.textContent = 'Keine Daten für dieses Diagramm.';
+      container.appendChild(note);
+      return;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-wrap';
+    wrap.appendChild(buildPieSVG(slices, 160));
+    container.appendChild(wrap);
+
+    const legend = document.createElement('div');
+    legend.className = 'chart-legend';
+    buildChartLegend(legend, slices, total);
+    container.appendChild(legend);
+
+    const totalRow = document.createElement('div');
+    totalRow.className = 'chart-total-row';
+    const l = document.createElement('span');
+    l.textContent = 'Gesamt';
+    const a = document.createElement('span');
+    a.textContent = formatCents(total);
+    totalRow.append(l, a);
+    container.appendChild(totalRow);
+  }
+
+  function buildChartOverview(){
+    const { real, withForecast } = computeChartSlices();
+    const frag = document.createDocumentFragment();
+
+    const monthLine = document.createElement('p');
+    monthLine.className = 'receipt-month'; // gleiche Optik wie im Beleg
+    monthLine.textContent = currentMonth;
+    frag.appendChild(monthLine);
+
+    buildChartSection(frag, 'Ist-Ausgaben', real);
+    buildChartSection(frag, 'Ist + Forecast', withForecast);
+
+    el.chartBody.replaceChildren(frag);
+  }
+
+  function openChart(){
+    buildChartOverview();
+    el.chartOverlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+    el.chartClose.focus();
+  }
+  function closeChart(){
+    el.chartOverlay.hidden = true;
+    document.body.style.overflow = '';
+    el.chartBtn.focus();
+  }
+
+  el.chartBtn.addEventListener('click', openChart);
+  el.chartClose.addEventListener('click', closeChart);
+  el.chartOverlay.addEventListener('click', (e) => {
+    if(e.target === el.chartOverlay) closeChart();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && !el.chartOverlay.hidden) closeChart();
+  });
+
+  /* ---------------------------------------------------------------------------
+     14. CLOUD-BRÜCKE
+     Bewusst schmale Schnittstelle nach außen: der Login-/Sync-Code (außerhalb
+     dieser IIFE, siehe unten) darf den Datenstand ersetzen (nach Laden aus der
+     Cloud), einen Schnappschuss zum Hochladen abrufen, und den Start der
+     Anzeige auslösen — alles andere bleibt privat innerhalb der IIFE.
+     --------------------------------------------------------------------------- */
+  window.__budgetCloud = {
+    replaceAllData(newData){
+      allData = sanitizeAll(newData);
+      writeStorage();   // sofort lokal spiegeln
+      renderMonth();
+    },
+    getSnapshot(){
+      return JSON.parse(JSON.stringify(allData));
+    },
+    start(){
+      renderMonth();
+    }
+  };
+})();
+
+/* =============================================================================
+   15. LOGIN + CLOUD-SYNC (außerhalb der App-IIFE, damit Firebase-Importe aus
+   dem Modul-Kopf direkt nutzbar sind). Ablauf:
+   1. Nutzer gibt 6-stellige PIN ein.
+   2. Zuerst wird ein Login versucht (Rückkehrer). Schlägt das fehl, wird
+      versucht, das Konto neu anzulegen (allererstes Mal). Schlägt AUCH das
+      fehl (Konto existiert schon), war die PIN schlicht falsch.
+   3. Nach erfolgreichem Login: Datenstand aus Firestore laden (oder, falls
+      noch keiner existiert, den aktuellen lokalen Stand hochladen) und die
+      App sichtbar machen.
+   ============================================================================= */
+(function(){
+  const sheetEl = document.getElementById('sheet');
+  const lockOverlay = document.getElementById('lock-overlay');
+  const lockPin = document.getElementById('lock-pin');
+  const lockSubmit = document.getElementById('lock-submit');
+  const lockError = document.getElementById('lock-error');
+  const lockStatus = document.getElementById('lock-status');
+
+  const budgetDocRef = (uid) => db.collection('budget').doc(uid);
+
+  // Wird von writeStorage() (innerhalb der App-IIFE) bei jeder Änderung
+  // aufgerufen — pusht den aktuellen Stand in die Cloud. Rein lokales
+  // Speichern läuft unabhängig davon immer sofort weiter.
+  window.__onLocalSave = function(data){
+    if(!auth.currentUser) return;
+    budgetDocRef(auth.currentUser.uid).set(data)
+      .catch(() => { /* nächste Änderung versucht es erneut */ });
+  };
+
+  async function unlock(){
+    const pin = lockPin.value.trim();
+    if(!/^\d{6}$/.test(pin)){
+      lockError.textContent = 'Bitte eine 6-stellige PIN eingeben.';
+      return;
+    }
+    lockError.textContent = '';
+    lockSubmit.disabled = true;
+    lockStatus.textContent = 'Anmelden…';
+
+    try{
+      // Fall A: Konto existiert schon (Rückkehrer) — normaler Login.
+      await auth.signInWithEmailAndPassword(FIXED_EMAIL, pin);
+    }catch(signInErr){
+      try{
+        // Fall B: allererstes Mal — Konto mit dieser PIN als Passwort anlegen.
+        await auth.createUserWithEmailAndPassword(FIXED_EMAIL, pin);
+      }catch(createErr){
+        lockSubmit.disabled = false;
+        lockStatus.textContent = '';
+        if(createErr.code === 'auth/email-already-in-use'){
+          lockError.textContent = 'Falsche PIN.';
+        } else if(createErr.code === 'auth/weak-password'){
+          lockError.textContent = 'PIN muss mindestens 6 Ziffern haben.';
+        } else if(createErr.code === 'auth/network-request-failed'){
+          lockError.textContent = 'Keine Internetverbindung — beim allerersten Mal zwingend nötig.';
+        } else {
+          lockError.textContent = 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.';
+        }
+        return;
+      }
+    }
+    // Erfolgreicher Login (Fall A oder B) — onAuthStateChanged übernimmt den Rest.
+  }
+
+  lockSubmit.addEventListener('click', unlock);
+  lockPin.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); unlock(); }
+  });
+  // Nur Ziffern zulassen, Rest stillschweigend verwerfen.
+  lockPin.addEventListener('input', () => {
+    lockPin.value = lockPin.value.replace(/\D/g, '').slice(0, 6);
+  });
+
+  // Abmelden: sperrt die App wieder, ohne Daten zu löschen (bleiben in der
+  // Cloud und lokal erhalten — nur die Sitzung wird beendet).
+  const signoutBtn = document.getElementById('signout-btn');
+  if(signoutBtn){
+    signoutBtn.addEventListener('click', () => { auth.signOut(); });
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if(user){
+      lockStatus.textContent = 'Daten werden geladen…';
+      try{
+        const snap = await budgetDocRef(user.uid).get();
+        if(snap.exists){
+          // Cloud-Stand ist führend, sobald er existiert.
+          window.__budgetCloud.replaceAllData(snap.data());
+        } else {
+          // Allererster Login: aktuellen lokalen Stand als Startpunkt hochladen.
+          await budgetDocRef(user.uid).set(window.__budgetCloud.getSnapshot());
+        }
+      }catch(err){
+        lockError.textContent = 'Cloud gerade nicht erreichbar — arbeite lokal weiter.';
+      }
+      lockPin.value = '';
+      lockStatus.textContent = '';
+      lockSubmit.disabled = false;
+      lockOverlay.hidden = true;
+      sheetEl.hidden = false;
+      window.__budgetCloud.start();
+    } else {
+      sheetEl.hidden = true;
+      lockOverlay.hidden = false;
+      lockSubmit.disabled = false;
+      lockStatus.textContent = '';
+      lockPin.value = '';
+      lockPin.focus();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
