@@ -4,7 +4,7 @@
    die sich selbst um ihre Event-Listener kümmern (Navigation, Ereignisse,
    Beleg-/Diagrammansicht, Sichern/Wiederherstellen, Cloud-Sync/Login).
    ============================================================================= */
-import { categoryDefs, savingDefs } from './constants.js';
+import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js';
 import { el } from './dom.js';
 import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js';
 
@@ -19,3 +19,4 @@ buildAddMonthSelects();
 fillSelect(el.catSelect, categoryDefs);
 fillSelect(el.savSelect, savingDefs);
 buildCostList();
+el.appVersion.textContent = 'Version ' + APP_VERSION + ' · ' + APP_VERSION_DATE;

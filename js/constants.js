@@ -4,6 +4,13 @@
    der Wahrheit — Speicher-Daten werden beim Laden gegen sie geprüft.
    ============================================================================= */
 
+// Versionsanzeige (Einstellungen-Bereich): bei jeder inhaltlichen Änderung
+// von Hand hochzählen und das Datum aktualisieren. Dient nur zur Kontrolle,
+// ob im Browser wirklich die neueste Version geladen ist (z. B. nach einem
+// Deployment, falls der Browser eine alte Version zwischenspeichert).
+export const APP_VERSION = 'v1';
+export const APP_VERSION_DATE = '2026-08-10';
+
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
 // (0.1 + 0.2 !== 0.3 in JavaScript). Gerechnet wird durchgängig in Cent.
 export const items = [

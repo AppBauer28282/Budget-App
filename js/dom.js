@@ -13,6 +13,7 @@ export const el = {
   backToOverviewBtn: document.getElementById('back-to-overview-btn'),
   currentMonthLabel: document.getElementById('current-month-label'),
   closeMonthBtn:   document.getElementById('close-month-btn'),
+  appVersion:      document.getElementById('app-version'),
 
   addMonthSelect:  document.getElementById('add-month-select'),
   addYearSelect:   document.getElementById('add-year-select'),
