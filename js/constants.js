@@ -8,8 +8,8 @@
 // von Hand hochzählen und das Datum aktualisieren. Dient nur zur Kontrolle,
 // ob im Browser wirklich die neueste Version geladen ist (z. B. nach einem
 // Deployment, falls der Browser eine alte Version zwischenspeichert).
-export const APP_VERSION = 'v1';
-export const APP_VERSION_DATE = '2026-08-10';
+export const APP_VERSION = 'v2';
+export const APP_VERSION_DATE = '2026-08-12';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
 // (0.1 + 0.2 !== 0.3 in JavaScript). Gerechnet wird durchgängig in Cent.
@@ -31,6 +31,8 @@ export const categoryDefs = [
   { key: 'gesundheit',   name: 'Gesundheit' },
   { key: 'eltern',       name: 'Eltern' },
   { key: 'konsum_cat',   name: 'Konsum' },
+  { key: 'freizeit',     name: 'Freizeit' },
+  { key: 'urlaub',       name: 'Urlaub' },
   { key: 'jahresfix',    name: 'Jahresfix' },
   { key: 'kfz_sonstige', name: 'sonstige KFZ-Ausgaben' }
 ];
@@ -90,6 +92,8 @@ export const SLICE_COLORS = {
   gesundheit:     '#3f7f93',
   eltern:         '#7d6a9c',
   konsum_cat:     '#a3455c',
+  freizeit:       '#3f5f8a',
+  urlaub:         '#7a8a4a',
   jahresfix:      '#c2a23a',
   kfz_sonstige:   '#8a7355',
   sparen:         '#3c6e4f',

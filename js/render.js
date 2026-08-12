@@ -47,8 +47,9 @@ function buildEntryLine(scope, key, idx, entry, withName, isIncome){
 // Gemeinsame Renderfunktion für "Sonstige Ausgaben" und "Sparen".
 // Aufbau erfolgt in einem DocumentFragment: der Baum wird komplett im
 // Speicher zusammengesetzt und nur einmal eingehängt, statt bei jedem
-// Element ein Neuzeichnen auszulösen.
-function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope){
+// Element ein Neuzeichnen auszulösen. summaryTotalEl (optional) zeigt
+// dieselbe Summe klein neben dem Abschnittstitel, wenn er eingeklappt ist.
+function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summaryTotalEl){
   const fragment = document.createDocumentFragment();
   let grandTotal = 0;
   let hasEntries = false;
@@ -93,15 +94,16 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope){
 
   listEl.replaceChildren(fragment);
   totalEl.textContent = formatCents(grandTotal);
+  if(summaryTotalEl) summaryTotalEl.textContent = formatCents(grandTotal);
 }
 
 export function renderCatList(){
   const m = getMonthData(currentMonthKey);
-  renderGroupedList(categoryDefs, m.categories, el.catList, el.catGrandTotal, true, 'cat');
+  renderGroupedList(categoryDefs, m.categories, el.catList, el.catGrandTotal, true, 'cat', el.catSummaryTotal);
 }
 export function renderSavList(){
   const m = getMonthData(currentMonthKey);
-  renderGroupedList(savingDefs, m.saving, el.savList, el.savGrandTotal, false, 'sav');
+  renderGroupedList(savingDefs, m.saving, el.savList, el.savGrandTotal, false, 'sav', el.savSummaryTotal);
 }
 
 // Aktualisiert alle abgeleiteten Anzeigen (Kopfzahl, Zusammenfassung, Forecast).
@@ -117,8 +119,10 @@ export function refreshTotals(){
   }
 
   el.checkedCount.textContent = t.checkedCount + ' von ' + items.length + ' angehakt';
-  // Enthält Fixkosten + sonstige Ausgaben + Sparen, passend zu "Verbleibend".
-  el.spentTotal.textContent = formatCents(t.spent) + ' gesamt';
+  // Nur die abgehakten Fixkosten — nicht t.spent (das würde zusätzlich
+  // Sonstige Ausgaben und Sparen mit reinrechnen, was hier falsch wäre).
+  el.spentTotal.textContent = formatCents(t.fixedPaid) + ' ausgegeben';
+  el.fixkostenSummaryTotal.textContent = formatCents(t.fixedPaid);
 
   el.forecastBase.textContent = t.remaining === null ? '–' : formatCents(t.remaining);
   el.forecastBase.classList.toggle('negative', t.remaining !== null && t.remaining < 0);

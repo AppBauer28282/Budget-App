@@ -655,6 +655,17 @@
   }
   .section-body{ padding-top: 18px; }
 
+  /* Kleine Summe neben dem Titel, nur sichtbar wenn der Bereich eingeklappt
+     ist — im aufgeklappten Zustand steht die Summe ohnehin schon im Inhalt. */
+  .section-summary-total{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:400;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .section[open] .section-summary-total{ display:none; }
+
   /* ---------- Zurücksetzen / Sicherung ---------- */
   .backup-box{
     margin-top: 18px;
