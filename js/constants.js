@@ -8,7 +8,7 @@
 // von Hand hochzählen und das Datum aktualisieren. Dient nur zur Kontrolle,
 // ob im Browser wirklich die neueste Version geladen ist (z. B. nach einem
 // Deployment, falls der Browser eine alte Version zwischenspeichert).
-export const APP_VERSION = 'v5';
+export const APP_VERSION = 'v6';
 export const APP_VERSION_DATE = '2026-08-12';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
