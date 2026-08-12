@@ -931,8 +931,29 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--brass-deep);
-    margin: 0 0 10px;
+    margin: 0;
   }
+  .analysis-filter-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .analysis-toggle-all{
+    background:none;
+    border:none;
+    color: var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    cursor:pointer;
+    padding: 0;
+    flex-shrink:0;
+  }
+  .analysis-toggle-all:hover{ color: var(--brass-deep); }
+  .analysis-toggle-all:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
   .analysis-filter-grid{
     display:grid;
     grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));

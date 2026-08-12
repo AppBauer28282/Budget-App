@@ -91,6 +91,27 @@ function buildCategoryCheckboxes(){
 buildMonthCheckboxes();
 buildCategoryCheckboxes();
 
+// "Alle auswählen/abwählen"-Umschaltknopf: Beschriftung zeigt immer die
+// nächste Aktion an (steht aktuell alles an, bietet er "Alle abwählen" an).
+function allChecked(container){
+  const boxes = Array.from(container.querySelectorAll('input[type="checkbox"]'));
+  return boxes.length > 0 && boxes.every(cb => cb.checked);
+}
+function setAllChecked(container, checked){
+  container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = checked; });
+}
+function updateToggleAllLabel(container, btn){
+  btn.textContent = allChecked(container) ? 'Alle abwählen' : 'Alle auswählen';
+}
+function wireToggleAllButton(btn, container){
+  updateToggleAllLabel(container, btn);
+  btn.addEventListener('click', () => {
+    setAllChecked(container, !allChecked(container));
+    updateToggleAllLabel(container, btn);
+    updateAnalysis();
+  });
+}
+
 function getSelectedMonthIndexes(){
   return Array.from(el.analysisMonths.querySelectorAll('input[type="checkbox"]:checked'))
     .map(cb => Number(cb.dataset.month));
@@ -281,12 +302,7 @@ function updateAnalysis(){
 
   const fragment = document.createDocumentFragment();
 
-  // Einnahmen zuerst, dann Ausgaben — gleiche Reihenfolge wie in der
-  // bestehenden Belegansicht (buildReceipt in receipt.js).
-  const incomeWrap = document.createElement('div');
-  renderIncomeChart(incomeWrap, incomeSlices);
-  fragment.appendChild(incomeWrap);
-
+  // Ausgaben-Diagramm und -Liste zuerst, Einnahmen ganz unten.
   const chartWrap = document.createElement('div');
   renderAnalysisChart(chartWrap, groups);
   fragment.appendChild(chartWrap);
@@ -295,11 +311,17 @@ function updateAnalysis(){
   renderAnalysisList(listWrap, groups);
   fragment.appendChild(listWrap);
 
+  const incomeWrap = document.createElement('div');
+  renderIncomeChart(incomeWrap, incomeSlices);
+  fragment.appendChild(incomeWrap);
+
   el.analysisResults.replaceChildren(fragment);
 }
 
 function openAnalysis(){
   populateYearSelect();
+  updateToggleAllLabel(el.analysisMonths, el.analysisMonthsToggle);
+  updateToggleAllLabel(el.analysisCategories, el.analysisCategoriesToggle);
   updateAnalysis();
   openOverlay(el.analysisOverlay, el.analysisClose);
 }
@@ -317,7 +339,18 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Live-Aktualisierung bei jeder Filteränderung (Event-Delegation auf den
-// jeweiligen Container statt einem Listener pro Checkbox).
+// jeweiligen Container statt einem Listener pro Checkbox). Die Umschalt-
+// Beschriftung ("Alle auswählen"/"Alle abwählen") muss bei jeder manuellen
+// Einzelauswahl mit aktualisiert werden.
 el.analysisYear.addEventListener('change', updateAnalysis);
-el.analysisMonths.addEventListener('change', updateAnalysis);
-el.analysisCategories.addEventListener('change', updateAnalysis);
+el.analysisMonths.addEventListener('change', () => {
+  updateToggleAllLabel(el.analysisMonths, el.analysisMonthsToggle);
+  updateAnalysis();
+});
+el.analysisCategories.addEventListener('change', () => {
+  updateToggleAllLabel(el.analysisCategories, el.analysisCategoriesToggle);
+  updateAnalysis();
+});
+
+wireToggleAllButton(el.analysisMonthsToggle, el.analysisMonths);
+wireToggleAllButton(el.analysisCategoriesToggle, el.analysisCategories);
