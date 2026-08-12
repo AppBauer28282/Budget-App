@@ -30,7 +30,8 @@ function describeSlicePath(cx, cy, r, startAngle, endAngle){
 }
 
 // slices: [{ label, cents, color }] — nur Einträge mit cents > 0.
-function buildPieSVG(slices, size){
+// Exportiert, damit js/analysis.js dieselbe SVG-Erzeugung wiederverwendet.
+export function buildPieSVG(slices, size){
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
   svg.setAttribute('width', String(size));
@@ -65,7 +66,8 @@ function buildPieSVG(slices, size){
   return svg;
 }
 
-function buildChartLegend(container, slices, total){
+// Exportiert, siehe buildPieSVG.
+export function buildChartLegend(container, slices, total){
   slices.forEach(slice => {
     const row = document.createElement('div');
     row.className = 'chart-legend-row';

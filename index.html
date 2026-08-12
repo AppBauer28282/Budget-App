@@ -89,6 +89,8 @@
     </div>
   </details>
 
+  <button type="button" class="receipt-btn" id="analysis-btn">Analyse</button>
+
   <details class="section">
     <summary class="section-summary">Einstellungen</summary>
     <div class="section-body">
@@ -364,6 +366,33 @@
       <button type="button" class="receipt-close" id="chart-close" aria-label="Diagramme schließen">✕</button>
     </div>
     <div class="receipt-body" id="chart-body"></div>
+  </div>
+</div>
+
+<!-- Analyse-Overlay: monatsübergreifende Auswertung über alle gespeicherten
+     Monate (offen und abgeschlossen). Filter-Checkboxen werden per JS
+     befüllt (analysis.js), Ergebnis (Diagramm + kumulierte Liste)
+     aktualisiert sich live bei jeder Filteränderung. -->
+<div class="receipt-overlay" id="analysis-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="analysis-title">
+    <div class="receipt-head">
+      <h2 id="analysis-title">Analyse</h2>
+      <button type="button" class="receipt-close" id="analysis-close" aria-label="Analyse schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <div class="analysis-filter-row">
+        <label for="analysis-year" class="month-label">Jahr</label>
+        <select id="analysis-year"></select>
+      </div>
+
+      <p class="analysis-filter-label">Monate</p>
+      <div class="analysis-filter-grid" id="analysis-months"></div>
+
+      <p class="analysis-filter-label">Kategorien</p>
+      <div class="analysis-filter-grid" id="analysis-categories"></div>
+
+      <div id="analysis-results"></div>
+    </div>
   </div>
 </div>
 
