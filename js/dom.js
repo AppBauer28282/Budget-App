@@ -85,7 +85,9 @@ export const el = {
   analysisClose:      document.getElementById('analysis-close'),
   analysisYear:       document.getElementById('analysis-year'),
   analysisMonths:     document.getElementById('analysis-months'),
-  analysisCategories: document.getElementById('analysis-categories'),
+  analysisMonthsToggle:     document.getElementById('analysis-months-toggle'),
+  analysisCategories:       document.getElementById('analysis-categories'),
+  analysisCategoriesToggle: document.getElementById('analysis-categories-toggle'),
   analysisResults:    document.getElementById('analysis-results')
 };
 
