@@ -8,7 +8,7 @@
 // von Hand hochzählen und das Datum aktualisieren. Dient nur zur Kontrolle,
 // ob im Browser wirklich die neueste Version geladen ist (z. B. nach einem
 // Deployment, falls der Browser eine alte Version zwischenspeichert).
-export const APP_VERSION = 'v6';
+export const APP_VERSION = 'v7';
 export const APP_VERSION_DATE = '2026-08-12';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
@@ -102,7 +102,9 @@ export const SLICE_COLORS = {
   fc_lebensmittel:'#8fae7a',
   fc_konsum:      '#d98b7c',
   fc_sprit:       '#e0a458',
-  fc_sonstiges:   '#9fa8c4'
+  fc_sonstiges:   '#9fa8c4',
+  overview_income:  '#c9a227',
+  overview_expense: '#8f3f3f'
 };
 
 // Eine Farbe je Monat — für das Einnahmen-Diagramm in der Analyse, das

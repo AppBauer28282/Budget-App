@@ -3,12 +3,12 @@
    Wertet — anders als Beleg/Diagramm, die immer nur den aktuell geöffneten
    Monat zeigen — ALLE gespeicherten Monate aus (offen und abgeschlossen).
    Nutzer wählt ein Jahr, beliebige Monate dieses Jahres und beliebige
-   Kategorien; Ergebnis sind drei Tortendiagramme — Ausgaben (Verteilung je
-   Kategorie, mit kumulierter Liste), Sparen (Sparen/Rücklagen, da keine
-   echten Ausgaben) und Einnahmen (Gehalt je Monat) — aktualisiert sich live
-   bei jeder Filteränderung.
+   Kategorien; Ergebnis sind zwei Tortendiagramme — Ausgaben (Verteilung je
+   Kategorie, mit kumulierter Liste) und Einnahmen (Übersicht: Einnahmen vs.
+   Ausgaben ohne Sparen vs. Sparen) — aktualisiert sich live bei jeder
+   Filteränderung.
    ============================================================================= */
-import { items, categoryDefs, MONTHS, SLICE_COLORS, MONTH_COLORS } from './constants.js';
+import { items, categoryDefs, MONTHS, SLICE_COLORS } from './constants.js';
 import { el } from './dom.js';
 import { formatCents } from './utils.js';
 import { allData } from './storage.js';
@@ -19,10 +19,10 @@ import { openOverlay, closeOverlay } from './overlays.js';
 // die normalen Sonstige-Ausgaben-Kategorien, und "Auflösung Rücklagen". Diese
 // ist eigentlich eine Einnahme, wird auf Nutzerwunsch aber wie eine normale
 // Ausgaben-Kategorie geführt. "Sparen"/"Rücklagen" sind dagegen keine echten
-// Ausgaben (das Geld ist nicht weg, nur zurückgelegt) und bekommen deshalb
-// ein eigenes, separates Diagramm (computeSavingsData/renderSavingsChart),
-// unabhängig vom Kategorien-Filter — ebenso wie "Einnahmen" (Gehalt) ihr
-// eigenes Diagramm hat (computeIncomeData/renderIncomeChart).
+// Ausgaben (das Geld ist nicht weg, nur zurückgelegt) und tauchen deshalb
+// nicht hier auf, sondern nur gesammelt im Einnahmen/Ausgaben/Sparen-
+// Übersichtsdiagramm ganz unten (computeOverviewData/renderIncomeChart),
+// unabhängig vom Kategorien-Filter.
 const ANALYSIS_CATEGORIES = [
   { key: 'fixed', name: 'Fixkosten' },
   ...categoryDefs.map(d => ({ key: d.key, name: d.name })),
@@ -168,40 +168,32 @@ function computeAnalysisData(year, monthSet, categorySet){
     .filter(g => g.subtotal > 0); // Kategorien ohne Einträge im Zeitraum überspringen
 }
 
-// Sammelt das gespeicherte Gehalt je ausgewähltem Monat (Monate ohne
-// gespeichertes Gehalt werden übersprungen). Unabhängig vom Kategorien-
-// Filter — der betrifft nur Ausgaben. Eine Verteilung "nach Kategorie" gibt
-// es hier nicht (nur eine Einnahmequelle), daher stattdessen ein Segment
-// je Monat.
-function computeIncomeData(year, monthSet){
-  const slices = [];
-  Object.values(allData.monthEntries).forEach(entry => {
-    if(entry.year !== year || !monthSet.has(entry.monthIndex)) return;
-    if(entry.data.salary === null) return;
-    slices.push({ label: entry.monthName, cents: entry.data.salary, color: MONTH_COLORS[entry.monthIndex] });
-  });
-  return slices.sort((a, b) => MONTHS.indexOf(a.label) - MONTHS.indexOf(b.label));
-}
-
-// Sammelt Sparen/Rücklagen (keine echten Ausgaben) über die gewählten
-// Monate hinweg, unabhängig vom Kategorien-Filter — analog zu
-// computeIncomeData, nur nach Kategorie statt nach Monat aufgeschlüsselt
-// (hier ergibt "je Monat" wenig Sinn, da es nur zwei feste Positionen gibt).
-function computeSavingsData(year, monthSet){
-  let sparen = 0, ruecklagen = 0;
+// Übersichts-Diagramm ganz unten: drei Gesamtsummen über die gewählten
+// Monate hinweg — Einnahmen (Gehalt), Ausgaben ohne Sparen (identisch zur
+// "Gesamt"-Zeile des Ausgaben-Diagramms, daher werden die dort schon
+// berechneten `groups` übergeben statt doppelt zu rechnen) und Sparen
+// (Sparen + Rücklagen zusammengefasst, da beides keine echten Ausgaben
+// sind). Unabhängig vom Kategorien-Filter — der betrifft nur die Ausgaben-
+// Aufschlüsselung selbst, nicht diese Gesamtsumme.
+function computeOverviewData(year, monthSet, groups){
+  let incomeCents = 0, savingsCents = 0;
   Object.values(allData.monthEntries).forEach(entry => {
     if(entry.year !== year || !monthSet.has(entry.monthIndex)) return;
     const m = entry.data;
-    sparen += m.saving.sparen.reduce((s, e) => s + e.cents, 0);
-    ruecklagen += m.saving.ruecklagen.reduce((s, e) => s + e.cents, 0);
+    if(m.salary !== null) incomeCents += m.salary;
+    savingsCents += m.saving.sparen.reduce((s, e) => s + e.cents, 0);
+    savingsCents += m.saving.ruecklagen.reduce((s, e) => s + e.cents, 0);
   });
+  const expenseCents = groups.reduce((s, g) => s + g.subtotal, 0);
+
   return [
-    { label: 'Sparen', cents: sparen, color: SLICE_COLORS.sparen },
-    { label: 'Rücklagen', cents: ruecklagen, color: SLICE_COLORS.ruecklagen }
+    { label: 'Einnahmen', cents: incomeCents, color: SLICE_COLORS.overview_income },
+    { label: 'Ausgaben ohne Sparen', cents: expenseCents, color: SLICE_COLORS.overview_expense },
+    { label: 'Sparen', cents: savingsCents, color: SLICE_COLORS.sparen }
   ].filter(s => s.cents > 0);
 }
 
-// Gemeinsamer Baustein für alle drei Diagramme: Titel + Tortendiagramm +
+// Gemeinsamer Baustein für beide Diagramme: Titel + Tortendiagramm +
 // Legende + Gesamt-Zeile, oder ein Leerzustand-Hinweis.
 function renderChartSection(container, title, slices, emptyText){
   const heading = document.createElement('p');
@@ -238,12 +230,8 @@ function renderChartSection(container, title, slices, emptyText){
   container.appendChild(totalRow);
 }
 
-function renderIncomeChart(container, incomeSlices){
-  renderChartSection(container, 'Einnahmen', incomeSlices, 'Kein Gehalt in diesem Zeitraum gespeichert.');
-}
-
-function renderSavingsChart(container, savingsSlices){
-  renderChartSection(container, 'Sparen', savingsSlices, 'Kein Sparen in diesem Zeitraum gespeichert.');
+function renderIncomeChart(container, overviewSlices){
+  renderChartSection(container, 'Einnahmen', overviewSlices, 'Keine Daten in diesem Zeitraum.');
 }
 
 function renderAnalysisChart(container, groups){
@@ -317,14 +305,12 @@ function updateAnalysis(){
   const monthSet = new Set(getSelectedMonthIndexes());
   const categorySet = new Set(getSelectedCategoryKeys());
 
-  const incomeSlices = computeIncomeData(year, monthSet);
-  const savingsSlices = computeSavingsData(year, monthSet);
   const groups = computeAnalysisData(year, monthSet, categorySet);
+  const overviewSlices = computeOverviewData(year, monthSet, groups);
 
   const fragment = document.createDocumentFragment();
 
-  // Ausgaben-Diagramm und -Liste zuerst, dann Sparen (keine echte Ausgabe),
-  // Einnahmen ganz unten.
+  // Ausgaben-Diagramm und -Liste zuerst, Einnahmen-Übersicht ganz unten.
   const chartWrap = document.createElement('div');
   renderAnalysisChart(chartWrap, groups);
   fragment.appendChild(chartWrap);
@@ -333,13 +319,9 @@ function updateAnalysis(){
   renderAnalysisList(listWrap, groups);
   fragment.appendChild(listWrap);
 
-  const savingsWrap = document.createElement('div');
-  renderSavingsChart(savingsWrap, savingsSlices);
-  fragment.appendChild(savingsWrap);
-
-  const incomeWrap = document.createElement('div');
-  renderIncomeChart(incomeWrap, incomeSlices);
-  fragment.appendChild(incomeWrap);
+  const overviewWrap = document.createElement('div');
+  renderIncomeChart(overviewWrap, overviewSlices);
+  fragment.appendChild(overviewWrap);
 
   el.analysisResults.replaceChildren(fragment);
 }
