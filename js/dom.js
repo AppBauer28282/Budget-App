@@ -26,9 +26,11 @@ export const el = {
   balance:         document.getElementById('balance'),
   checkedCount:    document.getElementById('checked-count'),
   spentTotal:      document.getElementById('spent-total'),
+  fixkostenSummaryTotal: document.getElementById('fixkosten-summary-total'),
 
   catList:         document.getElementById('cat-list'),
   catGrandTotal:   document.getElementById('cat-grand-total-amount'),
+  catSummaryTotal: document.getElementById('cat-summary-total'),
   catText:         document.getElementById('cat-text'),
   catSelect:       document.getElementById('cat-select'),
   catAmount:       document.getElementById('cat-amount'),
@@ -37,6 +39,7 @@ export const el = {
 
   savList:         document.getElementById('sav-list'),
   savGrandTotal:   document.getElementById('sav-grand-total-amount'),
+  savSummaryTotal: document.getElementById('sav-summary-total'),
   savSelect:       document.getElementById('sav-select'),
   savAmount:       document.getElementById('sav-amount'),
   savAddBtn:       document.getElementById('sav-add-btn'),
