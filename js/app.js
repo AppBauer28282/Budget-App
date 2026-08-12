@@ -13,6 +13,7 @@ import './events.js';
 import './receipt.js';
 import './charts.js';
 import './backup.js';
+import './analysis.js';
 import './cloud-sync.js';
 
 buildAddMonthSelects();

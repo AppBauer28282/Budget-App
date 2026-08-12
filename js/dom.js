@@ -78,7 +78,15 @@ export const el = {
   chartBtn:        document.getElementById('chart-btn'),
   chartOverlay:    document.getElementById('chart-overlay'),
   chartClose:      document.getElementById('chart-close'),
-  chartBody:       document.getElementById('chart-body')
+  chartBody:       document.getElementById('chart-body'),
+
+  analysisBtn:        document.getElementById('analysis-btn'),
+  analysisOverlay:    document.getElementById('analysis-overlay'),
+  analysisClose:      document.getElementById('analysis-close'),
+  analysisYear:       document.getElementById('analysis-year'),
+  analysisMonths:     document.getElementById('analysis-months'),
+  analysisCategories: document.getElementById('analysis-categories'),
+  analysisResults:    document.getElementById('analysis-results')
 };
 
 export const fcSliders = {};
