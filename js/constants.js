@@ -8,7 +8,7 @@
 // von Hand hochzählen und das Datum aktualisieren. Dient nur zur Kontrolle,
 // ob im Browser wirklich die neueste Version geladen ist (z. B. nach einem
 // Deployment, falls der Browser eine alte Version zwischenspeichert).
-export const APP_VERSION = 'v3';
+export const APP_VERSION = 'v4';
 export const APP_VERSION_DATE = '2026-08-12';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
@@ -98,8 +98,19 @@ export const SLICE_COLORS = {
   kfz_sonstige:   '#8a7355',
   sparen:         '#3c6e4f',
   ruecklagen:     '#6f5b3e',
+  aufloesung:     '#b06b8f',
   fc_lebensmittel:'#8fae7a',
   fc_konsum:      '#d98b7c',
   fc_sprit:       '#e0a458',
   fc_sonstiges:   '#9fa8c4'
 };
+
+// Eine Farbe je Monat — für das Einnahmen-Diagramm in der Analyse, das
+// (anders als das Ausgaben-Diagramm) nach Monat statt nach Kategorie
+// aufschlüsselt, da es nur eine Einnahmequelle (Gehalt) gibt. Reihenfolge
+// entspricht MONTHS (Index 0 = Januar).
+export const MONTH_COLORS = [
+  '#4a5a7a', '#6b8fa3', '#7a9e6e', '#a3a34a',
+  '#c2914a', '#c2703a', '#a8453f', '#9c3b5c',
+  '#7d4a9c', '#5c4a9c', '#4a5a8a', '#3c4a6e'
+];

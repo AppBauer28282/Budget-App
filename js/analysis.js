@@ -3,12 +3,12 @@
    Wertet — anders als Beleg/Diagramm, die immer nur den aktuell geöffneten
    Monat zeigen — ALLE gespeicherten Monate aus (offen und abgeschlossen).
    Nutzer wählt ein Jahr, beliebige Monate dieses Jahres und beliebige
-   Kategorien; Ergebnis ist ein Tortendiagramm (Verteilung je Kategorie) und
-   eine kumulierte Liste (Summe je Beschreibungstext, gruppiert nach
-   Kategorie mit Zwischensummen) — aktualisiert sich live bei jeder
-   Filteränderung.
+   Kategorien; Ergebnis sind zwei Tortendiagramme — Einnahmen (Gehalt je
+   Monat) und Ausgaben (Verteilung je Kategorie) — sowie eine kumulierte
+   Liste der Ausgaben (Summe je Beschreibungstext, gruppiert nach Kategorie
+   mit Zwischensummen) — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { items, categoryDefs, MONTHS, SLICE_COLORS } from './constants.js';
+import { items, categoryDefs, MONTHS, SLICE_COLORS, MONTH_COLORS } from './constants.js';
 import { el } from './dom.js';
 import { formatCents } from './utils.js';
 import { allData } from './storage.js';
@@ -16,15 +16,18 @@ import { buildPieSVG, buildChartLegend } from './charts.js';
 import { openOverlay, closeOverlay } from './overlays.js';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
-// die normalen Sonstige-Ausgaben-Kategorien, und Sparen/Rücklagen als zwei
-// eigene Positionen (wie in der bestehenden Diagrammansicht). "Auflösung
-// Rücklagen" bleibt bewusst außen vor — das ist eine Einnahme, keine Ausgabe,
-// genau wie bei der bestehenden Diagrammansicht.
+// die normalen Sonstige-Ausgaben-Kategorien, und die drei Sparen-Unterarten
+// (Sparen/Rücklagen/Auflösung Rücklagen) als eigene Positionen. "Auflösung
+// Rücklagen" ist eigentlich eine Einnahme, wird auf Nutzerwunsch aber wie
+// die anderen Ausgaben-Kategorien als normale wählbare Position geführt —
+// das eigentliche "Einnahmen" (Gehalt) hat ein eigenes, separates Diagramm
+// weiter unten (computeIncomeData/renderIncomeChart).
 const ANALYSIS_CATEGORIES = [
   { key: 'fixed', name: 'Fixkosten' },
   ...categoryDefs.map(d => ({ key: d.key, name: d.name })),
   { key: 'sparen', name: 'Sparen' },
-  { key: 'ruecklagen', name: 'Rücklagen' }
+  { key: 'ruecklagen', name: 'Rücklagen' },
+  { key: 'aufloesung', name: 'Auflösung Rücklagen' }
 ];
 
 function getAvailableYears(){
@@ -128,7 +131,7 @@ function computeAnalysisData(year, monthSet, categorySet){
       if(!groupByKey.has(def.key)) return;
       m.categories[def.key].forEach(e => addToGroup(def.key, e.name, e.cents));
     });
-    ['sparen', 'ruecklagen'].forEach(key => {
+    ['sparen', 'ruecklagen', 'aufloesung'].forEach(key => {
       if(!groupByKey.has(key)) return;
       const sum = m.saving[key].reduce((s, e) => s + e.cents, 0);
       addToGroup(key, groupByKey.get(key).name, sum);
@@ -146,17 +149,37 @@ function computeAnalysisData(year, monthSet, categorySet){
     .filter(g => g.subtotal > 0); // Kategorien ohne Einträge im Zeitraum überspringen
 }
 
-function renderAnalysisChart(container, groups){
-  const total = groups.reduce((s, g) => s + g.subtotal, 0);
-  if(groups.length === 0 || total <= 0){
+// Sammelt das gespeicherte Gehalt je ausgewähltem Monat (Monate ohne
+// gespeichertes Gehalt werden übersprungen). Unabhängig vom Kategorien-
+// Filter — der betrifft nur Ausgaben. Eine Verteilung "nach Kategorie" gibt
+// es hier nicht (nur eine Einnahmequelle), daher stattdessen ein Segment
+// je Monat.
+function computeIncomeData(year, monthSet){
+  const slices = [];
+  Object.values(allData.monthEntries).forEach(entry => {
+    if(entry.year !== year || !monthSet.has(entry.monthIndex)) return;
+    if(entry.data.salary === null) return;
+    slices.push({ label: entry.monthName, cents: entry.data.salary, color: MONTH_COLORS[entry.monthIndex] });
+  });
+  return slices.sort((a, b) => MONTHS.indexOf(a.label) - MONTHS.indexOf(b.label));
+}
+
+// Gemeinsamer Baustein für beide Diagramme: Titel + Tortendiagramm +
+// Legende + Gesamt-Zeile, oder ein Leerzustand-Hinweis.
+function renderChartSection(container, title, slices, emptyText){
+  const heading = document.createElement('p');
+  heading.className = 'chart-section-title';
+  heading.textContent = title;
+  container.appendChild(heading);
+
+  const total = slices.reduce((s, x) => s + x.cents, 0);
+  if(slices.length === 0 || total <= 0){
     const note = document.createElement('p');
     note.className = 'chart-empty-note';
-    note.textContent = 'Keine Daten für diese Auswahl.';
+    note.textContent = emptyText;
     container.appendChild(note);
     return;
   }
-
-  const slices = groups.map(g => ({ label: g.name, cents: g.subtotal, color: g.color }));
 
   const wrap = document.createElement('div');
   wrap.className = 'chart-wrap';
@@ -176,6 +199,15 @@ function renderAnalysisChart(container, groups){
   a.textContent = formatCents(total);
   totalRow.append(l, a);
   container.appendChild(totalRow);
+}
+
+function renderIncomeChart(container, incomeSlices){
+  renderChartSection(container, 'Einnahmen', incomeSlices, 'Kein Gehalt in diesem Zeitraum gespeichert.');
+}
+
+function renderAnalysisChart(container, groups){
+  const slices = groups.map(g => ({ label: g.name, cents: g.subtotal, color: g.color }));
+  renderChartSection(container, 'Ausgaben', slices, 'Keine Daten für diese Auswahl.');
 }
 
 // Nutzt dieselben CSS-Klassen wie die bestehende Sonstige-Ausgaben/Sparen-
@@ -244,9 +276,17 @@ function updateAnalysis(){
   const monthSet = new Set(getSelectedMonthIndexes());
   const categorySet = new Set(getSelectedCategoryKeys());
 
+  const incomeSlices = computeIncomeData(year, monthSet);
   const groups = computeAnalysisData(year, monthSet, categorySet);
 
   const fragment = document.createDocumentFragment();
+
+  // Einnahmen zuerst, dann Ausgaben — gleiche Reihenfolge wie in der
+  // bestehenden Belegansicht (buildReceipt in receipt.js).
+  const incomeWrap = document.createElement('div');
+  renderIncomeChart(incomeWrap, incomeSlices);
+  fragment.appendChild(incomeWrap);
+
   const chartWrap = document.createElement('div');
   renderAnalysisChart(chartWrap, groups);
   fragment.appendChild(chartWrap);
