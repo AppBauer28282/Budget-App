@@ -88,7 +88,14 @@ export const el = {
   analysisMonthsToggle:     document.getElementById('analysis-months-toggle'),
   analysisCategories:       document.getElementById('analysis-categories'),
   analysisCategoriesToggle: document.getElementById('analysis-categories-toggle'),
-  analysisResults:    document.getElementById('analysis-results')
+  analysisResults:    document.getElementById('analysis-results'),
+
+  // Nur Schaltfläche und Fensterrahmen des Gehaltsrechners. Seine vielen
+  // eigenen Eingabefelder holt sich js/salary-calc.js selbst — sie werden
+  // ausschließlich dort gebraucht und würden diese Liste sonst aufblähen.
+  salaryCalcBtn:      document.getElementById('salary-calc-btn'),
+  salaryCalcOverlay:  document.getElementById('salary-calc-overlay'),
+  salaryCalcClose:    document.getElementById('salary-calc-close')
 };
 
 export const fcSliders = {};

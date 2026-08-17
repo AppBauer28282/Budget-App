@@ -337,7 +337,7 @@ auth.onAuthStateChanged(async (user) => {
     // Abgemeldet: alle offenen Fenster schließen und die Scroll-Sperre
     // aufheben, damit der Sperrbildschirm nicht blockiert dargestellt wird.
     document.body.style.overflow = '';
-    ['receipt-overlay','chart-overlay','pin-overlay'].forEach(id => {
+    ['receipt-overlay','chart-overlay','pin-overlay','analysis-overlay','salary-calc-overlay'].forEach(id => {
       const ov = document.getElementById(id);
       if(ov) ov.hidden = true;
     });

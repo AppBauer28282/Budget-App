@@ -14,6 +14,7 @@ import './receipt.js';
 import './charts.js';
 import './backup.js';
 import './analysis.js';
+import './salary-calc.js';
 import './cloud-sync.js';
 
 buildAddMonthSelects();
