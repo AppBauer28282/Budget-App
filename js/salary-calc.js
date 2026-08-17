@@ -14,8 +14,7 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { el } from './dom.js';
-import { openOverlay, closeOverlay } from './overlays.js';
+import { openOverlay, closeOverlay } from './overlays.js?v=9';
 
 /* ---------- Entgelttabelle & Konstanten ---------- */
 const TABELLE = {
@@ -63,6 +62,15 @@ const scRows       = $('sc-rows');
 const scNettoCap   = $('sc-netto-cap');
 const scNettoOut   = $('sc-netto-out');
 const scDevNetto   = $('sc-dev-netto');
+
+// Auch Schaltfläche und Fensterrahmen werden hier selbst geholt statt über
+// dom.js. Grund: Browser können nach einem Deployment einzelne Dateien noch
+// aus dem Zwischenspeicher laden. Träfe eine neue salary-calc.js auf eine
+// alte dom.js, wäre der Verweis undefiniert — mit eigener Abfrage kann das
+// nicht passieren.
+const scOpenBtn    = $('salary-calc-btn');
+const scOverlay    = $('salary-calc-overlay');
+const scCloseBtn   = $('salary-calc-close');
 
 let jahrModus = false;
 
@@ -243,31 +251,47 @@ function setModus(jahr){
 
 /* ---------- Fenster öffnen/schließen ---------- */
 function openSalaryCalc(){
-  openOverlay(el.salaryCalcOverlay, el.salaryCalcClose);
+  openOverlay(scOverlay, scCloseBtn);
 }
 function closeSalaryCalc(){
-  closeOverlay(el.salaryCalcOverlay, el.salaryCalcBtn);
+  closeOverlay(scOverlay, scOpenBtn);
 }
 
-el.salaryCalcBtn.addEventListener('click', openSalaryCalc);
-el.salaryCalcClose.addEventListener('click', closeSalaryCalc);
-el.salaryCalcOverlay.addEventListener('click', (e) => {
-  if(e.target === el.salaryCalcOverlay) closeSalaryCalc();
-});
-document.addEventListener('keydown', (e) => {
-  if(e.key === 'Escape' && !el.salaryCalcOverlay.hidden) closeSalaryCalc();
-});
-
 /* ---------- Ereignisse & Start ---------- */
-scStufe.addEventListener('change', () => { fuelleGruppen(); update(); });
-[scGruppe, scStunden, scProzent, scKvz].forEach(node => {
-  node.addEventListener('input', update);
-  node.addEventListener('change', update);
-});
-scBtnMonat.addEventListener('click', () => setModus(false));
-scBtnJahr.addEventListener('click', () => setModus(true));
+function init(){
+  scOpenBtn.addEventListener('click', openSalaryCalc);
+  scCloseBtn.addEventListener('click', closeSalaryCalc);
+  scOverlay.addEventListener('click', (e) => {
+    if(e.target === scOverlay) closeSalaryCalc();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && !scOverlay.hidden) closeSalaryCalc();
+  });
 
-scStufe.value = '+7';
-fuelleGruppen();
-scGruppe.value = 'KT5';
-update();
+  scStufe.addEventListener('change', () => { fuelleGruppen(); update(); });
+  [scGruppe, scStunden, scProzent, scKvz].forEach(node => {
+    node.addEventListener('input', update);
+    node.addEventListener('change', update);
+  });
+  scBtnMonat.addEventListener('click', () => setModus(false));
+  scBtnJahr.addEventListener('click', () => setModus(true));
+
+  scStufe.value = '+7';
+  fuelleGruppen();
+  scGruppe.value = 'KT5';
+  update();
+}
+
+// Der Rechner ist ein Zusatzwerkzeug — er darf den Start der App unter
+// keinen Umständen verhindern. Fehlt auch nur eines seiner Elemente (etwa
+// weil der Browser noch eine ältere index.html aus dem Zwischenspeicher
+// anzeigt, die das Symbol noch nicht enthält), wird er still übersprungen
+// und Anmeldung sowie Budget funktionieren ganz normal weiter.
+const alleElementeDa = [
+  scStufe, scGruppe, scStunden, scStundenVal, scProzent, scProzentVal,
+  scMonatOut, scDevMonat, scJahrOut, scDevJahr, scGrowth, scKvz,
+  scBtnMonat, scBtnJahr, scRows, scNettoCap, scNettoOut, scDevNetto,
+  scOpenBtn, scOverlay, scCloseBtn
+].every(node => node !== null && node !== undefined);
+
+if(alleElementeDa) init();

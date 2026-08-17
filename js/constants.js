@@ -8,7 +8,18 @@
 // von Hand hochzählen und das Datum aktualisieren. Dient nur zur Kontrolle,
 // ob im Browser wirklich die neueste Version geladen ist (z. B. nach einem
 // Deployment, falls der Browser eine alte Version zwischenspeichert).
-export const APP_VERSION = 'v8';
+//
+// WICHTIG beim Hochzählen: Dieselbe Zahl steht auch in den "?v="-Angaben
+// hinter JEDER Verknüpfung in js/*.js und hinter js/app.js in index.html.
+// Sie sorgt dafür, dass der Browser nach einem Update alle Dateien frisch
+// holt und keine alte mit einer neuen mischen kann (genau daran ist v8
+// gescheitert: neue salary-calc.js traf auf alte dom.js).
+// Alle Stellen mitziehen, z. B.:
+//   sed -i "s|\.js?v=9'|.js?v=10'|g" js/*.js
+//   sed -i 's|js/app\.js?v=9|js/app.js?v=10|' index.html
+// Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
+// geladen und der gemeinsame Datenstand liefe auseinander.
+export const APP_VERSION = 'v9';
 export const APP_VERSION_DATE = '2026-08-17';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden

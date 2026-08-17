@@ -8,12 +8,12 @@
    Ausgaben ohne Sparen vs. Sparen) — aktualisiert sich live bei jeder
    Filteränderung.
    ============================================================================= */
-import { items, categoryDefs, MONTHS, SLICE_COLORS } from './constants.js';
-import { el } from './dom.js';
-import { formatCents } from './utils.js';
-import { allData } from './storage.js';
-import { buildPieSVG, buildChartLegend } from './charts.js';
-import { openOverlay, closeOverlay } from './overlays.js';
+import { items, categoryDefs, MONTHS, SLICE_COLORS } from './constants.js?v=9';
+import { el } from './dom.js?v=9';
+import { formatCents } from './utils.js?v=9';
+import { allData } from './storage.js?v=9';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=9';
+import { openOverlay, closeOverlay } from './overlays.js?v=9';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien, und "Auflösung Rücklagen". Diese
