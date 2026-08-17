@@ -4,18 +4,18 @@
    die sich selbst um ihre Event-Listener kümmern (Navigation, Ereignisse,
    Beleg-/Diagrammansicht, Sichern/Wiederherstellen, Cloud-Sync/Login).
    ============================================================================= */
-import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js';
-import { el } from './dom.js';
-import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js';
+import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=9';
+import { el } from './dom.js?v=9';
+import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=9';
 
-import './navigation.js';
-import './events.js';
-import './receipt.js';
-import './charts.js';
-import './backup.js';
-import './analysis.js';
-import './salary-calc.js';
-import './cloud-sync.js';
+import './navigation.js?v=9';
+import './events.js?v=9';
+import './receipt.js?v=9';
+import './charts.js?v=9';
+import './backup.js?v=9';
+import './analysis.js?v=9';
+import './salary-calc.js?v=9';
+import './cloud-sync.js?v=9';
 
 buildAddMonthSelects();
 fillSelect(el.catSelect, categoryDefs);

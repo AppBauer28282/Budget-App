@@ -5,7 +5,7 @@
    ausgewertet werden, ist `el` faktisch ein Singleton, das von allen
    anderen Modulen importiert wird.
    ============================================================================= */
-import { fcKeys } from './constants.js';
+import { fcKeys } from './constants.js?v=9';
 
 export const el = {
   overviewScreen:  document.getElementById('overview-screen'),
@@ -88,14 +88,10 @@ export const el = {
   analysisMonthsToggle:     document.getElementById('analysis-months-toggle'),
   analysisCategories:       document.getElementById('analysis-categories'),
   analysisCategoriesToggle: document.getElementById('analysis-categories-toggle'),
-  analysisResults:    document.getElementById('analysis-results'),
-
-  // Nur Schaltfläche und Fensterrahmen des Gehaltsrechners. Seine vielen
-  // eigenen Eingabefelder holt sich js/salary-calc.js selbst — sie werden
-  // ausschließlich dort gebraucht und würden diese Liste sonst aufblähen.
-  salaryCalcBtn:      document.getElementById('salary-calc-btn'),
-  salaryCalcOverlay:  document.getElementById('salary-calc-overlay'),
-  salaryCalcClose:    document.getElementById('salary-calc-close')
+  analysisResults:    document.getElementById('analysis-results')
+  // Der Gehaltsrechner taucht hier bewusst nicht auf: js/salary-calc.js holt
+  // alle seine Elemente selbst. So kann eine ältere, zwischengespeicherte
+  // Fassung dieser Datei den Rechner nicht lahmlegen.
 };
 
 export const fcSliders = {};
