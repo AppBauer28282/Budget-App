@@ -1101,3 +1101,197 @@
     border-color: var(--brass);
     box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
   }
+
+  /* ---------- Werkzeug-Symbol rechts oben (Übersicht) ---------- */
+  /* Titelblock und Symbol nebeneinander; der Titelblock darf schrumpfen
+     (min-width:0), damit lange Überschriften das Symbol nicht wegdrücken. */
+  .overview-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap: 16px;
+  }
+  .overview-head-titles{ min-width: 0; }
+  .icon-btn{
+    flex-shrink: 0;
+    width: 38px; height: 38px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    color: var(--ink);
+    padding: 0;
+    cursor: pointer;
+  }
+  .icon-btn:hover{ background: var(--ink); color: var(--paper); }
+  .icon-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .icon-btn svg{ width: 21px; height: 21px; display:block; }
+
+  /* ---------- Gehaltsrechner (eigenes Fenster) ---------- */
+  /* Breiter als die übrigen Overlays, da der Rechner ein zweispaltiges
+     Eingaberaster und lange Abzugszeilen enthält. */
+  .salary-calc-overlay .receipt-card{ max-width: 560px; }
+
+  .sc-num{ font-variant-numeric: tabular-nums; }
+
+  .sc-lead{
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0 0 20px;
+  }
+  .sc-section-title{
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--brass-deep);
+    margin: 24px 0 14px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+  .sc-section-title:first-of-type{
+    margin-top: 0; padding-top: 0; border-top: none;
+  }
+
+  .sc-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+  }
+  .sc-field{
+    display:flex; flex-direction:column; gap: 6px;
+    min-width: 0;
+  }
+  .sc-field > label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .sc-field select,
+  .sc-field input[type="text"]{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px;   /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    width: 100%;
+    min-width: 0;
+  }
+  .sc-field select:focus,
+  .sc-field input[type="text"]:focus{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+  .sc-field input[type="range"]{
+    width:100%;
+    accent-color: var(--brass);
+    margin: 4px 0;
+    cursor:pointer;
+  }
+  .sc-val{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .sc-out{
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    text-align:center;
+  }
+  .sc-cap{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .sc-cap-spaced{ margin-top: 16px; }
+  .sc-big{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 32px;
+    line-height: 1.1;
+  }
+  .sc-mid{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 20px;
+  }
+  .sc-dev{
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+    min-height: 16px;
+  }
+  .sc-growth{
+    font-size: 11px;
+    color: var(--brass-deep);
+    margin-top: 14px;
+    min-height: 16px;
+  }
+
+  /* Umschalter Monat/Jahr — gleiche Invertier-Logik wie die übrigen
+     gefüllten Schaltflächen der App. */
+  .sc-seg{
+    display:inline-flex;
+    align-self: flex-start;   /* sonst zieht die Spalte den Rahmen auf volle Breite */
+    border: 1px solid var(--line);
+  }
+  .sc-seg button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border: none;
+    background: var(--paper);
+    color: var(--ink-soft);
+    cursor:pointer;
+  }
+  .sc-seg button[aria-pressed="true"]{
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .sc-seg button:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .sc-rows{ margin-top: 20px; }
+  .sc-row{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 12.5px;
+  }
+  .sc-row span:last-child{ white-space: nowrap; }
+  .sc-row.neg span:last-child{ color: var(--error); }
+  .sc-row.sum{
+    border-bottom: none;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+    margin-top: 4px;
+    padding-top: 9px;
+  }
+  .sc-row.total{
+    border-bottom: none;
+    border-top: 2px double var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 6px;
+    padding-top: 11px;
+  }
+  .sc-note{
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 520px){
+    .sc-grid{ grid-template-columns: 1fr; }
+  }
