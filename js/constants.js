@@ -14,13 +14,13 @@
 // Sie sorgt dafür, dass der Browser nach einem Update alle Dateien frisch
 // holt und keine alte mit einer neuen mischen kann (genau daran ist v8
 // gescheitert: neue salary-calc.js traf auf alte dom.js).
-// Alle Stellen mitziehen — ALT und NEU jeweils an die passende Zahl
-// anpassen (Beispiel für den Schritt von 10 auf 11):
-//   sed -i "s|.js?v=10'|.js?v=11'|g" js/*.js
-//   sed -i 's|js/app.js?v=10|js/app.js?v=11|' index.html
+// Alle Stellen mitziehen (ALT = aktuelle Zahl, NEU = die nächste). Die
+// Zahlen hier bewusst als Platzhalter, damit ein sed über diese Datei den
+// Beispielbefehl nicht selbst mitverändert:
+//   sed -i "s/js?v=ALT/js?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v10';
+export const APP_VERSION = 'v11';
 export const APP_VERSION_DATE = '2026-08-21';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
@@ -114,6 +114,10 @@ export const SLICE_COLORS = {
   fc_lebensmittel:'#8fae7a',
   fc_konsum:      '#d98b7c',
   fc_sprit:       '#e0a458',
-  fc_sonstiges:   '#9fa8c4'
+  fc_sonstiges:   '#9fa8c4',
+  // Nur für das Drei-Segmente-Übersichtsdiagramm ganz unten in der Analyse.
+  // "Fix" und "Sparen" nutzen bewusst dieselben Töne wie die gleichnamigen
+  // Posten im oberen Diagramm, damit man sie wiedererkennt.
+  summary_ausgaben: '#8f3f3f'
 };
 

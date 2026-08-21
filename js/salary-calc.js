@@ -14,7 +14,7 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=10';
+import { openOverlay, closeOverlay } from './overlays.js?v=11';
 
 /* ---------- Entgelttabelle & Konstanten ---------- */
 const TABELLE = {

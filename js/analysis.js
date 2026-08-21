@@ -4,14 +4,15 @@
    Monat zeigen — ALLE gespeicherten Monate aus (offen und abgeschlossen).
    Nutzer wählt ein Jahr, beliebige Monate dieses Jahres und beliebige
    Kategorien; Ergebnis ist ein Tortendiagramm (Verteilung je Kategorie)
-   samt kumulierter Liste — aktualisiert sich live bei jeder Filteränderung.
+   samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
+   nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { items, categoryDefs, MONTHS, SLICE_COLORS } from './constants.js?v=10';
-import { el } from './dom.js?v=10';
-import { formatCents } from './utils.js?v=10';
-import { allData } from './storage.js?v=10';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=10';
-import { openOverlay, closeOverlay } from './overlays.js?v=10';
+import { items, categoryDefs, MONTHS, SLICE_COLORS } from './constants.js?v=11';
+import { el } from './dom.js?v=11';
+import { formatCents } from './utils.js?v=11';
+import { allData } from './storage.js?v=11';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=11';
+import { openOverlay, closeOverlay } from './overlays.js?v=11';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.
@@ -166,6 +167,48 @@ function computeAnalysisData(year, monthSet, categorySet){
     .filter(g => g.subtotal > 0); // Kategorien ohne Einträge im Zeitraum überspringen
 }
 
+// Grobe Dreiteilung für das Übersichtsdiagramm ganz unten. Bewusst feste
+// Töpfe statt der 13 Einzelkategorien — es geht nur um das Verhältnis von
+// Fixem, laufenden Ausgaben und Zurückgelegtem:
+//   Fix      = abgehakte Fixkosten + Jahresfix
+//   Ausgaben = alle übrigen Sonstige-Ausgaben-Kategorien + Rücklagen
+//              + Auflösung Rücklagen
+//   Sparen   = Sparen
+// Jahresfix zählt ausschließlich zu "Fix" und ist deshalb aus "Ausgaben"
+// herausgenommen, sonst stünde derselbe Betrag doppelt im Diagramm.
+// Hängt nur an Jahr und Monatsauswahl, nicht am Kategorien-Filter — die
+// drei Töpfe sind fest und lassen sich nicht sinnvoll einzeln abwählen.
+const SUMMARY_FIX_CATEGORIES = ['jahresfix'];
+
+function computeSummaryData(year, monthSet){
+  let fixCents = 0, ausgabenCents = 0, sparenCents = 0;
+
+  Object.values(allData.monthEntries).forEach(entry => {
+    if(entry.year !== year || !monthSet.has(entry.monthIndex)) return;
+    const m = entry.data;
+
+    items.forEach((item, i) => {
+      if(m.checked[i]) fixCents += item.cents;
+    });
+
+    categoryDefs.forEach(def => {
+      const sum = m.categories[def.key].reduce((s, e) => s + e.cents, 0);
+      if(SUMMARY_FIX_CATEGORIES.includes(def.key)) fixCents += sum;
+      else ausgabenCents += sum;
+    });
+
+    sparenCents   += m.saving.sparen.reduce((s, e) => s + e.cents, 0);
+    ausgabenCents += m.saving.ruecklagen.reduce((s, e) => s + e.cents, 0);
+    ausgabenCents += m.saving.aufloesung.reduce((s, e) => s + e.cents, 0);
+  });
+
+  return [
+    { label: 'Fix',      cents: fixCents,      color: SLICE_COLORS.fixed },
+    { label: 'Ausgaben', cents: ausgabenCents, color: SLICE_COLORS.summary_ausgaben },
+    { label: 'Sparen',   cents: sparenCents,   color: SLICE_COLORS.sparen }
+  ].filter(slice => slice.cents > 0);
+}
+
 // Titel + Tortendiagramm + Legende + Gesamt-Zeile, oder ein
 // Leerzustand-Hinweis.
 function renderChartSection(container, title, slices, emptyText){
@@ -206,6 +249,10 @@ function renderChartSection(container, title, slices, emptyText){
 function renderAnalysisChart(container, groups){
   const slices = groups.map(g => ({ label: g.name, cents: g.subtotal, color: g.color }));
   renderChartSection(container, 'Ausgaben', slices, 'Keine Daten für diese Auswahl.');
+}
+
+function renderSummaryChart(container, slices){
+  renderChartSection(container, 'Übersicht', slices, 'Keine Daten in diesem Zeitraum.');
 }
 
 // Nutzt dieselben CSS-Klassen wie die bestehende Sonstige-Ausgaben/Sparen-
@@ -285,6 +332,11 @@ function updateAnalysis(){
   const listWrap = document.createElement('div');
   renderAnalysisList(listWrap, groups);
   fragment.appendChild(listWrap);
+
+  // Grobe Dreiteilung ganz unten.
+  const summaryWrap = document.createElement('div');
+  renderSummaryChart(summaryWrap, computeSummaryData(year, monthSet));
+  fragment.appendChild(summaryWrap);
 
   el.analysisResults.replaceChildren(fragment);
 }
