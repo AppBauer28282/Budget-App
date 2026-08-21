@@ -14,13 +14,14 @@
 // Sie sorgt dafür, dass der Browser nach einem Update alle Dateien frisch
 // holt und keine alte mit einer neuen mischen kann (genau daran ist v8
 // gescheitert: neue salary-calc.js traf auf alte dom.js).
-// Alle Stellen mitziehen, z. B.:
-//   sed -i "s|\.js?v=9'|.js?v=10'|g" js/*.js
-//   sed -i 's|js/app\.js?v=9|js/app.js?v=10|' index.html
+// Alle Stellen mitziehen — ALT und NEU jeweils an die passende Zahl
+// anpassen (Beispiel für den Schritt von 10 auf 11):
+//   sed -i "s|.js?v=10'|.js?v=11'|g" js/*.js
+//   sed -i 's|js/app.js?v=10|js/app.js?v=11|' index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v9';
-export const APP_VERSION_DATE = '2026-08-17';
+export const APP_VERSION = 'v10';
+export const APP_VERSION_DATE = '2026-08-21';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
 // (0.1 + 0.2 !== 0.3 in JavaScript). Gerechnet wird durchgängig in Cent.
@@ -113,17 +114,6 @@ export const SLICE_COLORS = {
   fc_lebensmittel:'#8fae7a',
   fc_konsum:      '#d98b7c',
   fc_sprit:       '#e0a458',
-  fc_sonstiges:   '#9fa8c4',
-  overview_income:  '#c9a227',
-  overview_expense: '#8f3f3f'
+  fc_sonstiges:   '#9fa8c4'
 };
 
-// Eine Farbe je Monat — für das Einnahmen-Diagramm in der Analyse, das
-// (anders als das Ausgaben-Diagramm) nach Monat statt nach Kategorie
-// aufschlüsselt, da es nur eine Einnahmequelle (Gehalt) gibt. Reihenfolge
-// entspricht MONTHS (Index 0 = Januar).
-export const MONTH_COLORS = [
-  '#4a5a7a', '#6b8fa3', '#7a9e6e', '#a3a34a',
-  '#c2914a', '#c2703a', '#a8453f', '#9c3b5c',
-  '#7d4a9c', '#5c4a9c', '#4a5a8a', '#3c4a6e'
-];

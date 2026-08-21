@@ -630,6 +630,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
+    gap: 12px;
     padding: 8px 0;
     border-bottom: 1px solid var(--line);
     font-family:'Fraunces', serif;
@@ -657,13 +658,27 @@
 
   /* Kleine Summe neben dem Titel, nur sichtbar wenn der Bereich eingeklappt
      ist — im aufgeklappten Zustand steht die Summe ohnehin schon im Inhalt. */
+  /* Nimmt die volle Restbreite ein, damit die Summe ganz nach rechts rutscht
+     und direkt neben dem Plus/Minus steht statt gleich hinter dem Titel. */
+  .section-summary-title{
+    display:flex;
+    flex: 1;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
   .section-summary-total{
     font-family:'IBM Plex Mono', monospace;
     font-size: 11px;
     font-weight:400;
     color: var(--ink-soft);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
+  /* Negative Differenz (Kreditkarte) auch in der Überschrift kenntlich. */
+  .section-summary-total.negative{ color: var(--error); }
   .section[open] .section-summary-total{ display:none; }
 
   /* ---------- Zurücksetzen / Sicherung ---------- */

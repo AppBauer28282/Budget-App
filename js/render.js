@@ -5,11 +5,11 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=9';
-import { el, fcSliders, fcVals } from './dom.js?v=9';
-import { formatCents } from './utils.js?v=9';
-import { computeTotals, sumEntries } from './compute.js?v=9';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=9';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=10';
+import { el, fcSliders, fcVals } from './dom.js?v=10';
+import { formatCents } from './utils.js?v=10';
+import { computeTotals, sumEntries } from './compute.js?v=10';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=10';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung
@@ -131,9 +131,14 @@ export function refreshTotals(){
   if(t.forecast === null){
     el.forecastResult.textContent = '–';
     el.forecastResult.classList.remove('negative');
+    el.forecastSummaryTotal.textContent = '–';
+    el.forecastSummaryTotal.classList.remove('negative');
   } else {
     el.forecastResult.textContent = formatCents(t.forecast);
     el.forecastResult.classList.toggle('negative', t.forecast < 0);
+    // Gleicher Wert klein neben der Überschrift, solange der Bereich zu ist.
+    el.forecastSummaryTotal.textContent = formatCents(t.forecast);
+    el.forecastSummaryTotal.classList.toggle('negative', t.forecast < 0);
   }
 
   // --- Kreditkarte: Verbraucht (fester Gesamtsaldo − Restsaldo) gegen die
@@ -146,12 +151,18 @@ export function refreshTotals(){
     el.cardUsed.textContent = '–';
     el.cardDiff.textContent = '–';
     el.cardDiff.classList.remove('negative');
+    el.cardSummaryTotal.textContent = '–';
+    el.cardSummaryTotal.classList.remove('negative');
   } else {
     const used = CARD_TOTAL_CENTS - m.card.restsaldoCents;
     const diff = used - t.categoryTotal;
     el.cardUsed.textContent = formatCents(used);
     el.cardDiff.textContent = formatCents(diff);
     el.cardDiff.classList.toggle('negative', diff < 0);
+    // Die Differenz ist die eigentliche Kennzahl dieses Bereichs — deshalb
+    // steht sie auch klein in der Überschrift, solange er zugeklappt ist.
+    el.cardSummaryTotal.textContent = formatCents(diff);
+    el.cardSummaryTotal.classList.toggle('negative', diff < 0);
   }
 }
 
