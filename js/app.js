@@ -4,18 +4,18 @@
    die sich selbst um ihre Event-Listener kümmern (Navigation, Ereignisse,
    Beleg-/Diagrammansicht, Sichern/Wiederherstellen, Cloud-Sync/Login).
    ============================================================================= */
-import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=10';
-import { el } from './dom.js?v=10';
-import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=10';
+import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=11';
+import { el } from './dom.js?v=11';
+import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=11';
 
-import './navigation.js?v=10';
-import './events.js?v=10';
-import './receipt.js?v=10';
-import './charts.js?v=10';
-import './backup.js?v=10';
-import './analysis.js?v=10';
-import './salary-calc.js?v=10';
-import './cloud-sync.js?v=10';
+import './navigation.js?v=11';
+import './events.js?v=11';
+import './receipt.js?v=11';
+import './charts.js?v=11';
+import './backup.js?v=11';
+import './analysis.js?v=11';
+import './salary-calc.js?v=11';
+import './cloud-sync.js?v=11';
 
 buildAddMonthSelects();
 fillSelect(el.catSelect, categoryDefs);
