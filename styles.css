@@ -80,19 +80,13 @@
   }
 
   /* ---------- Monatsauswahl (Übersicht: Hinzufügen-Zeile) ---------- */
-  .month-row{
-    display:flex;
-    align-items:center;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
   .month-label{
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
-  #month-select, .add-month-row select{
+  .add-month-row select{
     font-family:'IBM Plex Mono', monospace;
     font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 8px 12px;
@@ -102,7 +96,7 @@
     cursor:pointer;
     outline:none;
   }
-  #month-select:focus-visible, .add-month-row select:focus-visible{
+  .add-month-row select:focus-visible{
     border-color: var(--brass);
     box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
   }
@@ -1335,4 +1329,432 @@
 
   @media (max-width: 520px){
     .sc-grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Werkzeug-Symbole rechts oben (mehrere nebeneinander) ---------- */
+  .overview-head-tools{
+    display:flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* ---------- Konsumtopf (eigenes Fenster) ---------- */
+  /* Breiter als die übrigen Overlays: enthält Jahrestabelle und ein
+     zweispaltiges Raster aus Füllstand und Monatsplanung. */
+  .konsum-overlay .receipt-card{ max-width: 880px; }
+
+  .kt-eyebrow{
+    font-size: 10.5px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--brass-deep);
+    margin: 0 0 12px;
+  }
+  .kt-section-title{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+    margin: 26px 0 14px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  .kt-num{ text-align: right; }
+
+  .kt-grid{
+    display:grid;
+    grid-template-columns: 250px 1fr;
+    gap: 26px;
+    align-items:start;
+  }
+
+  /* --- Füllstand --- */
+  .kt-sack-card{ text-align:center; }
+  .kt-sack-label{
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .kt-sack-value{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 8px;
+  }
+  .kt-sack{ width:100%; max-width: 190px; height:auto; display:block; margin: 0 auto; }
+  .kt-fill-rect{ transition: y .45s ease, height .45s ease, fill .3s ease; }
+  .kt-tick{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9px;
+    fill: var(--ink-soft);
+  }
+  .kt-sack-status{
+    display:inline-block;
+    margin-top: 10px;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+  }
+
+  /* --- Monatsplanung --- */
+  .kt-tabs{ display:flex; flex-wrap:wrap; gap: 4px; margin-bottom: 16px; }
+  .kt-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor:pointer;
+  }
+  .kt-tab:hover{ color: var(--ink); border-color: var(--brass); }
+  .kt-tab.active{
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    font-weight: 500;
+  }
+  /* Punkt markiert den laufenden Monat. */
+  .kt-tab.now::after{ content:"·"; margin-left: 3px; color: var(--brass); }
+  .kt-tab.active.now::after{ color: var(--paper); }
+  .kt-tab:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .kt-plan-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .kt-plan-title{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    margin: 0;
+  }
+  .kt-carry-in{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .kt-carry-in b{ color: var(--ink); font-weight: 600; }
+
+  .kt-field-row{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .kt-field-row label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .kt-field-row input{ width: 110px; }
+
+  /* Gemeinsame Feldoptik, wie im Rest der App. */
+  .konsum-overlay input[type="text"],
+  .konsum-overlay select,
+  .konsum-overlay textarea{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px;   /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline: none;
+    min-width: 0;
+  }
+  .konsum-overlay textarea{
+    width: 100%;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .konsum-overlay input[type="text"]:focus,
+  .konsum-overlay select:focus,
+  .konsum-overlay textarea:focus{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+
+  .kt-items{ margin-bottom: 6px; }
+  .kt-item{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    padding: 6px 2px;
+    border-bottom: 1px dashed var(--line);
+    font-size: 12.5px;
+  }
+  .kt-item-name{
+    flex: 1;
+    min-width: 0;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .kt-item-amount{
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-del{
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--error);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 4px 2px 4px 8px;
+    cursor: pointer;
+  }
+  .kt-del:hover{ color: var(--ink); }
+  .kt-del:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .kt-empty{
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 4px 2px 10px;
+  }
+
+  .kt-item-entry{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .kt-item-entry input[type="text"]:first-of-type{ flex: 1 1 120px; }
+  .kt-item-entry input.kt-num{ flex: 0 1 90px; }
+  .kt-add-btn{
+    flex: 1 1 auto;
+    padding: 9px 16px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .kt-add-btn:hover{ background: var(--brass-deep); }
+  .kt-add-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .kt-calc{
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .kt-calc-row{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 3px 0;
+    color: var(--ink-soft);
+  }
+  .kt-calc-row span:last-child{
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-calc-row.kt-res{
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+  }
+
+  /* --- Jahresverlauf --- */
+  /* Höhe begrenzt, damit das Diagramm das Fenster nicht dominiert. */
+  .kt-chart{ width:100%; height:auto; max-height: 170px; display:block; margin-bottom: 8px; }
+  .kt-chart rect.kt-bar{ cursor:pointer; }
+
+  .kt-table{ font-size: 12.5px; }
+  .kt-trow, .kt-tfoot{
+    display:grid;
+    grid-template-columns: 46px 1fr 1fr 1fr 1fr 1.9fr;
+    gap: 16px;
+    align-items:center;
+    padding: 7px 4px;
+  }
+  .kt-trow{ cursor:pointer; border-bottom: 1px dashed var(--line); }
+  .kt-trow:hover{ background: var(--paper); }
+  .kt-trow.active{ background: var(--paper); }
+  .kt-trow.now .kt-mo{ color: var(--brass-deep); font-weight: 600; }
+  .kt-trow:focus-visible{ outline: 2px solid var(--brass); outline-offset: -2px; }
+  .kt-thead{
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: default;
+    border-bottom: 1px solid var(--line);
+  }
+  .kt-thead:hover{ background: transparent; }
+  .kt-trow > div, .kt-tfoot > div{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Ohne ausreichende Zeilenhöhe schneidet das overflow:hidden die
+       Umlautpunkte der Großbuchstaben ab (ÜBERTRAG, RÜCKLAGE). */
+    line-height: 1.5;
+  }
+  .kt-trow .kt-mo, .kt-tfoot .kt-mo{ text-align: left; color: var(--ink-soft); }
+  .kt-trow .kt-posten{
+    text-align: left;
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    padding-left: 6px;
+  }
+  .kt-thead .kt-posten{ padding-left: 6px; }
+  .kt-tfoot{
+    border-top: 1px solid var(--ink);
+    border-bottom: none;
+    margin-top: 6px;
+    padding-top: 11px;
+    font-weight: 600;
+  }
+  .kt-tfoot .kt-mo{
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  /* Bedeutungsfarben, passend zur restlichen App. */
+  .kt-good{ color: var(--ok); }
+  .kt-bad{ color: var(--error); }
+  .kt-full{ color: var(--brass-deep); }
+  .kt-dim{ color: var(--ink-soft); }
+
+  /* --- Bucket-List --- */
+  .kt-bl-entry{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items:center;
+    margin-bottom: 14px;
+  }
+  .kt-bl-entry select{ flex: 0 0 auto; cursor:pointer; }
+  .kt-bl-entry #kt-bl-topic{ flex: 1 1 140px; }
+  .kt-bl-entry #kt-bl-sum{ flex: 0 1 90px; }
+
+  .kt-bl-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 7px 2px;
+    border-bottom: 1px dashed var(--line);
+    font-size: 12.5px;
+  }
+  .kt-bl-check{
+    flex: 0 0 18px;
+    width: 18px; height: 18px;
+    padding: 0;
+    border: 1.5px solid var(--ink-soft);
+    background: transparent;
+    color: transparent;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 11px; line-height: 1;
+    cursor: pointer;
+  }
+  .kt-bl-check.on{
+    background: var(--brass);
+    border-color: var(--brass-deep);
+    color: var(--ink);
+  }
+  .kt-bl-check:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .kt-bl-mo{
+    flex: 0 0 30px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .kt-bl-topic{
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .kt-bl-row.done .kt-bl-topic{ color: var(--ink-soft); }
+  .kt-bl-amt{
+    flex: 0 0 76px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-bl-amt.plan{ color: var(--ink-soft); }
+  .kt-bl-diff{
+    flex: 0 0 62px;
+    text-align: right;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-bl-hint{ flex: 0 0 auto; font-size: 11px; color: var(--ink-soft); }
+  .kt-bl-edit{ flex: 0 0 84px; width: 84px; }
+  .kt-bl-ok, .kt-bl-cancel{
+    flex: 0 0 auto;
+    border: none;
+    background: transparent;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+  .kt-bl-ok{ color: var(--ok); }
+  .kt-bl-cancel{ color: var(--ink-soft); }
+  .kt-bl-ok:focus-visible, .kt-bl-cancel:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .kt-bl-foot{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-top: 6px;
+    padding: 11px 2px 2px;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+    font-size: 12.5px;
+  }
+
+  /* --- Fußzeile --- */
+  .kt-tools{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+  .kt-tools label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .kt-tools input{ width: 110px; }
+  .kt-saved{
+    font-size: 11px;
+    color: var(--ok);
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .kt-saved.on{ opacity: 1; }
+
+  @media (max-width: 720px){
+    .kt-grid{ grid-template-columns: 1fr; gap: 20px; }
+    .kt-trow, .kt-tfoot{ grid-template-columns: 40px 1fr 1fr 1fr; }
+    .kt-trow .kt-carry, .kt-trow .kt-posten,
+    .kt-tfoot .kt-carry, .kt-tfoot .kt-posten{ display:none; }
+    /* Monatsname und Übertragszeile untereinander — nebeneinander wird es
+       auf schmalen Displays zu eng. */
+    .kt-plan-head{ flex-direction: column; align-items: flex-start; gap: 2px; }
   }
