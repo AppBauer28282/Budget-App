@@ -5,16 +5,16 @@
    abgeschlossenen Monat direkt die schreibgeschützte Belegansicht gezeigt —
    ein editierbares "sheet" existiert für abgeschlossene Monate gar nicht.
    ============================================================================= */
-import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=11';
-import { el } from './dom.js?v=11';
-import { monthKey } from './utils.js?v=11';
-import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey } from './storage.js?v=11';
-import { renderMonth } from './render.js?v=11';
+import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=12';
+import { el } from './dom.js?v=12';
+import { monthKey } from './utils.js?v=12';
+import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey } from './storage.js?v=12';
+import { renderMonth } from './render.js?v=12';
 // Zirkulärer Import: receipt.js importiert umgekehrt showOverview aus diesem
 // Modul (für den Rückweg von der Belegansicht eines abgeschlossenen Monats
 // zur Übersicht). Sicher, weil beide Seiten die importierte Funktion erst
 // in späteren Event-Handlern aufrufen, nie beim Modul-Start.
-import { openReceipt } from './receipt.js?v=11';
+import { openReceipt } from './receipt.js?v=12';
 
 export function showOverview(){
   el.sheet.hidden = true;
@@ -32,13 +32,29 @@ function renderMonthListItems(listEl, entries, emptyText){
     fragment.appendChild(li);
   } else {
     entries.forEach(entry => {
+      const key = monthKey(entry.year, entry.monthIndex);
       const li = document.createElement('li');
+      li.className = 'month-row';
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'month-list-item';
       btn.textContent = entry.monthName + ' ' + entry.year;
-      btn.dataset.key = monthKey(entry.year, entry.monthIndex);
+      btn.dataset.key = key;
       li.appendChild(btn);
+
+      // Löscht den kompletten Monat (offen wie abgeschlossen) — der Schlüssel
+      // wird dadurch wieder frei, der Monat lässt sich anschließend über
+      // "Hinzufügen" wie neu anlegen, ganz ohne die alten Einträge.
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'month-delete-btn';
+      delBtn.dataset.key = key;
+      delBtn.textContent = '✕';
+      delBtn.setAttribute('aria-label', entry.monthName + ' ' + entry.year + ' löschen');
+      delBtn.title = 'Monat löschen';
+      li.appendChild(delBtn);
+
       fragment.appendChild(li);
     });
   }
@@ -77,6 +93,26 @@ function handleMonthListClick(e){
 }
 el.openMonthList.addEventListener('click', handleMonthListClick);
 el.closedMonthList.addEventListener('click', handleMonthListClick);
+
+// Löscht einen Monat komplett — offen wie abgeschlossen. Danach ist der
+// Schlüssel wieder frei und der Monat lässt sich über "Hinzufügen" neu
+// anlegen, ganz ohne die alten Einträge — so, als wäre er nie bearbeitet
+// worden. Unwiderruflich, deshalb mit Sicherheitsabfrage wie beim
+// Abschließen eines Monats.
+function handleMonthListDelete(e){
+  const btn = e.target.closest('.month-delete-btn');
+  if(!btn) return;
+  const key = btn.dataset.key;
+  const entry = allData.monthEntries[key];
+  if(!entry) return;
+  const label = entry.monthName + ' ' + entry.year;
+  if(!confirm(label + ' wirklich löschen? Alle Einträge dieses Monats gehen unwiderruflich verloren.')) return;
+  delete allData.monthEntries[key];
+  saveAll(true);
+  renderOverview();
+}
+el.openMonthList.addEventListener('click', handleMonthListDelete);
+el.closedMonthList.addEventListener('click', handleMonthListDelete);
 
 function handleAddMonth(){
   const monthIndex = Number(el.addMonthSelect.value);
