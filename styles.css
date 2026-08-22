@@ -137,11 +137,20 @@
     border-top: 1px solid var(--line);
   }
   .month-list li{ border-bottom: 1px solid var(--line); }
+  /* Zeile aus zwei Geschwister-Buttons: öffnet den Monat, bzw. löscht ihn.
+     Kein Button im Button (ungültiges HTML) — deshalb zwei Buttons
+     nebeneinander statt der Löschen-Aktion innerhalb der Öffnen-Fläche. */
+  .month-row{
+    display:flex;
+    align-items:center;
+    gap: 4px;
+  }
   .month-list-item{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    width:100%;
+    flex: 1;
+    min-width: 0;
     padding: 13px 2px;
     background:none;
     border:none;
@@ -161,6 +170,23 @@
   .month-list-item:focus-visible{
     outline: 2px solid var(--brass);
     outline-offset: -2px;
+  }
+  /* Gleiche Optik wie die übrigen Lösch-Buttons der App (z. B. bei
+     Sonstige-Ausgaben-Einträgen) — borderless, zurückhaltend rot. */
+  .month-delete-btn{
+    flex-shrink:0;
+    background:none;
+    border:none;
+    color: var(--error);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 4px 2px 4px 8px;
+    cursor:pointer;
+  }
+  .month-delete-btn:hover{ color: var(--ink); }
+  .month-delete-btn:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
   }
   .month-list-empty{
     font-size: 12px;
