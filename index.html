@@ -69,16 +69,29 @@
       <p class="eyebrow">Monatsbudget</p>
       <h1>Deine Monate</h1>
     </div>
-    <button type="button" class="icon-btn" id="salary-calc-btn"
-            aria-label="Gehaltsrechner öffnen" title="Gehaltsrechner">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-        <rect x="2.5" y="6.5" width="19" height="11" rx="2"/>
-        <circle cx="12" cy="12" r="2.4"/>
-        <path d="M6.1 12h.01"/>
-        <path d="M17.9 12h.01"/>
-      </svg>
-    </button>
+    <div class="overview-head-tools">
+      <button type="button" class="icon-btn" id="salary-calc-btn"
+              aria-label="Gehaltsrechner öffnen" title="Gehaltsrechner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <rect x="2.5" y="6.5" width="19" height="11" rx="2"/>
+          <circle cx="12" cy="12" r="2.4"/>
+          <path d="M6.1 12h.01"/>
+          <path d="M17.9 12h.01"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn" id="konsum-btn"
+              aria-label="Konsumtopf öffnen" title="Konsumtopf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M10.1 2.6h3.8l-1.1 3.1h-1.6z"/>
+          <path d="M11.2 5.7C8 6.9 5.2 10.4 5.2 14.1c0 4.2 2.8 6.4 6.8 6.4s6.8-2.2 6.8-6.4c0-3.7-2.8-7.2-6-8.4"/>
+          <path d="M14 11.9a3.1 3.1 0 1 0 0 4.4"/>
+          <path d="M9.4 13.3h4.1"/>
+          <path d="M9.4 14.9h4.1"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <div class="add-month-row">
@@ -504,6 +517,121 @@
   </div>
 </div>
 
+<!-- Konsumtopf-Overlay: eigenständiges Planungswerkzeug hinter dem Geldsack-
+     Symbol rechts oben. Plant über 12 Monate hinweg Rücklagen und geplante
+     Konsum-Posten und zeigt den Füllstand des "Topfes". Speichert unter einem
+     eigenen Schlüssel und rührt die Budget-Daten nicht an. -->
+<div class="receipt-overlay konsum-overlay" id="konsum-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="konsum-title">
+    <div class="receipt-head">
+      <h2 id="konsum-title">Konsumtopf</h2>
+      <button type="button" class="receipt-close" id="konsum-close" aria-label="Konsumtopf schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+
+      <div class="kt-grid">
+        <!-- Füllstand -->
+        <div class="kt-sack-card">
+          <p class="kt-eyebrow">Stand im Topf</p>
+          <div class="kt-sack-label" id="kt-sack-label">Ende August</div>
+          <div class="kt-sack-value" id="kt-sack-value">0 €</div>
+
+          <svg class="kt-sack" viewBox="0 0 270 250" role="img" aria-labelledby="kt-sack-title">
+            <title id="kt-sack-title">Füllstand des Konsumtopfes</title>
+            <defs>
+              <clipPath id="kt-body-clip">
+                <path d="M70 72 C46 92, 26 128, 26 164 C26 204, 60 226, 100 226 C140 226, 174 204, 174 164 C174 128, 154 92, 130 72 Z"/>
+              </clipPath>
+            </defs>
+            <path d="M70 72 C46 92, 26 128, 26 164 C26 204, 60 226, 100 226 C140 226, 174 204, 174 164 C174 128, 154 92, 130 72 Z"
+                  fill="#e2e4dc" stroke="#8a7355" stroke-width="2"/>
+            <g clip-path="url(#kt-body-clip)">
+              <rect id="kt-fill" class="kt-fill-rect" x="20" y="226" width="160" height="0" fill="#3c6e4f" opacity="0.85"/>
+              <rect id="kt-fill-edge" class="kt-fill-rect" x="20" y="226" width="160" height="2" fill="#14202b" opacity="0.25"/>
+            </g>
+            <path d="M72 36 C84 28, 116 28, 128 36 L130 72 L70 72 Z" fill="#e2e4dc" stroke="#8a7355" stroke-width="2"/>
+            <rect x="64" y="56" width="72" height="11" rx="5.5" fill="#8a7355" opacity="0.5"/>
+            <path d="M78 32 C92 24, 108 24, 122 32" fill="none" stroke="#8a7355" stroke-width="2" opacity="0.7"/>
+            <line x1="176" y1="72"  x2="192" y2="72"  stroke="rgba(20,32,43,0.16)" stroke-width="1"/>
+            <line x1="176" y1="226" x2="192" y2="226" stroke="rgba(20,32,43,0.16)" stroke-width="1"/>
+            <text class="kt-tick" x="197" y="75">2.500 € max</text>
+            <text class="kt-tick" x="197" y="229">0 €</text>
+          </svg>
+
+          <div class="kt-sack-status" id="kt-sack-status">—</div>
+        </div>
+
+        <!-- Monatsplanung -->
+        <div>
+          <p class="kt-eyebrow">Monat planen</p>
+          <div class="kt-tabs" id="kt-tabs"></div>
+
+          <div class="kt-plan-head">
+            <p class="kt-plan-title" id="kt-plan-title">August</p>
+            <p class="kt-carry-in">Übertrag aus Vormonat: <b id="kt-carry-in">0 €</b></p>
+          </div>
+
+          <div class="kt-field-row">
+            <label for="kt-rueck">Rücklage</label>
+            <input type="text" inputmode="decimal" id="kt-rueck" class="kt-num" value="300" autocomplete="off">
+          </div>
+
+          <p class="kt-eyebrow">Geplante Posten</p>
+          <div class="kt-items" id="kt-items"></div>
+          <div class="kt-item-entry">
+            <label class="visually-hidden" for="kt-new-name">Bezeichnung</label>
+            <input type="text" id="kt-new-name" placeholder="Bezeichnung" maxlength="80" autocomplete="off">
+            <label class="visually-hidden" for="kt-new-amount">Betrag in Euro</label>
+            <input type="text" id="kt-new-amount" class="kt-num" inputmode="decimal" placeholder="0" autocomplete="off">
+            <button type="button" class="kt-add-btn" id="kt-add-item">Hinzufügen</button>
+          </div>
+
+          <div class="kt-calc" id="kt-calc"></div>
+        </div>
+      </div>
+
+      <p class="kt-section-title">Jahresverlauf</p>
+      <svg class="kt-chart" id="kt-chart" viewBox="0 0 480 132" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+
+      <div class="kt-table">
+        <div class="kt-trow kt-thead">
+          <div class="kt-mo">Monat</div>
+          <div class="kt-carry">Übertrag</div>
+          <div>Rücklage</div>
+          <div>Konsum</div>
+          <div>Rest</div>
+          <div class="kt-posten">Posten</div>
+        </div>
+        <div id="kt-rows"></div>
+        <div class="kt-tfoot" id="kt-tfoot"></div>
+      </div>
+
+      <p class="kt-section-title">Bucket-List</p>
+      <div class="kt-bl-entry">
+        <label class="visually-hidden" for="kt-bl-month">Monat</label>
+        <select id="kt-bl-month"></select>
+        <label class="visually-hidden" for="kt-bl-topic">Thema</label>
+        <input type="text" id="kt-bl-topic" placeholder="Thema" maxlength="80" autocomplete="off">
+        <label class="visually-hidden" for="kt-bl-sum">Betrag in Euro</label>
+        <input type="text" id="kt-bl-sum" class="kt-num" inputmode="decimal" placeholder="0" autocomplete="off">
+        <button type="button" class="kt-add-btn" id="kt-bl-add">Hinzufügen</button>
+      </div>
+      <div id="kt-bl-list"></div>
+      <div class="kt-bl-foot" id="kt-bl-foot"></div>
+
+      <p class="kt-section-title">Notizen</p>
+      <textarea id="kt-notes" rows="6" maxlength="2000" placeholder="Regeln, Merkposten, Ideen …"></textarea>
+
+      <div class="kt-tools">
+        <label for="kt-start">Startübertrag</label>
+        <input type="text" inputmode="decimal" id="kt-start" class="kt-num" value="0" autocomplete="off">
+        <span class="kt-saved" id="kt-saved">gespeichert</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- Firebase über die klassische "Compat"-Variante laden (normale <script>-Tags,
      kein type="module") — einfacher Direkteinbinden per CDN, unabhängig von
      Modul-Unterstützung. Diese klassischen Skripte laufen garantiert VOR dem
@@ -520,7 +648,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=13"></script>
+<script type="module" src="js/app.js?v=14"></script>
 
 </body>
 </html>
