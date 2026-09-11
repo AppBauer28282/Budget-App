@@ -6,12 +6,12 @@
    <path> per Trigonometrie berechnet. Gleiche Anzeigelogik wie der Beleg
    (Overlay, nur per Button sichtbar).
    ============================================================================= */
-import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS } from './constants.js?v=19';
-import { el } from './dom.js?v=19';
-import { formatCents } from './utils.js?v=19';
-import { computeTotals, sumEntries } from './compute.js?v=19';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=19';
-import { openOverlay, closeOverlay } from './overlays.js?v=19';
+import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS } from './constants.js?v=20';
+import { el } from './dom.js?v=20';
+import { formatCents } from './utils.js?v=20';
+import { computeTotals, sumEntries } from './compute.js?v=20';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=20';
+import { openOverlay, closeOverlay } from './overlays.js?v=20';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
