@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=18';
+import { openOverlay, closeOverlay } from './overlays.js?v=19';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -659,7 +659,6 @@ function buildPenCard(pen, showForecast){
   const unitsError = elem('p', 'pt-error');
   unitsError.hidden = true;
   unitsField.appendChild(unitsError);
-  unitsField.appendChild(elem('p', 'pt-hint', 'Nachträglich änderbar, falls der Pen mehr oder weniger Einheiten enthält als angenommen.'));
 
   unitsBtn.addEventListener('click', () => {
     const value = parseInt(unitsInput.value, 10);
@@ -691,7 +690,7 @@ function buildPenCard(pen, showForecast){
       // Datum und Menge liegen in einem eigenen Kasten, damit sie auf
       // schmalen Displays gemeinsam umbrechen und das Löschkreuz stehen bleibt.
       const inner = elem('span', 'pt-week-inner');
-      inner.appendChild(elem('span', 'pt-week-when', weekLabel(entry.date) + ' · ' + fmtDate(entry.date)));
+      inner.appendChild(elem('span', 'pt-week-when', weekLabel(entry.date)));
       const mg = (entry.units / UNITS_PER_FULL_DOSE) * pen.doseMg;
       const amount = elem('span', 'pt-week-units', entry.units + ' E. · ' + fmtNum(mg, 2) + ' mg');
       amount.appendChild(elem('span', 'pt-week-cost', ' · ' + fmtEur(entry.units * ppu)));

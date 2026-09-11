@@ -5,7 +5,7 @@
    ausgewertet werden, ist `el` faktisch ein Singleton, das von allen
    anderen Modulen importiert wird.
    ============================================================================= */
-import { fcKeys } from './constants.js?v=18';
+import { fcKeys } from './constants.js?v=19';
 
 export const el = {
   overviewScreen:  document.getElementById('overview-screen'),
