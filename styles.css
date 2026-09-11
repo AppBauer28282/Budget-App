@@ -2143,11 +2143,24 @@
   .pt-img{ display: block; width: 100%; height: auto; border: 1px solid var(--line); }
 
   @media (max-width: 520px){
-    .pt-kpi-grid{ grid-template-columns: repeat(2, 1fr); }
     .pt-field-row{ grid-template-columns: 1fr; }
     /* Datum und Menge untereinander — nebeneinander bricht die Zeile sonst
        mitten im Betrag um. */
     .pt-week-row{ align-items: flex-start; }
     .pt-week-inner{ flex-direction: column; align-items: flex-start; gap: 1px; }
     .pt-week-units{ text-align: left; }
+  }
+
+  /* Drei Spalten bleiben bis hier bequem lesbar — Zelle etwas schlanker,
+     damit auch längere Werte (Datum, €-Beträge) einzeilig passen. */
+  @media (max-width: 400px){
+    .pt-kpi{ padding: 8px 6px 9px; }
+    .pt-kpi-value{ font-size: 15px; }
+    .pt-kpi-value-sm{ font-size: 11.5px; }
+  }
+
+  /* Erst unterhalb praktisch nicht mehr genutzter Displaybreiten auf zwei
+     Spalten zurückfallen. */
+  @media (max-width: 340px){
+    .pt-kpi-grid{ grid-template-columns: repeat(2, 1fr); }
   }
