@@ -212,7 +212,10 @@ function intOrNull(value, min, max){
 }
 function isIsoDate(value){
   if(typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(value + 'T00:00:00');
+  // Als UTC parsen (nicht lokal) — sonst verschiebt toISOString() das Datum
+  // in jeder Zeitzone östlich von UTC (z. B. Deutschland) um einen Tag und
+  // jedes gültige Datum würde fälschlich abgelehnt.
+  const d = new Date(value + 'T00:00:00Z');
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 }
 /* Liest den Wert eines Datumsfelds robust aus: normalerweise liefert
