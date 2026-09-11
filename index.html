@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Kontor — Monatsbudget</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kontor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+
+<!--
+  Schriften über <link> statt @import: @import in CSS blockiert das Rendering
+  zusätzlich, weil der Browser erst das CSS parsen muss, bevor er den Font-Request
+  startet. preconnect öffnet die Verbindung schon vorab.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Globaler Fehler-Fänger, ganz am Anfang, damit JEDER Fehler beim Laden
+     (auch aus Firebase-Skripten oder dem Hauptcode) sichtbar auf dem
+     PIN-Bildschirm landet, statt lautlos zu verpuffen. Wichtig auf dem
+     iPhone, wo man keine Entwicklertools zur Hand hat. -->
+<script>
+  window.addEventListener('error', function(e){
+    var el = document.getElementById('lock-error');
+    if(el){
+      el.textContent = 'Technischer Fehler beim Laden: ' + (e.message || 'unbekannt') +
+        (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '');
+    }
+  });
+</script>
+
+<!-- PIN-Sperrbildschirm: sichtbar, bis Firebase-Login erfolgreich war. -->
+<div class="lock-overlay" id="lock-overlay">
+  <div class="lock-card">
+    <p class="eyebrow">Monatsbudget</p>
+    <h1 class="lock-title">Entsperren</h1>
+    <p class="lock-sub">6-stellige PIN eingeben. Beim allerersten Mal wird sie automatisch als deine PIN angelegt.</p>
+
+    <label class="visually-hidden" for="lock-pin">PIN</label>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+           id="lock-pin" placeholder="••••••" autocomplete="off">
+
+    <button type="button" class="lock-submit-btn" id="lock-submit">Weiter</button>
+    <p class="lock-error" id="lock-error" role="alert"></p>
+    <p class="lock-status" id="lock-status"></p>
+  </div>
+</div>
+
+<!-- Erst nach erfolgreichem Login sichtbar (JS entfernt das hidden-Attribut). -->
+<!-- Übersichtsseite: erster Screen nach dem Login. Zeigt alle angelegten
+     Monate, getrennt in offen (bearbeitbar, max. 3 gleichzeitig) und
+     abgeschlossen (nur noch Belegansicht, schreibgeschützt). -->
+<div class="sheet" id="overview-screen" hidden>
+  <!-- Kopfzeile: Titel links, Werkzeug-Symbol (Geldsack) rechts oben. -->
+  <div class="overview-head">
+    <div class="overview-head-titles">
+      <p class="eyebrow">Monatsbudget</p>
+      <h1>Deine Monate</h1>
+    </div>
+    <div class="overview-head-tools">
+      <button type="button" class="icon-btn" id="salary-calc-btn"
+              aria-label="Gehaltsrechner öffnen" title="Gehaltsrechner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <rect x="2.5" y="6.5" width="19" height="11" rx="2"/>
+          <circle cx="12" cy="12" r="2.4"/>
+          <path d="M6.1 12h.01"/>
+          <path d="M17.9 12h.01"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn" id="konsum-btn"
+              aria-label="Konsumtopf öffnen" title="Konsumtopf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M10.1 2.6h3.8l-1.1 3.1h-1.6z"/>
+          <path d="M11.2 5.7C8 6.9 5.2 10.4 5.2 14.1c0 4.2 2.8 6.4 6.8 6.4s6.8-2.2 6.8-6.4c0-3.7-2.8-7.2-6-8.4"/>
+          <path d="M14 11.9a3.1 3.1 0 1 0 0 4.4"/>
+          <path d="M9.4 13.3h4.1"/>
+          <path d="M9.4 14.9h4.1"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn" id="pentracker-btn"
+              aria-label="Pen-Tracker öffnen" title="Pen-Tracker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M12 4.1v16"/>
+          <path d="M7.9 20.1h8.2"/>
+          <path d="M3.4 6.9h2.6c1.9 0 4.3-.9 6-1.8 1.7.9 4.1 1.8 6 1.8h2.6"/>
+          <path d="M6.2 7.2 3.5 13.6h5.4z"/>
+          <path d="M17.8 7.2 15.1 13.6h5.4z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="add-month-row">
+    <label class="visually-hidden" for="add-month-select">Monat</label>
+    <select id="add-month-select"></select>
+    <label class="visually-hidden" for="add-year-select">Jahr</label>
+    <select id="add-year-select"></select>
+    <button type="button" id="add-month-btn">Hinzufügen</button>
+  </div>
+  <div class="cat-error" id="add-month-error" role="alert"></div>
+
+  <details class="section" open>
+    <summary class="section-summary">Offene Monate</summary>
+    <div class="section-body">
+      <ul class="month-list" id="open-month-list"></ul>
+    </div>
+  </details>
+
+  <details class="section" open>
+    <summary class="section-summary">Abgeschlossene Monate</summary>
+    <div class="section-body">
+      <ul class="month-list" id="closed-month-list"></ul>
+    </div>
+  </details>
+
+  <button type="button" class="receipt-btn" id="analysis-btn">Analyse</button>
+
+  <details class="section">
+    <summary class="section-summary">Einstellungen</summary>
+    <div class="section-body">
+      <div class="backup-box">
+        <p class="backup-hint">Alle Monate lokal sichern oder eine gesicherte Datei wieder einlesen.</p>
+        <button type="button" class="receipt-btn" id="export-btn">Sichern (Datei speichern)</button>
+        <label class="receipt-btn" for="import-file">Wiederherstellen</label>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <div class="backup-msg" id="backup-msg" role="status"></div>
+      </div>
+
+      <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
+      <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+
+      <p class="app-version" id="app-version"></p>
+    </div>
+  </details>
+</div>
+
+<!-- Detailansicht eines einzelnen offenen Monats. Wird nur über einen Klick
+     auf einen Eintrag in der Übersicht erreicht (siehe openMonthDetail). -->
+<div class="sheet" id="sheet" hidden>
+  <div class="back-row">
+    <button type="button" class="back-btn" id="back-to-overview-btn" aria-label="Zurück zur Übersicht" title="Zurück zur Übersicht">←</button>
+    <p class="current-month-label" id="current-month-label"></p>
+  </div>
+  <p class="eyebrow">Monatsbudget</p>
+  <h1>Budget im Blick</h1>
+
+  <!-- Gehalt: variiert monatlich. Gespeichert = fixierte Zeile mit Löschen-Button.
+       Noch nicht gespeichert / nach Löschen = Schieberegler zum Einstellen. -->
+  <div class="salary-fixed" id="salary-fixed" hidden>
+    <span class="salary-fixed-label">Gehalt</span>
+    <span class="salary-fixed-right">
+      <span class="salary-fixed-value" id="salary-fixed-value">–</span>
+      <button type="button" class="salary-delete-btn" id="salary-delete-btn"
+              aria-label="Gehalt löschen und neu einstellen" title="Gehalt löschen">✕</button>
+    </span>
+  </div>
+
+  <div class="salary-box" id="salary-box">
+    <div class="salary-head">
+      <label for="salary-slider" class="salary-label">Gehalt diesen Monat</label>
+      <span class="salary-value" id="salary-value">–</span>
+    </div>
+    <input type="range" id="salary-slider" min="2000" max="8000" step="10" value="3250"
+           aria-label="Gehalt in Euro">
+    <div class="salary-range-labels">
+      <span>2.000 €</span>
+      <span>8.000 €</span>
+    </div>
+    <button type="button" class="salary-save-btn" id="salary-save-btn">Speichern</button>
+  </div>
+
+  <!-- Zentrale Kennzahl: Gehalt minus alle erfassten Ausgaben. -->
+  <div class="balance">
+    <span class="label">Verbleibend</span>
+    <span class="amount" id="balance" aria-live="polite">–</span>
+  </div>
+
+  <!-- ============ BEREICH 1: FIXKOSTEN ============ -->
+  <details class="section">
+    <summary class="section-summary"><span class="section-summary-title">Fixkosten <span class="section-summary-total" id="fixkosten-summary-total"></span></span></summary>
+    <div class="section-body">
+      <ul class="costs" id="cost-list"></ul>
+      <div class="summary">
+        <span id="checked-count">0 von 6 angehakt</span>
+        <span id="spent-total">0,00 € ausgegeben</span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 2: SONSTIGE AUSGABEN ============ -->
+  <details class="section">
+    <summary class="section-summary"><span class="section-summary-title">Sonstige Ausgaben <span class="section-summary-total" id="cat-summary-total"></span></span></summary>
+    <div class="section-body">
+      <div class="cat-list" id="cat-list"></div>
+      <div class="cat-grand-total">
+        <span>Gesamtsumme</span>
+        <span class="cat-grand-total-amount" id="cat-grand-total-amount">0,00 €</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="cat-text">Bezeichnung</label>
+        <input type="text" id="cat-text" maxlength="80" autocomplete="off" enterkeyhint="done">
+        <label class="visually-hidden" for="cat-select">Kategorie</label>
+        <select id="cat-select"></select>
+        <label class="visually-hidden" for="cat-amount">Betrag in Euro</label>
+        <input type="number" id="cat-amount" placeholder="€" step="0.01" min="0" max="1000000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="cat-add-btn">Hinzufügen</button>
+      </div>
+      <div class="cat-error" id="cat-error" role="alert"></div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 3: SPAREN ============ -->
+  <details class="section">
+    <summary class="section-summary"><span class="section-summary-title">Sparen <span class="section-summary-total" id="sav-summary-total"></span></span></summary>
+    <div class="section-body">
+      <div class="cat-list" id="sav-list"></div>
+      <div class="cat-grand-total">
+        <span>Gesamtsumme</span>
+        <span class="cat-grand-total-amount" id="sav-grand-total-amount">0,00 €</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="sav-select">Unterkategorie</label>
+        <select id="sav-select"></select>
+        <label class="visually-hidden" for="sav-amount">Betrag in Euro</label>
+        <input type="number" id="sav-amount" placeholder="€" step="0.01" min="0" max="1000000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="sav-add-btn">Hinzufügen</button>
+      </div>
+      <div class="cat-error" id="sav-error" role="alert"></div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 4: FORECAST ============ -->
+  <details class="section">
+    <summary class="section-summary"><span class="section-summary-title">Forecast <span class="section-summary-total" id="forecast-summary-total"></span></span></summary>
+    <div class="section-body">
+      <!-- Basis ist das echte "Verbleibend" von oben — bewusst klein/dezent. -->
+      <div class="forecast-row">
+        <span class="forecast-row-label">Verbleibend</span>
+        <span class="forecast-row-value" id="forecast-base">–</span>
+      </div>
+
+      <!-- Ergebnis-Kachel, optisch klar getrennt von der Abschnitts-Überschrift. -->
+      <div class="forecast-result-box">
+        <span class="forecast-result-label">Forecast</span>
+        <span class="forecast-result-value" id="forecast-result" aria-live="polite">–</span>
+      </div>
+
+      <!-- Automatisch: Fixkosten, die noch nicht abgehakt sind, kommen sicher noch. -->
+      <div class="forecast-static">
+        <span class="forecast-static-label">
+          Restliche Fixkosten
+        </span>
+        <span class="forecast-slider-val" id="forecast-fixed-rest">0,00 €</span>
+      </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-lebensmittel-label">Lebensmittel</span>
+          <span class="forecast-slider-val" id="fc-lebensmittel-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-lebensmittel" min="0" max="800" step="5" value="0"
+               aria-labelledby="fc-lebensmittel-label">
+      </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-konsum-label">Konsum</span>
+          <span class="forecast-slider-val" id="fc-konsum-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-konsum" min="0" max="2000" step="5" value="0"
+               aria-labelledby="fc-konsum-label">
+      </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-sprit-label">Sprit</span>
+          <span class="forecast-slider-val" id="fc-sprit-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-sprit" min="0" max="300" step="5" value="0"
+               aria-labelledby="fc-sprit-label">
+      </div>
+
+      <div class="forecast-slider">
+        <div class="forecast-slider-head">
+          <span id="fc-sonstiges-label">Sonstiges</span>
+          <span class="forecast-slider-val" id="fc-sonstiges-val">0,00 €</span>
+        </div>
+        <input type="range" id="fc-sonstiges" min="0" max="1000" step="5" value="0"
+               aria-labelledby="fc-sonstiges-label">
+      </div>
+
+      <div class="forecast-note">
+        <label for="forecast-note">Notizen</label>
+        <textarea id="forecast-note" rows="5" maxlength="2000"
+                  placeholder="Freie Notizen zur Planung dieses Monats…"></textarea>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ BEREICH 5: KREDITKARTE ============ -->
+  <details class="section">
+    <summary class="section-summary"><span class="section-summary-title">Kreditkarte <span class="section-summary-total" id="card-summary-total"></span></span></summary>
+    <div class="section-body">
+      <div class="forecast-row">
+        <span class="forecast-row-label">Gesamtsaldo</span>
+        <span class="forecast-row-value" id="card-total">–</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="card-restsaldo">Restsaldo in Euro</label>
+        <input type="number" id="card-restsaldo" placeholder="Restsaldo €" step="0.01" min="0" max="2000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="card-save-btn">Speichern</button>
+      </div>
+      <div class="cat-error" id="card-error" role="alert"></div>
+
+      <div class="forecast-row">
+        <span class="forecast-row-label">Verbraucht (Gesamtsaldo − Restsaldo)</span>
+        <span class="forecast-row-value" id="card-used">–</span>
+      </div>
+      <div class="forecast-row">
+        <span class="forecast-row-label">Sonstige Ausgaben (Ist)</span>
+        <span class="forecast-row-value" id="card-cat-total">–</span>
+      </div>
+
+      <div class="forecast-result-box">
+        <span class="forecast-result-label">Differenz</span>
+        <span class="forecast-result-value" id="card-diff" aria-live="polite">–</span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ VERWALTUNG ============ -->
+
+  <button type="button" class="receipt-btn" id="receipt-btn">Belegansicht</button>
+  <button type="button" class="receipt-btn" id="chart-btn">Diagrammansicht</button>
+  <button type="button" class="receipt-btn" id="close-month-btn">Monat abschließen</button>
+</div>
+
+<!-- PIN-ändern-Overlay: gleiche Optik wie Beleg/Diagramm. -->
+<div class="receipt-overlay" id="pin-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+    <div class="receipt-head">
+      <h2 id="pin-title">PIN ändern</h2>
+      <button type="button" class="receipt-close" id="pin-close" aria-label="Fenster schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <p class="categories-hint">Aktuelle PIN zur Bestätigung, danach zweimal die neue 6-stellige PIN eingeben.</p>
+
+      <label class="visually-hidden" for="pin-current">Aktuelle PIN</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+             id="pin-current" placeholder="Aktuelle PIN" class="pin-change-input">
+
+      <label class="visually-hidden" for="pin-new">Neue PIN</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+             id="pin-new" placeholder="Neue PIN" class="pin-change-input">
+
+      <label class="visually-hidden" for="pin-new-repeat">Neue PIN wiederholen</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+             id="pin-new-repeat" placeholder="Neue PIN wiederholen" class="pin-change-input">
+
+      <button type="button" class="salary-save-btn" id="pin-change-btn">PIN ändern</button>
+      <p class="lock-error" id="pin-change-error" role="alert"></p>
+      <p class="lock-status" id="pin-change-status"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Beleg-Overlay: wird per JS befüllt und ein-/ausgeblendet. -->
+<div class="receipt-overlay" id="receipt-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="receipt-title">
+    <div class="receipt-head">
+      <h2 id="receipt-title">Beleg</h2>
+      <button type="button" class="receipt-close" id="receipt-close" aria-label="Beleg schließen">✕</button>
+    </div>
+    <div class="receipt-body" id="receipt-body"></div>
+  </div>
+</div>
+
+<!-- Diagramm-Overlay: gleiche Optik wie der Beleg (dieselben CSS-Klassen),
+     eigene IDs, damit JS es unabhängig steuern kann. -->
+<div class="receipt-overlay" id="chart-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="chart-title">
+    <div class="receipt-head">
+      <h2 id="chart-title">Diagramme</h2>
+      <button type="button" class="receipt-close" id="chart-close" aria-label="Diagramme schließen">✕</button>
+    </div>
+    <div class="receipt-body" id="chart-body"></div>
+  </div>
+</div>
+
+<!-- Analyse-Overlay: monatsübergreifende Auswertung über alle gespeicherten
+     Monate (offen und abgeschlossen). Filter-Checkboxen werden per JS
+     befüllt (analysis.js), Ergebnis (Diagramm + kumulierte Liste)
+     aktualisiert sich live bei jeder Filteränderung. -->
+<div class="receipt-overlay" id="analysis-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="analysis-title">
+    <div class="receipt-head">
+      <h2 id="analysis-title">Analyse</h2>
+      <button type="button" class="receipt-close" id="analysis-close" aria-label="Analyse schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <div class="analysis-filter-row">
+        <label for="analysis-year" class="month-label">Jahr</label>
+        <select id="analysis-year"></select>
+      </div>
+
+      <div class="analysis-filter-head">
+        <p class="analysis-filter-label">Monate</p>
+        <button type="button" class="analysis-toggle-all" id="analysis-months-toggle">Alle abwählen</button>
+      </div>
+      <div class="analysis-filter-grid" id="analysis-months"></div>
+
+      <div class="analysis-filter-head">
+        <p class="analysis-filter-label">Kategorien</p>
+        <button type="button" class="analysis-toggle-all" id="analysis-categories-toggle">Alle abwählen</button>
+      </div>
+      <div class="analysis-filter-grid" id="analysis-categories"></div>
+
+      <div id="analysis-results"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Gehaltsrechner-Overlay: eigenständiges Werkzeug hinter dem Geldsack-Symbol
+     rechts oben in der Übersicht. Rechnet aus der Entgelttabelle das Brutto
+     hoch und daraus das Netto (Rechtsstand 2026). Greift bewusst NICHT auf die
+     Budget-Daten zu und speichert nichts — reiner Rechner. -->
+<div class="receipt-overlay salary-calc-overlay" id="salary-calc-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="salary-calc-title">
+    <div class="receipt-head">
+      <h2 id="salary-calc-title">Gehaltsrechner</h2>
+      <button type="button" class="receipt-close" id="salary-calc-close" aria-label="Gehaltsrechner schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <p class="sc-lead">Entgelttabelle KT1–KT5 · Brutto-Netto nach Rechtsstand 2026
+        (NRW, Steuerklasse 1, kinderlos, ohne Kirchensteuer)</p>
+
+      <p class="sc-section-title">1 · Gehalt</p>
+      <div class="sc-grid">
+        <div class="sc-field">
+          <label for="sc-stufe">Stufe</label>
+          <select id="sc-stufe">
+            <option value="-3">-3</option>
+            <option value="+3">+3</option>
+            <option value="+5">+5</option>
+            <option value="+7">+7</option>
+            <option value="+9">+9</option>
+          </select>
+        </div>
+
+        <div class="sc-field">
+          <label for="sc-gruppe">Gruppe</label>
+          <select id="sc-gruppe"></select>
+        </div>
+
+        <div class="sc-field">
+          <label for="sc-stunden">Wochenstunden</label>
+          <input type="range" id="sc-stunden" min="30" max="39.5" step="0.5" value="39.5">
+          <span class="sc-val sc-num" id="sc-stunden-val"></span>
+        </div>
+
+        <div class="sc-field">
+          <label for="sc-prozent">Erhöhung</label>
+          <input type="range" id="sc-prozent" min="0" max="5" step="0.05" value="0">
+          <span class="sc-val sc-num" id="sc-prozent-val"></span>
+        </div>
+      </div>
+
+      <div class="sc-out">
+        <div class="sc-cap">Brutto pro Monat</div>
+        <div class="sc-big sc-num" id="sc-monat-out">–</div>
+        <div class="sc-dev" id="sc-dev-monat"></div>
+
+        <div class="sc-cap sc-cap-spaced">Brutto pro Jahr</div>
+        <div class="sc-mid sc-num" id="sc-jahr-out">–</div>
+        <div class="sc-dev" id="sc-dev-jahr"></div>
+
+        <div class="sc-growth" id="sc-growth"></div>
+      </div>
+
+      <p class="sc-section-title">2 · Brutto zu Netto</p>
+      <div class="sc-grid">
+        <div class="sc-field">
+          <label for="sc-kvz">Zusatzbeitrag Krankenkasse (gesamt, %)</label>
+          <input type="text" id="sc-kvz" value="2,99" inputmode="decimal" autocomplete="off">
+        </div>
+        <div class="sc-field">
+          <label id="sc-modus-label">Zeitraum</label>
+          <div class="sc-seg" role="group" aria-labelledby="sc-modus-label">
+            <button type="button" id="sc-btn-monat" aria-pressed="true">Monat</button>
+            <button type="button" id="sc-btn-jahr" aria-pressed="false">Jahr</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-rows" id="sc-rows"></div>
+
+      <div class="sc-out">
+        <div class="sc-cap" id="sc-netto-cap">Netto pro Monat</div>
+        <div class="sc-big sc-num" id="sc-netto-out">–</div>
+        <div class="sc-dev" id="sc-dev-netto"></div>
+      </div>
+
+      <p class="sc-note">Lohnsteuer nach dem Programmablaufplan 2026 (Vorsorgepauschale,
+        § 39b EStG). Ohne individuelle Freibeträge – Näherungswert, keine verbindliche
+        Abrechnung.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Konsumtopf-Overlay: eigenständiges Planungswerkzeug hinter dem Geldsack-
+     Symbol rechts oben. Plant über 12 Monate hinweg Rücklagen und geplante
+     Konsum-Posten und zeigt den Füllstand des "Topfes". Speichert unter einem
+     eigenen Schlüssel und rührt die Budget-Daten nicht an. -->
+<div class="receipt-overlay konsum-overlay" id="konsum-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="konsum-title">
+    <div class="receipt-head">
+      <h2 id="konsum-title">Konsumtopf</h2>
+      <button type="button" class="receipt-close" id="konsum-close" aria-label="Konsumtopf schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+
+      <div class="kt-grid">
+        <!-- Füllstand -->
+        <div class="kt-sack-card">
+          <p class="kt-eyebrow">Stand im Topf</p>
+          <div class="kt-sack-label" id="kt-sack-label">Ende August</div>
+          <div class="kt-sack-value" id="kt-sack-value">0 €</div>
+
+          <svg class="kt-sack" viewBox="0 0 270 250" role="img" aria-labelledby="kt-sack-title">
+            <title id="kt-sack-title">Füllstand des Konsumtopfes</title>
+            <defs>
+              <clipPath id="kt-body-clip">
+                <path d="M70 72 C46 92, 26 128, 26 164 C26 204, 60 226, 100 226 C140 226, 174 204, 174 164 C174 128, 154 92, 130 72 Z"/>
+              </clipPath>
+            </defs>
+            <path d="M70 72 C46 92, 26 128, 26 164 C26 204, 60 226, 100 226 C140 226, 174 204, 174 164 C174 128, 154 92, 130 72 Z"
+                  fill="#e2e4dc" stroke="#8a7355" stroke-width="2"/>
+            <g clip-path="url(#kt-body-clip)">
+              <rect id="kt-fill" class="kt-fill-rect" x="20" y="226" width="160" height="0" fill="#3c6e4f" opacity="0.85"/>
+              <rect id="kt-fill-edge" class="kt-fill-rect" x="20" y="226" width="160" height="2" fill="#14202b" opacity="0.25"/>
+            </g>
+            <path d="M72 36 C84 28, 116 28, 128 36 L130 72 L70 72 Z" fill="#e2e4dc" stroke="#8a7355" stroke-width="2"/>
+            <rect x="64" y="56" width="72" height="11" rx="5.5" fill="#8a7355" opacity="0.5"/>
+            <path d="M78 32 C92 24, 108 24, 122 32" fill="none" stroke="#8a7355" stroke-width="2" opacity="0.7"/>
+            <line x1="176" y1="72"  x2="192" y2="72"  stroke="rgba(20,32,43,0.16)" stroke-width="1"/>
+            <line x1="176" y1="226" x2="192" y2="226" stroke="rgba(20,32,43,0.16)" stroke-width="1"/>
+            <text class="kt-tick" x="197" y="75">2.500 € max</text>
+            <text class="kt-tick" x="197" y="229">0 €</text>
+          </svg>
+
+          <div class="kt-sack-status" id="kt-sack-status">—</div>
+        </div>
+
+        <!-- Monatsplanung -->
+        <div>
+          <p class="kt-eyebrow">Monat planen</p>
+          <div class="kt-tabs" id="kt-tabs"></div>
+
+          <div class="kt-plan-head">
+            <p class="kt-plan-title" id="kt-plan-title">August</p>
+            <p class="kt-carry-in">Übertrag aus Vormonat: <b id="kt-carry-in">0 €</b></p>
+          </div>
+
+          <div class="kt-field-row">
+            <label for="kt-rueck">Rücklage</label>
+            <input type="text" inputmode="decimal" id="kt-rueck" class="kt-num" value="300" autocomplete="off">
+          </div>
+
+          <p class="kt-eyebrow">Geplante Posten</p>
+          <div class="kt-items" id="kt-items"></div>
+          <div class="kt-item-entry">
+            <label class="visually-hidden" for="kt-new-name">Bezeichnung</label>
+            <input type="text" id="kt-new-name" placeholder="Bezeichnung" maxlength="80" autocomplete="off">
+            <label class="visually-hidden" for="kt-new-amount">Betrag in Euro</label>
+            <input type="text" id="kt-new-amount" class="kt-num" inputmode="decimal" placeholder="0" autocomplete="off">
+            <button type="button" class="kt-add-btn" id="kt-add-item">Hinzufügen</button>
+          </div>
+
+          <div class="kt-calc" id="kt-calc"></div>
+        </div>
+      </div>
+
+      <p class="kt-section-title">Jahresverlauf</p>
+      <svg class="kt-chart" id="kt-chart" viewBox="0 0 480 132" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+
+      <div class="kt-table">
+        <div class="kt-trow kt-thead">
+          <div class="kt-mo">Monat</div>
+          <div class="kt-carry">Übertrag</div>
+          <div>Rücklage</div>
+          <div>Konsum</div>
+          <div>Rest</div>
+          <div class="kt-posten">Posten</div>
+        </div>
+        <div id="kt-rows"></div>
+        <div class="kt-tfoot" id="kt-tfoot"></div>
+      </div>
+
+      <p class="kt-section-title">Bucket-List</p>
+      <div class="kt-bl-entry">
+        <label class="visually-hidden" for="kt-bl-month">Monat</label>
+        <select id="kt-bl-month"></select>
+        <label class="visually-hidden" for="kt-bl-topic">Thema</label>
+        <input type="text" id="kt-bl-topic" placeholder="Thema" maxlength="80" autocomplete="off">
+        <label class="visually-hidden" for="kt-bl-sum">Betrag in Euro</label>
+        <input type="text" id="kt-bl-sum" class="kt-num" inputmode="decimal" placeholder="0" autocomplete="off">
+        <button type="button" class="kt-add-btn" id="kt-bl-add">Hinzufügen</button>
+      </div>
+      <div id="kt-bl-list"></div>
+      <div class="kt-bl-foot" id="kt-bl-foot"></div>
+
+      <p class="kt-section-title">Notizen</p>
+      <textarea id="kt-notes" rows="6" maxlength="2000" placeholder="Regeln, Merkposten, Ideen …"></textarea>
+
+      <div class="kt-tools">
+        <label for="kt-start">Startübertrag</label>
+        <input type="text" inputmode="decimal" id="kt-start" class="kt-num" value="0" autocomplete="off">
+        <span class="kt-saved" id="kt-saved">gespeichert</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Pen-Tracker-Overlay: eigenständiges Werkzeug hinter dem Waagen-Symbol
+     rechts oben. Erfasst Pens (Preis, Einheiten, Wochendosen) und das
+     Körpergewicht und rechnet daraus Kosten, BMI und Prognose. Speichert wie
+     der Konsumtopf unter einem eigenen Schlüssel nur auf diesem Gerät und
+     rührt die Budget-Daten nicht an. -->
+<div class="receipt-overlay pt-overlay" id="pentracker-overlay" hidden>
+  <div class="receipt-card pt-card" role="dialog" aria-modal="true" aria-labelledby="pentracker-title">
+    <div class="receipt-head">
+      <h2 id="pentracker-title">Pen-Tracker</h2>
+      <button type="button" class="receipt-close" id="pentracker-close" aria-label="Pen-Tracker schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+
+      <p class="pt-warning" id="pt-storage-warning" hidden></p>
+
+      <div class="pt-kpi-grid">
+        <div class="pt-kpi"><span class="pt-kpi-label">Gewicht</span><span class="pt-kpi-value" id="pt-kpi-weight">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Veränderung</span><span class="pt-kpi-value" id="pt-kpi-change">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Veränderung %</span><span class="pt-kpi-value" id="pt-kpi-change-pct">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Ø pro Woche</span><span class="pt-kpi-value" id="pt-kpi-avg">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">BMI aktuell</span><span class="pt-kpi-value" id="pt-kpi-bmi">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Rest bis Ziel</span><span class="pt-kpi-value" id="pt-kpi-rest">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Fortschritt</span><span class="pt-kpi-value" id="pt-kpi-progress">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Zieltermin</span><span class="pt-kpi-value pt-kpi-value-sm" id="pt-kpi-target-date">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Wochen übrig</span><span class="pt-kpi-value" id="pt-kpi-weeks">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Ø Preis / Dosis</span><span class="pt-kpi-value" id="pt-kpi-cost-dose">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Kosten / kg</span><span class="pt-kpi-value pt-kpi-value-sm" id="pt-kpi-cost-kg">–</span></div>
+        <div class="pt-kpi"><span class="pt-kpi-label">Gesamtkosten</span><span class="pt-kpi-value" id="pt-kpi-total-cost">–</span></div>
+      </div>
+
+      <details class="section pt-section">
+        <summary class="section-summary"><span class="section-summary-title">Pens <span class="section-summary-total" id="pt-pen-count"></span></span></summary>
+        <div class="section-body">
+          <div id="pt-pen-list"></div>
+          <button type="button" class="pt-btn pt-btn-accent pt-btn-full" id="pt-new-pen">+ Neuer Pen</button>
+        </div>
+      </details>
+
+      <details class="section pt-section">
+        <summary class="section-summary"><span class="section-summary-title">Körpergewicht <span class="section-summary-total" id="pt-weight-count"></span></span></summary>
+        <div class="section-body">
+          <div id="pt-weight-list"></div>
+          <button type="button" class="pt-btn pt-btn-accent pt-btn-full" id="pt-new-weight">+ Eintrag</button>
+        </div>
+      </details>
+
+      <details class="section pt-section">
+        <summary class="section-summary"><span class="section-summary-title">Gewichtsverlauf</span></summary>
+        <div class="section-body">
+          <div id="pt-chart"></div>
+          <div class="pt-legend" id="pt-chart-legend"></div>
+        </div>
+      </details>
+
+      <details class="section pt-section">
+        <summary class="section-summary"><span class="section-summary-title">Preise</span></summary>
+        <div class="section-body">
+          <button type="button" class="pt-btn pt-btn-ghost pt-btn-full" id="pt-show-prices">Preisübersicht anzeigen</button>
+          <button type="button" class="pt-btn pt-btn-ghost pt-btn-full" id="pt-show-price-table">Preistabelle (Klicks/Dosen) anzeigen</button>
+        </div>
+      </details>
+
+      <details class="section pt-section">
+        <summary class="section-summary"><span class="section-summary-title">Einstellungen &amp; Sicherung</span></summary>
+        <div class="section-body">
+          <button type="button" class="pt-btn pt-btn-ghost pt-btn-full" id="pt-settings-btn">Größe, Start- und Zielgewicht</button>
+          <button type="button" class="pt-btn pt-btn-ghost pt-btn-full" id="pt-export">Daten sichern (Datei)</button>
+          <label class="pt-btn pt-btn-ghost pt-btn-full pt-file-label" for="pt-import-file">Daten aus Datei laden</label>
+          <input type="file" id="pt-import-file" accept="application/json,.json" class="visually-hidden">
+          <p class="pt-msg" id="pt-backup-msg" role="status"></p>
+          <p class="pt-note">Alle Pen-Tracker-Daten liegen ausschließlich in diesem Browser auf diesem Gerät —
+             sie werden nicht in die Cloud übertragen und sind nicht Teil der Budget-Sicherung.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</div>
+
+<!-- Kleine Dialoge des Pen-Trackers. Liegen über dem Pen-Tracker-Fenster
+     (z-index 150), aber unter dem PIN-Sperrbildschirm (200). -->
+<div class="pt-dialog" id="pt-dlg-pen" hidden>
+  <div class="pt-dialog-card" role="dialog" aria-modal="true" aria-labelledby="pt-dlg-pen-title">
+    <button type="button" class="receipt-close pt-dialog-close" data-pt-close aria-label="Schließen">✕</button>
+    <h3 class="pt-dialog-title" id="pt-dlg-pen-title">Neuen Pen anlegen</h3>
+    <p class="pt-dialog-sub">Wähle zuerst die Dosis pro Injektion.</p>
+    <div class="pt-field">
+      <span class="pt-label">Dosis pro Injektion (mg)</span>
+      <div class="pt-dose-grid" id="pt-dose-grid" role="group" aria-label="Dosis pro Injektion">
+        <button type="button" class="pt-dose" data-dose="2.5">2,5 mg</button>
+        <button type="button" class="pt-dose" data-dose="5">5 mg</button>
+        <button type="button" class="pt-dose" data-dose="7.5">7,5 mg</button>
+        <button type="button" class="pt-dose" data-dose="10">10 mg</button>
+        <button type="button" class="pt-dose" data-dose="12.5">12,5 mg</button>
+        <button type="button" class="pt-dose" data-dose="15">15 mg</button>
+      </div>
+    </div>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-pen-start">Startdatum</label>
+      <input type="date" id="pt-pen-start">
+    </div>
+    <div class="pt-field-row">
+      <div class="pt-field">
+        <label class="pt-label" for="pt-pen-price">Preis des Pens (€)</label>
+        <input type="text" inputmode="decimal" id="pt-pen-price" placeholder="z. B. 383,03">
+      </div>
+      <div class="pt-field">
+        <label class="pt-label" for="pt-pen-units">Einheiten im Pen</label>
+        <input type="number" step="1" min="1" id="pt-pen-units" placeholder="z. B. 240">
+      </div>
+    </div>
+    <p class="pt-hint">240–300 Einheiten sind üblich · 1 volle Dosis = 60 Einheiten.</p>
+    <p class="pt-error" id="pt-pen-error" hidden></p>
+    <div class="pt-dialog-actions">
+      <button type="button" class="pt-btn pt-btn-ghost" data-pt-close>Abbrechen</button>
+      <button type="button" class="pt-btn pt-btn-primary" id="pt-pen-save">Pen anlegen</button>
+    </div>
+  </div>
+</div>
+
+<div class="pt-dialog" id="pt-dlg-week" hidden>
+  <div class="pt-dialog-card" role="dialog" aria-modal="true" aria-labelledby="pt-week-title">
+    <button type="button" class="receipt-close pt-dialog-close" data-pt-close aria-label="Schließen">✕</button>
+    <h3 class="pt-dialog-title" id="pt-week-title">Einheiten eintragen</h3>
+    <p class="pt-dialog-sub">Trage die in dieser Kalenderwoche entnommenen Einheiten ein.</p>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-week-date">Kalenderwoche</label>
+      <input type="date" id="pt-week-date">
+      <p class="pt-hint" id="pt-week-label"></p>
+    </div>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-week-units">Entnommene Einheiten</label>
+      <input type="number" step="1" min="1" id="pt-week-units" placeholder="z. B. 30">
+    </div>
+    <p class="pt-error" id="pt-week-error" hidden></p>
+    <div class="pt-dialog-actions">
+      <button type="button" class="pt-btn pt-btn-ghost" data-pt-close>Abbrechen</button>
+      <button type="button" class="pt-btn pt-btn-primary" id="pt-week-save">Eintragen</button>
+    </div>
+  </div>
+</div>
+
+<div class="pt-dialog" id="pt-dlg-weight" hidden>
+  <div class="pt-dialog-card" role="dialog" aria-modal="true" aria-labelledby="pt-dlg-weight-title">
+    <button type="button" class="receipt-close pt-dialog-close" data-pt-close aria-label="Schließen">✕</button>
+    <h3 class="pt-dialog-title" id="pt-dlg-weight-title">Gewicht eintragen</h3>
+    <p class="pt-dialog-sub">Ein Eintrag pro Kalenderwoche.</p>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-weight-date">Kalenderwoche</label>
+      <input type="date" id="pt-weight-date">
+      <p class="pt-hint" id="pt-weight-label"></p>
+    </div>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-weight-value">Gewicht (kg)</label>
+      <input type="text" inputmode="decimal" id="pt-weight-value" placeholder="z. B. 84,2">
+    </div>
+    <p class="pt-error" id="pt-weight-error" hidden></p>
+    <div class="pt-dialog-actions">
+      <button type="button" class="pt-btn pt-btn-ghost" data-pt-close>Abbrechen</button>
+      <button type="button" class="pt-btn pt-btn-primary" id="pt-weight-save">Eintragen</button>
+    </div>
+  </div>
+</div>
+
+<div class="pt-dialog" id="pt-dlg-settings" hidden>
+  <div class="pt-dialog-card" role="dialog" aria-modal="true" aria-labelledby="pt-dlg-settings-title">
+    <button type="button" class="receipt-close pt-dialog-close" data-pt-close aria-label="Schließen">✕</button>
+    <h3 class="pt-dialog-title" id="pt-dlg-settings-title">Einstellungen</h3>
+    <p class="pt-dialog-sub">Grundlage für BMI, Fortschritt und Prognose.</p>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-set-height">Körpergröße (cm)</label>
+      <input type="number" step="0.1" min="0" id="pt-set-height" placeholder="z. B. 178">
+    </div>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-set-start-weight">Startgewicht (kg)</label>
+      <input type="text" inputmode="decimal" id="pt-set-start-weight" placeholder="z. B. 96,5">
+      <p class="pt-hint">Leer lassen: dann zählt der erste Gewichtseintrag als Start.</p>
+    </div>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-set-start-date">Startdatum</label>
+      <input type="date" id="pt-set-start-date">
+      <p class="pt-hint">Wird zusammen mit dem Startgewicht für „Ø pro Woche“ verwendet.</p>
+    </div>
+    <div class="pt-field">
+      <label class="pt-label" for="pt-set-goal">Zielgewicht (kg)</label>
+      <input type="text" inputmode="decimal" id="pt-set-goal" placeholder="z. B. 80">
+    </div>
+    <p class="pt-error" id="pt-set-error" hidden></p>
+    <div class="pt-dialog-actions">
+      <button type="button" class="pt-btn pt-btn-ghost" data-pt-close>Abbrechen</button>
+      <button type="button" class="pt-btn pt-btn-primary" id="pt-set-save">Speichern</button>
+    </div>
+    <button type="button" class="pt-btn pt-btn-danger pt-btn-full" id="pt-reset-all">Alle Pen-Tracker-Daten löschen</button>
+  </div>
+</div>
+
+<div class="pt-dialog" id="pt-dlg-prices" hidden>
+  <div class="pt-dialog-card pt-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="pt-dlg-prices-title">
+    <button type="button" class="receipt-close pt-dialog-close" data-pt-close aria-label="Schließen">✕</button>
+    <h3 class="pt-dialog-title" id="pt-dlg-prices-title">Preisübersicht</h3>
+    <p class="pt-dialog-sub">Preis je Dosis.</p>
+    <img class="pt-img" id="pt-prices-img" alt="Preisübersicht je Dosis" decoding="async">
+  </div>
+</div>
+
+<div class="pt-dialog" id="pt-dlg-pricetable" hidden>
+  <div class="pt-dialog-card pt-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="pt-dlg-pricetable-title">
+    <button type="button" class="receipt-close pt-dialog-close" data-pt-close aria-label="Schließen">✕</button>
+    <h3 class="pt-dialog-title" id="pt-dlg-pricetable-title">Preistabelle</h3>
+    <p class="pt-dialog-sub">Preis pro Dosis, Klicks pro Dosis, Anzahl Dosen pro Woche.</p>
+    <img class="pt-img" id="pt-pricetable-img" alt="Preistabelle: Klicks und Dosen" decoding="async">
+  </div>
+</div>
+
+<!-- Eigener Bestätigungsdialog statt window.confirm: manche In-App-Browser
+     unterdrücken confirm() stillschweigend, das Löschen liefe dann ins Leere. -->
+<div class="pt-dialog" id="pt-dlg-confirm" hidden>
+  <div class="pt-dialog-card pt-dialog-narrow" role="alertdialog" aria-modal="true" aria-labelledby="pt-confirm-title">
+    <h3 class="pt-dialog-title" id="pt-confirm-title">Bestätigen</h3>
+    <p class="pt-confirm-text" id="pt-confirm-text"></p>
+    <div class="pt-dialog-actions">
+      <button type="button" class="pt-btn pt-btn-ghost" id="pt-confirm-cancel">Abbrechen</button>
+      <button type="button" class="pt-btn pt-btn-primary" id="pt-confirm-ok">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase über die klassische "Compat"-Variante laden (normale <script>-Tags,
+     kein type="module") — einfacher Direkteinbinden per CDN, unabhängig von
+     Modul-Unterstützung. Diese klassischen Skripte laufen garantiert VOR dem
+     App-Modul unten (Module werden wie defer-Skripte erst nach dem Parsen
+     der Seite ausgeführt), daher steht window.firebase beim Start von
+     js/app.js bereits bereit. -->
+<script src="https://www.gstatic.com/firebasejs/12.12.0/firebase-app-compat.js"
+        onerror="document.getElementById('lock-error').textContent='Firebase-Grundmodul (app-compat) konnte nicht geladen werden — Internetverbindung oder Blocker prüfen.'"></script>
+<script src="https://www.gstatic.com/firebasejs/12.12.0/firebase-auth-compat.js"
+        onerror="document.getElementById('lock-error').textContent='Firebase-Auth-Modul konnte nicht geladen werden — Internetverbindung oder Blocker prüfen.'"></script>
+<script src="https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore-compat.js"
+        onerror="document.getElementById('lock-error').textContent='Firebase-Firestore-Modul konnte nicht geladen werden — Internetverbindung oder Blocker prüfen.'"></script>
+
+<!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
+     da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
+     nicht per file://-Doppelklick geöffnet wird. -->
+<script type="module" src="js/app.js?v=17"></script>
+
+</body>
+</html>

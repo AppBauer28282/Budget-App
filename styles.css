@@ -1,0 +1,2153 @@
+  /* =========================================================
+     DESIGN-TOKENS
+     Zentrale Farb- und Linienwerte. Änderungen hier wirken
+     sich auf die gesamte Seite aus.
+     ========================================================= */
+  :root{
+    --ink: #14202b;
+    --ink-soft: #3c4a56;
+    --paper: #eef0ea;
+    --paper-2: #e2e4dc;
+    --brass: #a8783f;
+    --brass-deep: #7f5a2e;
+    --line: rgba(20,32,43,0.16);
+    --error: #9c3b2e;
+    --ok: #3c6e4f;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; margin:0; overflow-x:hidden; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding: 48px 20px;
+    position:relative;
+    min-height:100%;
+  }
+
+  /* Dekoratives Raster im Hintergrund. pointer-events:none, damit es
+     keine Klicks abfängt. */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity:0.35;
+    pointer-events:none;
+  }
+
+  .sheet{
+    position:relative;
+    width:100%;
+    max-width: 560px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -20px rgba(20,32,43,0.35);
+    padding: 44px 40px 36px;
+  }
+  /* Auf kleinen Displays (iPhone) weniger Innenabstand, damit mehr Platz
+     für Inhalte bleibt. */
+  @media (max-width: 520px){
+    body{ padding: 20px 12px; }
+    .sheet{ padding: 28px 20px 24px; }
+  }
+
+  .eyebrow{
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0 0 10px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: clamp(24px, 4vw, 30px);
+    margin: 0 0 8px;
+  }
+  .sub{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height:1.6;
+    margin: 0 0 30px;
+    max-width: 46ch;
+  }
+
+  /* ---------- Monatsauswahl (Übersicht: Hinzufügen-Zeile) ---------- */
+  .month-label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .add-month-row select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 8px 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    cursor:pointer;
+    outline:none;
+  }
+  .add-month-row select:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+
+  /* ---------- Übersichtsseite: Monat hinzufügen ---------- */
+  .add-month-row{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .add-month-row select{ flex: 1 1 120px; min-width: 0; }
+  .add-month-row button{
+    flex: 1 1 auto;
+    padding: 9px 16px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .add-month-row button:hover{ background: var(--brass-deep); }
+
+  /* ---------- Übersichtsseite: Monatslisten ---------- */
+  .month-list{
+    list-style:none;
+    margin: 0 0 4px;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .month-list li{ border-bottom: 1px solid var(--line); }
+  /* Zeile aus zwei Geschwister-Buttons: öffnet den Monat, bzw. löscht ihn.
+     Kein Button im Button (ungültiges HTML) — deshalb zwei Buttons
+     nebeneinander statt der Löschen-Aktion innerhalb der Öffnen-Fläche. */
+  .month-row{
+    display:flex;
+    align-items:center;
+    gap: 4px;
+  }
+  .month-list-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex: 1;
+    min-width: 0;
+    padding: 13px 2px;
+    background:none;
+    border:none;
+    color: var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    text-align:left;
+    cursor:pointer;
+  }
+  .month-list-item::after{
+    content:"→";
+    color: var(--brass-deep);
+    flex-shrink:0;
+    margin-left: 10px;
+  }
+  .month-list-item:hover{ color: var(--brass-deep); }
+  .month-list-item:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: -2px;
+  }
+  /* Gleiche Optik wie die übrigen Lösch-Buttons der App (z. B. bei
+     Sonstige-Ausgaben-Einträgen) — borderless, zurückhaltend rot. */
+  .month-delete-btn{
+    flex-shrink:0;
+    background:none;
+    border:none;
+    color: var(--error);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 4px 2px 4px 8px;
+    cursor:pointer;
+  }
+  .month-delete-btn:hover{ color: var(--ink); }
+  .month-delete-btn:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+  .month-list-empty{
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 10px 2px 14px;
+    list-style:none;
+  }
+
+  /* ---------- Zurück-Button (Detailansicht → Übersicht) ---------- */
+  .back-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .back-btn{
+    width: 32px; height: 32px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    color: var(--ink);
+    font-size: 15px;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .back-btn:hover{ background: var(--ink); color: var(--paper); }
+  .back-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .current-month-label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0;
+  }
+
+  /* ---------- Gehalt (Schieberegler + Speichern) ---------- */
+  .salary-box{
+    margin-bottom: 24px;
+    padding: 16px 18px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+  }
+  .salary-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .salary-label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .salary-value{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 20px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  #salary-slider{
+    width: 100%;
+    accent-color: var(--brass);
+    margin: 6px 0;
+    cursor:pointer;
+  }
+  .salary-range-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .salary-save-btn{
+    width:100%;
+    padding: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .salary-save-btn:hover{ background: var(--brass-deep); }
+
+  /* Fixierte Anzeige, wenn ein Gehalt gespeichert ist. */
+  .salary-fixed{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 2px 2px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .salary-fixed-label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .salary-fixed-right{ display:flex; align-items:center; gap: 10px; }
+  .salary-fixed-value{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 20px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  /* Kleiner roter Kreis-Button zum Löschen — bewusst auffällig, da destruktiv. */
+  .salary-delete-btn{
+    width: 24px; height: 24px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1.5px solid var(--error);
+    border-radius: 50%;
+    color: var(--error);
+    font-size: 12px;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .salary-delete-btn:hover{ background: var(--error); color: var(--paper); }
+  .salary-delete-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  /* ---------- Kopfzahl "Verbleibend" ---------- */
+  .balance{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 12px;
+    padding: 18px 20px;
+    background: var(--ink);
+    color: var(--paper);
+    margin-bottom: 28px;
+  }
+  .balance .label{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(238,240,234,0.6);
+  }
+  .balance .amount{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 30px;
+    color: var(--paper);
+    white-space: nowrap;
+  }
+  /* Negativer Kontostand wird farblich hervorgehoben. */
+  .balance .amount.negative{ color: #d98b7c; }
+
+  /* ---------- Fixkosten-Liste ---------- */
+  ul.costs{
+    list-style:none;
+    margin: 0 0 8px;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  ul.costs li{ border-bottom: 1px solid var(--line); }
+  .cost-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    padding: 13px 2px;
+    cursor:pointer;
+  }
+  /* Eigene Checkbox-Optik, damit sie zum Design passt. */
+  .cost-row input[type="checkbox"]{
+    appearance:none;
+    -webkit-appearance:none;
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--ink-soft);
+    background: var(--paper);
+    cursor:pointer;
+    position:relative;
+    flex-shrink:0;
+    margin: 0;
+  }
+  .cost-row input[type="checkbox"]:checked{
+    background: var(--brass);
+    border-color: var(--brass-deep);
+  }
+  .cost-row input[type="checkbox"]:checked::after{
+    content:"";
+    position:absolute;
+    left:6px; top:2px;
+    width:5px; height:10px;
+    border: solid var(--ink);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .cost-row input[type="checkbox"]:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+  .cost-name{ flex:1; font-size: 13.5px; }
+  .cost-amount{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    margin-top: 18px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- Eintragslisten (Sonstige Ausgaben + Sparen) ---------- */
+  .categories-hint{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    line-height:1.55;
+    margin: 0 0 20px;
+    max-width: 48ch;
+  }
+  .cat-list{ margin-bottom: 18px; }
+  .cat-group{ margin-bottom: 26px; }
+  /* Trennlinie zwischen den Gruppen (nicht vor der ersten), zusätzlich zum
+     größeren Abstand — macht die Kategorie-Grenzen klarer erkennbar. */
+  .cat-group + .cat-group{
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .cat-group-name{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0 0 6px;
+  }
+  .cat-entry-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 8px;
+    font-size: 12.5px;
+    padding: 6px 2px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .cat-entry-text{
+    flex:1;
+    color: var(--ink);
+    overflow-wrap: anywhere; /* lange Wörter brechen um statt zu überlaufen */
+  }
+  .cat-entry-amount{
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  /* Beträge, die das Budget erhöhen (Auflösung Rücklagen), grün mit "+". */
+  .cat-entry-amount.income{ color: var(--ok); font-weight: 600; }
+  /* Gilt für BEIDE Listen (vorher fehlte die Regel für die Sparen-Liste). */
+  .cat-entry-remove{
+    background:none;
+    border:none;
+    color: var(--error);
+    font-size: 13px;
+    line-height:1;
+    cursor:pointer;
+    padding: 4px 2px 4px 8px;
+    flex-shrink:0;
+  }
+  .cat-subtotal{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    padding: 4px 2px 0;
+  }
+  .cat-empty{
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 4px 2px 14px;
+  }
+  .cat-grand-total{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .cat-grand-total-amount{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 17px;
+    white-space: nowrap;
+  }
+
+  /* Eingabezeile: umbruchfähig, damit sie auf schmalen Displays nicht überläuft. */
+  .cat-entry-row{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cat-entry-row input,
+  .cat-entry-row select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 9px 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+  }
+  .cat-entry-row input[type="text"]{ flex: 1 1 120px; min-width: 0; }
+  .cat-entry-row select{ flex: 1 1 130px; min-width: 0; }
+  .cat-entry-row input[type="number"]{ flex: 0 1 100px; min-width: 0; }
+  .cat-entry-row input:focus-visible,
+  .cat-entry-row select:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+  .cat-add-btn{
+    flex: 1 1 auto;
+    padding: 10px 18px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .cat-add-btn:hover{ background: var(--brass-deep); }
+  .cat-error{
+    font-size: 11px;
+    color: var(--error);
+    min-height: 14px;
+    margin-top: 6px;
+  }
+
+  /* ---------- Forecast ---------- */
+  .forecast-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .forecast-row-label{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  /* Bewusst klein und dezent (vorher zu groß/prominent). */
+  .forecast-row-value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight:500;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .forecast-row-value.negative{ color: var(--error); }
+
+  /* Ergebnis-Kachel statt Fließtext-Überschrift, damit sie sich klar von den
+     Abschnitts-Überschriften (Fixkosten, Sparen, …) unterscheidet. */
+  .forecast-result-box{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--brass);
+    padding: 14px 16px;
+    margin: 10px 0 20px;
+  }
+  .forecast-result-label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .forecast-result-value{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 21px;
+    color: var(--brass-deep);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .forecast-result-value.negative{ color: var(--error); }
+
+  .forecast-static{
+    margin-top: 16px;
+    padding: 10px 12px;
+    background: rgba(20,32,43,0.05);
+    border: 1px dashed var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 10px;
+  }
+  .forecast-static-label{ font-size: 12.5px; color: var(--ink-soft); }
+  .forecast-static .forecast-slider-val{
+    color: var(--brass-deep);
+    font-weight: 600;
+  }
+  .forecast-slider{ margin-top: 16px; }
+  .forecast-slider-head{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .forecast-slider-val{
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .forecast-slider input[type="range"]{
+    width:100%;
+    accent-color: var(--brass);
+    cursor:pointer;
+  }
+
+  .forecast-note{ margin-top: 20px; }
+  .forecast-note label{
+    display:block;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .forecast-note textarea{
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    resize: vertical;
+    line-height:1.5;
+  }
+  .forecast-note textarea:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+
+  /* ---------- Ein-/ausklappbare Bereiche ---------- */
+  .section{ margin-top: 28px; }
+  .section summary.section-summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 17px;
+    color: var(--ink);
+  }
+  /* Standard-Dreieck des <details>-Elements in allen Browsern ausblenden. */
+  .section summary.section-summary::-webkit-details-marker{ display:none; }
+  .section summary.section-summary::marker{ content:""; }
+  /* Plus/Minus zeigt den Auf-/Zuklapp-Zustand an. */
+  .section summary.section-summary::after{
+    content: "＋";
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight:400;
+    color: var(--brass-deep);
+  }
+  .section[open] > summary.section-summary::after{ content: "－"; }
+  .section summary.section-summary:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+  .section-body{ padding-top: 18px; }
+
+  /* Kleine Summe neben dem Titel, nur sichtbar wenn der Bereich eingeklappt
+     ist — im aufgeklappten Zustand steht die Summe ohnehin schon im Inhalt. */
+  /* Nimmt die volle Restbreite ein, damit die Summe ganz nach rechts rutscht
+     und direkt neben dem Plus/Minus steht statt gleich hinter dem Titel. */
+  .section-summary-title{
+    display:flex;
+    flex: 1;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+  .section-summary-total{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight:400;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  /* Negative Differenz (Kreditkarte) auch in der Überschrift kenntlich. */
+  .section-summary-total.negative{ color: var(--error); }
+  .section[open] .section-summary-total{ display:none; }
+
+  /* ---------- Zurücksetzen / Sicherung ---------- */
+  .backup-box{
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  .backup-hint{
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height:1.5;
+    margin: 0 0 12px;
+    max-width: 46ch;
+  }
+  .backup-msg{
+    font-size: 11px;
+    color: var(--ok);
+    margin-top: 10px;
+    min-height: 14px;
+    line-height: 1.5;
+  }
+  .backup-msg.error{ color: var(--error); }
+
+  /* Versionsanzeige: unauffällig, dient nur zur Kontrolle, ob eine neue
+     Version geladen wurde (z. B. nach Deployment, gegen Browser-Cache). */
+  .app-version{
+    margin-top: 22px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-align: center;
+    color: var(--ink-soft);
+    opacity: 0.7;
+  }
+
+  /* Nur für Screenreader sichtbar. */
+  .visually-hidden{
+    position:absolute;
+    width:1px; height:1px;
+    padding:0; margin:-1px;
+    overflow:hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border:0;
+  }
+
+  /* ---------- Belegansicht ---------- */
+  .receipt-btn{
+    display: block; /* wichtig für <label class="receipt-btn">, die sonst inline bleiben und width:100% ignorieren würden */
+    width: 100%;
+    margin-top: 26px;
+    padding: 12px 20px;
+    background: transparent;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .receipt-btn:hover{ background: var(--ink); color: var(--paper); }
+
+  .receipt-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(20,32,43,0.55);
+    align-items:flex-start;
+    justify-content:center;
+    padding: 32px 16px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none; /* Standard: unsichtbar */
+  }
+  /* WICHTIG: display:flex nur, wenn das hidden-Attribut NICHT gesetzt ist.
+     Eine feste "display:flex"-Regel auf .receipt-overlay würde das
+     hidden-Attribut wirkungslos machen, da Autor-CSS die eingebaute
+     Browser-Regel [hidden]{display:none} unabhängig von der Spezifität
+     immer überschreibt — genau das war der Bug. */
+  .receipt-overlay:not([hidden]){
+    display:flex;
+  }
+  .receipt-card{
+    width:100%;
+    max-width: 380px;
+    background: #fbfaf6; /* leicht wärmeres Weiß, wirkt wie Bon-Papier */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink);
+  }
+  .receipt-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding: 16px 18px;
+    border-bottom: 1px dashed var(--line);
+    position: sticky;
+    top: 0;
+    background: #fbfaf6;
+  }
+  .receipt-head h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 18px;
+    margin: 0;
+  }
+  .receipt-close{
+    width: 26px; height: 26px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    color: var(--ink);
+    font-size: 12px;
+    cursor:pointer;
+    padding:0;
+    flex-shrink:0;
+  }
+  .receipt-close:hover{ background: var(--ink); color: var(--paper); }
+
+  .receipt-body{ padding: 18px; font-size: 12.5px; }
+
+  .receipt-month{
+    text-align:center;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+  }
+  .receipt-section-title{
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin: 18px 0 8px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .receipt-section-title:first-of-type{ border-top: none; padding-top: 0; margin-top: 0; }
+  .receipt-subgroup{
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 10px 0 4px;
+  }
+  .receipt-line{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    padding: 3px 0;
+  }
+  .receipt-line-label{ flex:1; overflow-wrap: anywhere; }
+  .receipt-line-amount{ white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .receipt-line-amount.income{ color: var(--ok); font-weight: 600; }
+  .receipt-empty-note{
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 3px 0;
+  }
+  .receipt-total-line{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+  }
+  .receipt-total-line.grand{
+    font-family:'Fraunces', serif;
+    font-size: 16px;
+    border-top: 2px double var(--ink);
+    padding-top: 12px;
+    margin-top: 16px;
+  }
+
+  /* ---------- Diagrammansicht (Tortendiagramme) ---------- */
+  .chart-section-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 15px;
+    margin: 0 0 14px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  /* Kein Trennstrich vor dem allerersten Abschnitt. */
+  .chart-section-title:first-of-type{ border-top:none; padding-top:0; }
+  .chart-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom: 16px;
+  }
+  .chart-svg{ display:block; }
+  .chart-legend{
+    display:flex;
+    flex-direction:column;
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+  .chart-legend-row{
+    display:grid;
+    grid-template-columns: 11px 1fr auto auto;
+    align-items:center;
+    gap: 8px;
+    font-size: 11.5px;
+  }
+  .chart-legend-swatch{
+    width: 11px; height: 11px;
+    border-radius: 2px;
+    flex-shrink:0;
+  }
+  .chart-legend-label{ color: var(--ink); overflow-wrap:anywhere; }
+  .chart-legend-pct{
+    color: var(--brass-deep);
+    font-weight:600;
+    font-variant-numeric: tabular-nums;
+    white-space:nowrap;
+  }
+  .chart-legend-amount{
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space:nowrap;
+  }
+  .chart-total-row{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    font-weight:600;
+    font-size: 12.5px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+  .chart-empty-note{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* ---------- Analyse (monatsübergreifende Auswertung) ---------- */
+  .analysis-filter-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .analysis-filter-row select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 8px 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    cursor:pointer;
+    outline:none;
+  }
+  .analysis-filter-label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brass-deep);
+    margin: 0;
+  }
+  .analysis-filter-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .analysis-toggle-all{
+    background:none;
+    border:none;
+    color: var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    cursor:pointer;
+    padding: 0;
+    flex-shrink:0;
+  }
+  .analysis-toggle-all:hover{ color: var(--brass-deep); }
+  .analysis-toggle-all:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .analysis-filter-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 4px 10px;
+    margin-bottom: 22px;
+  }
+  .analysis-check{
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink);
+    padding: 3px 0;
+    cursor:pointer;
+  }
+  .analysis-check input[type="checkbox"]{
+    appearance:none;
+    -webkit-appearance:none;
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--ink-soft);
+    background: var(--paper);
+    cursor:pointer;
+    position:relative;
+    flex-shrink:0;
+    margin: 0;
+  }
+  .analysis-check input[type="checkbox"]:checked{
+    background: var(--brass);
+    border-color: var(--brass-deep);
+  }
+  .analysis-check input[type="checkbox"]:checked::after{
+    content:"";
+    position:absolute;
+    left:4px; top:1px;
+    width:4px; height:8px;
+    border: solid var(--ink);
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+  }
+  .analysis-check input[type="checkbox"]:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+  .analysis-results-empty{
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 8px 0;
+  }
+
+  /* ---------- PIN-Sperrbildschirm ---------- */
+  .lock-overlay{
+    position: fixed;
+    inset: 0;
+    background: var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+    z-index: 200;
+  }
+  .lock-overlay[hidden]{ display:none; }
+  .lock-card{
+    width: 100%;
+    max-width: 340px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -20px rgba(20,32,43,0.35);
+    padding: 36px 30px;
+    text-align:center;
+  }
+  .lock-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+  .lock-sub{
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin: 0 0 24px;
+  }
+  #lock-pin{
+    width: 100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 26px;
+    letter-spacing: 0.5em;
+    text-align:center;
+    padding: 12px 10px 12px 16px; /* extra links wegen letter-spacing */
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    margin-bottom: 16px;
+  }
+  #lock-pin:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+  .lock-submit-btn{
+    width:100%;
+    padding: 13px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor:pointer;
+  }
+  .lock-submit-btn:hover{ background: var(--brass-deep); }
+  .lock-submit-btn:disabled{ opacity: 0.6; cursor: default; }
+  .lock-error{
+    font-size: 11.5px;
+    color: var(--error);
+    min-height: 16px;
+    margin: 12px 0 0;
+  }
+  .lock-status{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    min-height: 16px;
+    margin: 6px 0 0;
+  }
+
+  /* PIN-Eingabefelder im "PIN ändern"-Fenster — schmaler als der große
+     Lock-Screen-Eingang, aber gleiche Grundoptik. */
+  .pin-change-input{
+    display:block;
+    width: 100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 18px;
+    letter-spacing: 0.3em;
+    text-align:center;
+    padding: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    margin-bottom: 10px;
+  }
+  .pin-change-input:focus-visible{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+
+  /* ---------- Werkzeug-Symbol rechts oben (Übersicht) ---------- */
+  /* Titelblock und Symbol nebeneinander; der Titelblock darf schrumpfen
+     (min-width:0), damit lange Überschriften das Symbol nicht wegdrücken. */
+  .overview-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap: 16px;
+  }
+  .overview-head-titles{ min-width: 0; }
+  .icon-btn{
+    flex-shrink: 0;
+    width: 38px; height: 38px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    color: var(--ink);
+    padding: 0;
+    cursor: pointer;
+  }
+  .icon-btn:hover{ background: var(--ink); color: var(--paper); }
+  .icon-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .icon-btn svg{ width: 21px; height: 21px; display:block; }
+
+  /* ---------- Gehaltsrechner (eigenes Fenster) ---------- */
+  /* Breiter als die übrigen Overlays, da der Rechner ein zweispaltiges
+     Eingaberaster und lange Abzugszeilen enthält. */
+  .salary-calc-overlay .receipt-card{ max-width: 560px; }
+
+  .sc-num{ font-variant-numeric: tabular-nums; }
+
+  .sc-lead{
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0 0 20px;
+  }
+  .sc-section-title{
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--brass-deep);
+    margin: 24px 0 14px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+  .sc-section-title:first-of-type{
+    margin-top: 0; padding-top: 0; border-top: none;
+  }
+
+  .sc-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+  }
+  .sc-field{
+    display:flex; flex-direction:column; gap: 6px;
+    min-width: 0;
+  }
+  .sc-field > label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .sc-field select,
+  .sc-field input[type="text"]{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px;   /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline:none;
+    width: 100%;
+    min-width: 0;
+  }
+  .sc-field select:focus,
+  .sc-field input[type="text"]:focus{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+  .sc-field input[type="range"]{
+    width:100%;
+    accent-color: var(--brass);
+    margin: 4px 0;
+    cursor:pointer;
+  }
+  .sc-val{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .sc-out{
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    text-align:center;
+  }
+  .sc-cap{
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .sc-cap-spaced{ margin-top: 16px; }
+  .sc-big{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 32px;
+    line-height: 1.1;
+  }
+  .sc-mid{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 20px;
+  }
+  .sc-dev{
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+    min-height: 16px;
+  }
+  .sc-growth{
+    font-size: 11px;
+    color: var(--brass-deep);
+    margin-top: 14px;
+    min-height: 16px;
+  }
+
+  /* Umschalter Monat/Jahr — gleiche Invertier-Logik wie die übrigen
+     gefüllten Schaltflächen der App. */
+  .sc-seg{
+    display:inline-flex;
+    align-self: flex-start;   /* sonst zieht die Spalte den Rahmen auf volle Breite */
+    border: 1px solid var(--line);
+  }
+  .sc-seg button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border: none;
+    background: var(--paper);
+    color: var(--ink-soft);
+    cursor:pointer;
+  }
+  .sc-seg button[aria-pressed="true"]{
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .sc-seg button:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .sc-rows{ margin-top: 20px; }
+  .sc-row{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 12.5px;
+  }
+  .sc-row span:last-child{ white-space: nowrap; }
+  .sc-row.neg span:last-child{ color: var(--error); }
+  .sc-row.sum{
+    border-bottom: none;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+    margin-top: 4px;
+    padding-top: 9px;
+  }
+  .sc-row.total{
+    border-bottom: none;
+    border-top: 2px double var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 6px;
+    padding-top: 11px;
+  }
+  .sc-note{
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 520px){
+    .sc-grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Werkzeug-Symbole rechts oben (mehrere nebeneinander) ---------- */
+  .overview-head-tools{
+    display:flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* ---------- Konsumtopf (eigenes Fenster) ---------- */
+  /* Breiter als die übrigen Overlays: enthält Jahrestabelle und ein
+     zweispaltiges Raster aus Füllstand und Monatsplanung. */
+  .konsum-overlay .receipt-card{ max-width: 880px; }
+
+  .kt-eyebrow{
+    font-size: 10.5px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--brass-deep);
+    margin: 0 0 12px;
+  }
+  .kt-section-title{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+    margin: 26px 0 14px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  .kt-num{ text-align: right; }
+
+  .kt-grid{
+    display:grid;
+    grid-template-columns: 250px 1fr;
+    gap: 26px;
+    align-items:start;
+  }
+
+  /* --- Füllstand --- */
+  .kt-sack-card{ text-align:center; }
+  .kt-sack-label{
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .kt-sack-value{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 8px;
+  }
+  .kt-sack{ width:100%; max-width: 190px; height:auto; display:block; margin: 0 auto; }
+  .kt-fill-rect{ transition: y .45s ease, height .45s ease, fill .3s ease; }
+  .kt-tick{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9px;
+    fill: var(--ink-soft);
+  }
+  .kt-sack-status{
+    display:inline-block;
+    margin-top: 10px;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+  }
+
+  /* --- Monatsplanung --- */
+  .kt-tabs{ display:flex; flex-wrap:wrap; gap: 4px; margin-bottom: 16px; }
+  .kt-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor:pointer;
+  }
+  .kt-tab:hover{ color: var(--ink); border-color: var(--brass); }
+  .kt-tab.active{
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    font-weight: 500;
+  }
+  /* Punkt markiert den laufenden Monat. */
+  .kt-tab.now::after{ content:"·"; margin-left: 3px; color: var(--brass); }
+  .kt-tab.active.now::after{ color: var(--paper); }
+  .kt-tab:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .kt-plan-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .kt-plan-title{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    margin: 0;
+  }
+  .kt-carry-in{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .kt-carry-in b{ color: var(--ink); font-weight: 600; }
+
+  .kt-field-row{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .kt-field-row label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .kt-field-row input{ width: 110px; }
+
+  /* Gemeinsame Feldoptik, wie im Rest der App. */
+  .konsum-overlay input[type="text"],
+  .konsum-overlay select,
+  .konsum-overlay textarea{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 16px;   /* >=16px verhindert Auto-Zoom in iOS Safari */
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    outline: none;
+    min-width: 0;
+  }
+  .konsum-overlay textarea{
+    width: 100%;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .konsum-overlay input[type="text"]:focus,
+  .konsum-overlay select:focus,
+  .konsum-overlay textarea:focus{
+    border-color: var(--brass);
+    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  }
+
+  .kt-items{ margin-bottom: 6px; }
+  .kt-item{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    padding: 6px 2px;
+    border-bottom: 1px dashed var(--line);
+    font-size: 12.5px;
+  }
+  .kt-item-name{
+    flex: 1;
+    min-width: 0;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .kt-item-amount{
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-del{
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--error);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 4px 2px 4px 8px;
+    cursor: pointer;
+  }
+  .kt-del:hover{ color: var(--ink); }
+  .kt-del:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .kt-empty{
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 4px 2px 10px;
+  }
+
+  .kt-item-entry{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .kt-item-entry input[type="text"]:first-of-type{ flex: 1 1 120px; }
+  .kt-item-entry input.kt-num{ flex: 0 1 90px; }
+  .kt-add-btn{
+    flex: 1 1 auto;
+    padding: 9px 16px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .kt-add-btn:hover{ background: var(--brass-deep); }
+  .kt-add-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .kt-calc{
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .kt-calc-row{
+    display:flex;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 3px 0;
+    color: var(--ink-soft);
+  }
+  .kt-calc-row span:last-child{
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-calc-row.kt-res{
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+  }
+
+  /* --- Jahresverlauf --- */
+  /* Höhe begrenzt, damit das Diagramm das Fenster nicht dominiert. */
+  .kt-chart{ width:100%; height:auto; max-height: 170px; display:block; margin-bottom: 8px; }
+  .kt-chart rect.kt-bar{ cursor:pointer; }
+
+  .kt-table{ font-size: 12.5px; }
+  .kt-trow, .kt-tfoot{
+    display:grid;
+    grid-template-columns: 46px 1fr 1fr 1fr 1fr 1.9fr;
+    gap: 16px;
+    align-items:center;
+    padding: 7px 4px;
+  }
+  .kt-trow{ cursor:pointer; border-bottom: 1px dashed var(--line); }
+  .kt-trow:hover{ background: var(--paper); }
+  .kt-trow.active{ background: var(--paper); }
+  .kt-trow.now .kt-mo{ color: var(--brass-deep); font-weight: 600; }
+  .kt-trow:focus-visible{ outline: 2px solid var(--brass); outline-offset: -2px; }
+  .kt-thead{
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: default;
+    border-bottom: 1px solid var(--line);
+  }
+  .kt-thead:hover{ background: transparent; }
+  .kt-trow > div, .kt-tfoot > div{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Ohne ausreichende Zeilenhöhe schneidet das overflow:hidden die
+       Umlautpunkte der Großbuchstaben ab (ÜBERTRAG, RÜCKLAGE). */
+    line-height: 1.5;
+  }
+  .kt-trow .kt-mo, .kt-tfoot .kt-mo{ text-align: left; color: var(--ink-soft); }
+  .kt-trow .kt-posten{
+    text-align: left;
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    padding-left: 6px;
+  }
+  .kt-thead .kt-posten{ padding-left: 6px; }
+  .kt-tfoot{
+    border-top: 1px solid var(--ink);
+    border-bottom: none;
+    margin-top: 6px;
+    padding-top: 11px;
+    font-weight: 600;
+  }
+  .kt-tfoot .kt-mo{
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  /* Bedeutungsfarben, passend zur restlichen App. */
+  .kt-good{ color: var(--ok); }
+  .kt-bad{ color: var(--error); }
+  .kt-full{ color: var(--brass-deep); }
+  .kt-dim{ color: var(--ink-soft); }
+
+  /* --- Bucket-List --- */
+  .kt-bl-entry{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items:center;
+    margin-bottom: 14px;
+  }
+  .kt-bl-entry select{ flex: 0 0 auto; cursor:pointer; }
+  .kt-bl-entry #kt-bl-topic{ flex: 1 1 140px; }
+  .kt-bl-entry #kt-bl-sum{ flex: 0 1 90px; }
+
+  .kt-bl-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 7px 2px;
+    border-bottom: 1px dashed var(--line);
+    font-size: 12.5px;
+  }
+  .kt-bl-check{
+    flex: 0 0 18px;
+    width: 18px; height: 18px;
+    padding: 0;
+    border: 1.5px solid var(--ink-soft);
+    background: transparent;
+    color: transparent;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 11px; line-height: 1;
+    cursor: pointer;
+  }
+  .kt-bl-check.on{
+    background: var(--brass);
+    border-color: var(--brass-deep);
+    color: var(--ink);
+  }
+  .kt-bl-check:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .kt-bl-mo{
+    flex: 0 0 30px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .kt-bl-topic{
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .kt-bl-row.done .kt-bl-topic{ color: var(--ink-soft); }
+  .kt-bl-amt{
+    flex: 0 0 76px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-bl-amt.plan{ color: var(--ink-soft); }
+  .kt-bl-diff{
+    flex: 0 0 62px;
+    text-align: right;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .kt-bl-hint{ flex: 0 0 auto; font-size: 11px; color: var(--ink-soft); }
+  .kt-bl-edit{ flex: 0 0 84px; width: 84px; }
+  .kt-bl-ok, .kt-bl-cancel{
+    flex: 0 0 auto;
+    border: none;
+    background: transparent;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+  .kt-bl-ok{ color: var(--ok); }
+  .kt-bl-cancel{ color: var(--ink-soft); }
+  .kt-bl-ok:focus-visible, .kt-bl-cancel:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .kt-bl-foot{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-top: 6px;
+    padding: 11px 2px 2px;
+    border-top: 1px solid var(--ink);
+    font-weight: 600;
+    font-size: 12.5px;
+  }
+
+  /* --- Fußzeile --- */
+  .kt-tools{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+  .kt-tools label{
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .kt-tools input{ width: 110px; }
+  .kt-saved{
+    font-size: 11px;
+    color: var(--ok);
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .kt-saved.on{ opacity: 1; }
+
+  @media (max-width: 720px){
+    .kt-grid{ grid-template-columns: 1fr; gap: 20px; }
+    .kt-trow, .kt-tfoot{ grid-template-columns: 40px 1fr 1fr 1fr; }
+    .kt-trow .kt-carry, .kt-trow .kt-posten,
+    .kt-tfoot .kt-carry, .kt-tfoot .kt-posten{ display:none; }
+    /* Monatsname und Übertragszeile untereinander — nebeneinander wird es
+       auf schmalen Displays zu eng. */
+    .kt-plan-head{ flex-direction: column; align-items: flex-start; gap: 2px; }
+  }
+
+  /* ---------- Pen-Tracker ----------
+     Eigenständiges Werkzeug hinter dem Waagen-Symbol. Die Vorlage kam aus
+     einem dunklen Layout; hier ist alles auf die Papier-Optik der App
+     umgestellt (gleiche Farbmarken, gleiche Schriften). */
+  .pt-card{ max-width: 620px; }
+
+  .pt-warning{
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    background: rgba(156,59,46,0.1);
+    border: 1px solid var(--error);
+    color: var(--error);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  /* Kennzahlen */
+  .pt-kpi-grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 22px;
+  }
+  .pt-kpi{
+    background: var(--paper-2);
+    padding: 9px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .pt-kpi-label{
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .pt-kpi-value{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+    line-height: 1.2;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .pt-kpi-value-sm{ font-size: 13px; }
+
+  .pt-section{ margin-bottom: 0; }
+  .pt-section .section-body > * + *{ margin-top: 10px; }
+
+  /* Schaltflächen */
+  .pt-btn{
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border: 1px solid var(--line);
+    background: var(--paper-2);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .pt-btn:hover{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .pt-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .pt-btn-primary{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .pt-btn-primary:hover{ background: var(--ink-soft); border-color: var(--ink-soft); }
+  .pt-btn-accent{ background: var(--brass); color: var(--paper); border-color: var(--brass); }
+  .pt-btn-accent:hover{ background: var(--brass-deep); border-color: var(--brass-deep); }
+  .pt-btn-danger{ color: var(--error); }
+  .pt-btn-danger:hover{ background: var(--error); color: var(--paper); border-color: var(--error); }
+  .pt-btn-sm{ padding: 6px 10px; font-size: 10px; }
+  .pt-btn-full{ display: block; width: 100%; text-align: center; }
+  .pt-file-label{ display: block; }
+
+  .pt-msg{ margin: 4px 0 0; font-size: 11px; color: var(--ok); line-height: 1.5; }
+  .pt-msg.error{ color: var(--error); }
+  .pt-note{ margin: 4px 0 0; font-size: 10.5px; color: var(--ink-soft); line-height: 1.6; }
+  .pt-hint{ margin: 4px 0 0; font-size: 10.5px; color: var(--ink-soft); line-height: 1.5; }
+  .pt-error{ margin: 6px 0 0; font-size: 11px; color: var(--error); line-height: 1.5; }
+
+  .pt-empty{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 26px 18px;
+    text-align: center;
+    border: 1px dashed var(--line);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .pt-empty strong{ font-size: 13px; color: var(--ink); font-weight: 600; }
+
+  /* Pen-Karten */
+  .pt-pen-card{ border: 1px solid var(--line); margin-bottom: 10px; }
+  .pt-pen-card.closed{ opacity: 0.66; }
+  .pt-pen-head{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 12px;
+    background: var(--paper-2);
+    border: none;
+    font-family: inherit;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+  }
+  .pt-pen-head:focus-visible{ outline: 2px solid var(--brass); outline-offset: -2px; }
+  .pt-pen-id{ display: flex; align-items: center; gap: 9px; min-width: 0; }
+  .pt-vial{
+    position: relative;
+    width: 8px;
+    height: 32px;
+    flex-shrink: 0;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .pt-vial-fill{
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: var(--brass);
+  }
+  .pt-pen-titles{ display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .pt-pen-title{ font-size: 12.5px; font-weight: 600; }
+  .pt-pen-meta{ font-size: 10.5px; color: var(--ink-soft); }
+  .pt-pen-status-wrap{ display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .pt-pen-status{
+    font-size: 8.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+  }
+  .pt-pen-status.active{ color: var(--ok); border-color: var(--ok); }
+  .pt-pen-status.closed{ color: var(--ink-soft); }
+  .pt-chevron{ font-size: 11px; color: var(--ink-soft); transition: transform .2s; }
+  .pt-pen-card.open .pt-chevron{ transform: rotate(180deg); }
+
+  .pt-pen-body{ display: none; padding: 12px; border-top: 1px solid var(--line); }
+  .pt-pen-card.open .pt-pen-body{ display: block; }
+  .pt-pen-body > * + *{ margin-top: 12px; }
+
+  .pt-stats{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .pt-stat{ display: flex; flex-direction: column; gap: 1px; background: var(--paper-2); padding: 7px 9px; }
+  .pt-stat-label{ font-size: 8.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-soft); }
+  .pt-stat-value{ font-size: 12.5px; font-weight: 600; }
+
+  .pt-inline-row{ display: flex; gap: 8px; }
+  .pt-inline-row input{ flex: 1; min-width: 0; }
+
+  .pt-week-list{ border-top: 1px dashed var(--line); }
+  .pt-week-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 11.5px;
+  }
+  .pt-week-inner{ display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex: 1; min-width: 0; }
+  .pt-week-when{ color: var(--ink-soft); flex-shrink: 0; }
+  .pt-week-units{ font-weight: 600; text-align: right; }
+  .pt-week-cost{ font-weight: 400; color: var(--ink-soft); }
+  .pt-del{
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .pt-del:hover{ color: var(--error); }
+  .pt-del:focus-visible{ outline: 2px solid var(--brass); outline-offset: 1px; }
+
+  .pt-pen-actions{ display: flex; flex-wrap: wrap; gap: 6px; }
+  .pt-pen-forecast{ margin: 0; font-size: 10px; color: var(--ink-soft); text-align: right; }
+
+  /* Gewichtsliste */
+  .pt-weight-card{ border: 1px solid var(--line); padding: 0 12px; }
+  .pt-weight-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+  }
+  .pt-weight-row:last-child{ border-bottom: none; }
+  .pt-weight-when{ color: var(--ink-soft); flex-shrink: 0; }
+  .pt-weight-values{ flex: 1; text-align: right; display: flex; justify-content: flex-end; gap: 8px; }
+  .pt-weight-kg{ font-weight: 600; }
+  .pt-weight-trend{ font-size: 11px; }
+  .pt-weight-trend.down{ color: var(--ok); }
+  .pt-weight-trend.up{ color: var(--error); }
+
+  /* Verlaufsdiagramm */
+  .pt-chart-summary{ display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .pt-chart-summary > div{ display: flex; flex-direction: column; gap: 2px; }
+  .pt-chart-summary-right{ text-align: right; }
+  .pt-chart-summary-label{ font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  .pt-chart-summary-value{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 19px; }
+  .pt-chart-empty{ margin: 0; padding: 26px 10px; text-align: center; font-size: 11.5px; color: var(--ink-soft); }
+
+  .pt-chart-wrap{ display: flex; gap: 6px; }
+  /* Höhe wie .pt-chart-bars, damit die absolut gesetzten Beschriftungen
+     dieselbe Nulllinie haben wie die Balken. */
+  .pt-chart-axis{
+    position: relative;
+    box-sizing: border-box;
+    width: 26px;
+    height: 198px;
+    flex-shrink: 0;
+  }
+  .pt-chart-axis span{
+    position: absolute;
+    right: 0;
+    transform: translateY(-50%);
+    font-size: 9px;
+    line-height: 1;
+    color: var(--ink-soft);
+  }
+  .pt-chart-bars{
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    box-sizing: border-box;
+    flex: 1;
+    height: 198px;
+    padding: 0 2px;
+    border-left: 1px solid var(--line);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .pt-gridline{ position: absolute; left: 0; border-top: 1px solid var(--line); pointer-events: none; }
+  .pt-goalline{ position: absolute; left: 0; border-top: 2px dashed var(--error); pointer-events: none; z-index: 2; }
+  .pt-bmiline{ position: absolute; left: 0; border-top: 2px dashed var(--ok); pointer-events: none; z-index: 2; }
+  .pt-line-label{
+    position: absolute;
+    left: 2px;
+    top: -13px;
+    padding: 0 3px;
+    background: var(--paper);
+    font-size: 8.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pt-line-label.goal{ color: var(--error); }
+  .pt-line-label.bmi{ color: var(--ok); }
+
+  .pt-bar-col{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    min-width: 14px;
+    height: 180px;
+    padding-bottom: 18px;
+    flex-shrink: 0;
+  }
+  .pt-bar-col.month-start{ border-left: 1px dashed var(--line); }
+  .pt-bar-col.forecast-start{ border-left: 1px solid var(--ink-soft); }
+  .pt-bar{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 18px;
+    width: 9px;
+  }
+  .pt-bar.forecast-bar{
+    background-image: repeating-linear-gradient(45deg, rgba(238,240,234,0.45) 0 2px, transparent 2px 4px);
+  }
+  .pt-bar-month{
+    position: absolute;
+    left: 2px;
+    bottom: 0;
+    font-size: 8.5px;
+    line-height: 18px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .pt-legend{ display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .pt-legend-item{ display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--ink-soft); }
+  .pt-legend-swatch{ width: 10px; height: 10px; flex-shrink: 0; }
+
+  /* Kleine Dialoge des Pen-Trackers.
+     Liegen über dem Pen-Tracker-Fenster (100), aber unter dem PIN-Sperr-
+     bildschirm (200), damit der Login immer obenauf bleibt. */
+  .pt-dialog{
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px;
+    background: rgba(20,32,43,0.55);
+    overflow-y: auto;
+  }
+  .pt-dialog:not([hidden]){ display: flex; }
+  .pt-dialog-card{
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -20px rgba(20,32,43,0.4);
+    padding: 22px 20px;
+  }
+  .pt-dialog-wide{ max-width: 520px; }
+  .pt-dialog-narrow{ max-width: 330px; }
+  .pt-dialog-close{ position: absolute; top: 12px; right: 12px; }
+  .pt-dialog-title{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0 0 4px;
+    padding-right: 32px;
+  }
+  .pt-dialog-sub{ margin: 0 0 18px; font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+  .pt-confirm-text{ margin: 0; font-size: 12.5px; line-height: 1.6; }
+  .pt-dialog-actions{ display: flex; gap: 10px; margin-top: 20px; }
+  .pt-dialog-actions .pt-btn{ flex: 1; text-align: center; }
+  .pt-dialog-card > .pt-btn-full{ margin-top: 10px; }
+
+  .pt-field + .pt-field, .pt-field-row + .pt-hint{ margin-top: 14px; }
+  .pt-field-row{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .pt-field-row .pt-field + .pt-field{ margin-top: 0; }
+  .pt-label{
+    display: block;
+    margin-bottom: 5px;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .pt-dialog input, .pt-pen-body input{
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 9px 10px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 0;
+  }
+  .pt-dialog input:focus, .pt-pen-body input:focus{
+    outline: none;
+    border-color: var(--brass);
+    background: var(--paper);
+  }
+
+  .pt-dose-grid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .pt-dose{
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 9px 4px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .pt-dose:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .pt-dose.selected{ background: var(--brass); border-color: var(--brass); color: var(--paper); }
+
+  .pt-img{ display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+
+  @media (max-width: 520px){
+    .pt-kpi-grid{ grid-template-columns: repeat(2, 1fr); }
+    .pt-field-row{ grid-template-columns: 1fr; }
+    /* Datum und Menge untereinander — nebeneinander bricht die Zeile sonst
+       mitten im Betrag um. */
+    .pt-week-row{ align-items: flex-start; }
+    .pt-week-inner{ flex-direction: column; align-items: flex-start; gap: 1px; }
+    .pt-week-units{ text-align: left; }
+  }
