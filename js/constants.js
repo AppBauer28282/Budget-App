@@ -20,7 +20,7 @@
 //   sed -i "s/js?v=ALT/js?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v17';
+export const APP_VERSION = 'v18';
 export const APP_VERSION_DATE = '2026-09-11';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden

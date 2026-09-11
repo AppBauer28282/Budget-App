@@ -14,7 +14,7 @@
    Oberfläche kollidieren. Aufbau der Listen über die DOM-API statt über
    innerHTML, wie überall sonst in dieser App.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=17';
+import { openOverlay, closeOverlay } from './overlays.js?v=18';
 
 const MONTHS_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 const MONTHS_FULL  = ['Januar','Februar','März','April','Mai','Juni','Juli',
