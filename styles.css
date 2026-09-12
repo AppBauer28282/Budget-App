@@ -1338,425 +1338,258 @@
     flex-shrink: 0;
   }
 
-  /* ---------- Konsumtopf (eigenes Fenster) ---------- */
-  /* Breiter als die übrigen Overlays: enthält Jahrestabelle und ein
-     zweispaltiges Raster aus Füllstand und Monatsplanung. */
-  .konsum-overlay .receipt-card{ max-width: 880px; }
+  /* ---------- Konsumtopf (eigenes Fenster) ----------
+     Bewusst in iOS-Optik gehalten (helle Systemschrift, weiße Rundkarten,
+     Blau als Aktionsfarbe) und damit abweichend von der Papier-Optik der
+     übrigen App. ALLE Regeln hier hängen an .konsum-overlay — die Vorlage
+     gestaltete nackte Elemente (body, h1, input, button) und generische
+     Klassen (.card, .row, .sum), was ohne diese Verschachtelung jeden
+     anderen Bildschirm mitreißen würde. */
+  .konsum-overlay .receipt-card{
+    max-width: 640px;
+    background: #f2f2f7;
+    color: #1c1c1e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .konsum-overlay .receipt-head{
+    background: #f2f2f7;
+    border-bottom: 1px solid #e2e2e7;
+    padding: 14px 16px;
+  }
+  .konsum-overlay .receipt-head h2{
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: #1c1c1e;
+  }
+  .konsum-overlay .receipt-close{
+    border-color: #c7c7cc;
+    color: #6b6b70;
+    background: #fff;
+  }
+  .konsum-overlay .receipt-close:hover{ background: #e8e8ed; color: #1c1c1e; }
+  .konsum-overlay .receipt-body{ padding: 12px; font-size: 16px; }
 
-  .kt-eyebrow{
-    font-size: 10.5px;
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: var(--brass-deep);
-    margin: 0 0 12px;
+  /* --- Grundbausteine --- */
+  .konsum-overlay label{
+    font-size: 12px;
+    color: #6b6b70;
+    display: block;
+    margin-bottom: 3px;
   }
-  .kt-section-title{
-    font-family:'Fraunces', serif;
-    font-weight: 600;
-    font-size: 15px;
-    margin: 26px 0 14px;
-    padding-top: 18px;
-    border-top: 1px dashed var(--line);
-  }
-  .kt-num{ text-align: right; }
-
-  .kt-grid{
-    display:grid;
-    grid-template-columns: 250px 1fr;
-    gap: 26px;
-    align-items:start;
-  }
-
-  /* --- Füllstand --- */
-  .kt-sack-card{ text-align:center; }
-  .kt-sack-label{
-    font-size: 11px;
-    color: var(--ink-soft);
-    margin-bottom: 4px;
-  }
-  .kt-sack-value{
-    font-family:'Fraunces', serif;
-    font-weight: 600;
-    font-size: 26px;
-    line-height: 1.1;
-    font-variant-numeric: tabular-nums;
-    margin-bottom: 8px;
-  }
-  .kt-sack{ width:100%; max-width: 190px; height:auto; display:block; margin: 0 auto; }
-  .kt-fill-rect{ transition: y .45s ease, height .45s ease, fill .3s ease; }
-  .kt-tick{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 9px;
-    fill: var(--ink-soft);
-  }
-  .kt-sack-status{
-    display:inline-block;
-    margin-top: 10px;
-    font-size: 11px;
-    padding: 4px 10px;
-    border: 1px solid currentColor;
-    border-radius: 999px;
-  }
-
-  /* --- Monatsplanung --- */
-  .kt-tabs{ display:flex; flex-wrap:wrap; gap: 4px; margin-bottom: 16px; }
-  .kt-tab{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    padding: 5px 8px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink-soft);
-    cursor:pointer;
-  }
-  .kt-tab:hover{ color: var(--ink); border-color: var(--brass); }
-  .kt-tab.active{
-    background: var(--ink);
-    color: var(--paper);
-    border-color: var(--ink);
-    font-weight: 500;
-  }
-  /* Punkt markiert den laufenden Monat. */
-  .kt-tab.now::after{ content:"·"; margin-left: 3px; color: var(--brass); }
-  .kt-tab.active.now::after{ color: var(--paper); }
-  .kt-tab:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
-
-  .kt-plan-head{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    gap: 12px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .kt-plan-title{
-    font-family:'Fraunces', serif;
-    font-weight: 600;
-    font-size: 17px;
-    margin: 0;
-  }
-  .kt-carry-in{
-    font-size: 11.5px;
-    color: var(--ink-soft);
-    margin: 0;
-    font-variant-numeric: tabular-nums;
-  }
-  .kt-carry-in b{ color: var(--ink); font-weight: 600; }
-
-  .kt-field-row{
-    display:flex;
-    align-items:center;
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-  .kt-field-row label{
-    font-size: 10.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-  }
-  .kt-field-row input{ width: 110px; }
-
-  /* Gemeinsame Feldoptik, wie im Rest der App. */
-  .konsum-overlay input[type="text"],
+  .konsum-overlay input,
   .konsum-overlay select,
-  .konsum-overlay textarea{
-    font-family:'IBM Plex Mono', monospace;
+  .konsum-overlay button{
+    font-family: inherit;
     font-size: 16px;   /* >=16px verhindert Auto-Zoom in iOS Safari */
-    padding: 8px 10px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    color: var(--ink);
-    outline: none;
+    color: #1c1c1e;
+  }
+  .konsum-overlay input,
+  .konsum-overlay select{
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #d8d8dd;
+    border-radius: 10px;
+    background: #fff;
+    appearance: none;
     min-width: 0;
   }
-  .konsum-overlay textarea{
-    width: 100%;
-    font-size: 13px;
-    line-height: 1.5;
-    resize: vertical;
+  .konsum-overlay input:focus,
+  .konsum-overlay select:focus{
+    outline: 2px solid #0a84ff;
+    outline-offset: -1px;
+    border-color: transparent;
   }
-  .konsum-overlay input[type="text"]:focus,
-  .konsum-overlay select:focus,
-  .konsum-overlay textarea:focus{
-    border-color: var(--brass);
-    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+  .konsum-overlay button{
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 12px;
+    background: #e8e8ed;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .konsum-overlay button:focus-visible{ outline: 2px solid #0a84ff; outline-offset: 2px; }
+  .konsum-overlay .kt-pri{ background: #0a84ff; color: #fff; }
+  .konsum-overlay .kt-gh{ background: transparent; color: #0a84ff; padding: 6px 4px; }
+  .konsum-overlay .kt-del{
+    background: transparent;
+    color: #9b9ba0;
+    padding: 6px 8px;
+    font-size: 18px;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+  /* Erster Klick schärft nur — der Knopf sagt dann, was der zweite tut. */
+  .konsum-overlay .kt-del.arm{
+    background: #ff3b30;
+    color: #fff;
+    font-size: 13px;
+    padding: 6px 10px;
   }
 
-  .kt-items{ margin-bottom: 6px; }
-  .kt-item{
+  .kt-h2{ font-size: 20px; font-weight: 700; margin: 22px 0 2px; }
+  .kt-sub{ font-size: 13px; color: #6b6b70; margin: 0 0 12px; }
+  .kt-hint{ font-size: 11px; color: #8e8e93; margin-top: 6px; }
+  .kt-warn{
+    background: #fff4e5;
+    color: #8a5700;
+    font-size: 13px;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .kt-card{
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .kt-row{ display:flex; align-items:center; gap: 8px; }
+
+  /* --- Topfstand --- */
+  .kt-topf{ background: #1c1c1e; color: #fff; border-radius: 16px; padding: 16px; }
+  .kt-topf .kt-lbl{ font-size: 12px; opacity: 0.65; }
+  .kt-topf .kt-val{ font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+  .kt-topf .kt-mini{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 12px;
+    opacity: 0.75;
+  }
+
+  /* --- Monatskarten --- */
+  .kt-mhead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .kt-mhead:focus-visible{ outline: 2px solid #0a84ff; outline-offset: 4px; border-radius: 4px; }
+  .kt-mname{ font-weight: 700; font-size: 16px; }
+  .kt-mname small{ font-weight: 500; color: #6b6b70; font-size: 12px; display: block; }
+  .kt-badge{
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 9px;
+    background: #e8f6ec;
+    color: #1a7f37;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .kt-badge.neg{ background: #ffe9e7; color: #c0392b; }
+  .kt-mbody{
+    margin-top: 12px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    display: none;
+  }
+  .kt-mbody.open{ display: block; }
+  .kt-posten-liste{ margin-top: 10px; }
+
+  /* --- Posten- und Belegzeilen --- */
+  .kt-posten{
     display:flex;
     align-items:center;
     gap: 8px;
-    padding: 6px 2px;
-    border-bottom: 1px dashed var(--line);
-    font-size: 12.5px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f2f2f5;
   }
-  .kt-item-name{
+  .kt-posten .kt-nm{
     flex: 1;
     min-width: 0;
-    color: var(--ink);
-    overflow-wrap: anywhere;
-  }
-  .kt-item-amount{
-    color: var(--ink-soft);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .kt-del{
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    color: var(--error);
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 13px;
-    padding: 4px 2px 4px 8px;
-    cursor: pointer;
-  }
-  .kt-del:hover{ color: var(--ink); }
-  .kt-del:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
-  .kt-empty{
-    font-size: 12px;
-    color: var(--ink-soft);
-    padding: 4px 2px 10px;
-  }
-
-  .kt-item-entry{
-    display:flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 8px;
-  }
-  .kt-item-entry input[type="text"]:first-of-type{ flex: 1 1 120px; }
-  .kt-item-entry input.kt-num{ flex: 0 1 90px; }
-  .kt-add-btn{
-    flex: 1 1 auto;
-    padding: 9px 16px;
-    background: var(--ink);
-    color: var(--paper);
-    border: none;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-  .kt-add-btn:hover{ background: var(--brass-deep); }
-  .kt-add-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
-
-  .kt-calc{
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid var(--line);
-    font-size: 12.5px;
-  }
-  .kt-calc-row{
-    display:flex;
-    justify-content:space-between;
-    gap: 12px;
-    padding: 3px 0;
-    color: var(--ink-soft);
-  }
-  .kt-calc-row span:last-child{
-    color: var(--ink);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .kt-calc-row.kt-res{
-    margin-top: 8px;
-    padding-top: 10px;
-    border-top: 1px solid var(--ink);
-    font-weight: 600;
-  }
-
-  /* --- Jahresverlauf --- */
-  /* Höhe begrenzt, damit das Diagramm das Fenster nicht dominiert. */
-  .kt-chart{ width:100%; height:auto; max-height: 170px; display:block; margin-bottom: 8px; }
-  .kt-chart rect.kt-bar{ cursor:pointer; }
-
-  .kt-table{ font-size: 12.5px; }
-  .kt-trow, .kt-tfoot{
-    display:grid;
-    grid-template-columns: 46px 1fr 1fr 1fr 1fr 1.9fr;
-    gap: 16px;
-    align-items:center;
-    padding: 7px 4px;
-  }
-  .kt-trow{ cursor:pointer; border-bottom: 1px dashed var(--line); }
-  .kt-trow:hover{ background: var(--paper); }
-  .kt-trow.active{ background: var(--paper); }
-  .kt-trow.now .kt-mo{ color: var(--brass-deep); font-weight: 600; }
-  .kt-trow:focus-visible{ outline: 2px solid var(--brass); outline-offset: -2px; }
-  .kt-thead{
-    font-size: 10px;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    cursor: default;
-    border-bottom: 1px solid var(--line);
-  }
-  .kt-thead:hover{ background: transparent; }
-  .kt-trow > div, .kt-tfoot > div{
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* Ohne ausreichende Zeilenhöhe schneidet das overflow:hidden die
-       Umlautpunkte der Großbuchstaben ab (ÜBERTRAG, RÜCKLAGE). */
-    line-height: 1.5;
+    white-space: nowrap;
   }
-  .kt-trow .kt-mo, .kt-tfoot .kt-mo{ text-align: left; color: var(--ink-soft); }
-  .kt-trow .kt-posten{
-    text-align: left;
-    color: var(--ink-soft);
-    font-size: 11.5px;
-    padding-left: 6px;
-  }
-  .kt-thead .kt-posten{ padding-left: 6px; }
-  .kt-tfoot{
-    border-top: 1px solid var(--ink);
-    border-bottom: none;
-    margin-top: 6px;
-    padding-top: 11px;
-    font-weight: 600;
-  }
-  .kt-tfoot .kt-mo{
-    font-size: 10px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    font-weight: 400;
-  }
+  .kt-posten .kt-bt{ font-variant-numeric: tabular-nums; font-weight: 600; }
+  .kt-idx{ font-family: ui-monospace, Menlo, monospace; color: #8e8e93; }
 
-  /* Bedeutungsfarben, passend zur restlichen App. */
-  .kt-good{ color: var(--ok); }
-  .kt-bad{ color: var(--error); }
-  .kt-full{ color: var(--brass-deep); }
-  .kt-dim{ color: var(--ink-soft); }
+  /* --- Eingabezeile --- */
+  .kt-add{ display:flex; gap: 6px; margin-top: 10px; }
+  .kt-add input.kt-n{ flex: 1; }
+  .kt-add input.kt-b{ width: 88px; flex: 0 0 88px; text-align: right; }
+
+  /* --- Summenzeilen --- */
+  .kt-msum{ margin-top: 12px; }
+  .kt-sum{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    font-size: 13px;
+    padding: 3px 0;
+    color: #48484a;
+  }
+  .kt-sum b{ font-variant-numeric: tabular-nums; }
+  .kt-sum.tot{
+    font-size: 15px;
+    color: #1c1c1e;
+    font-weight: 700;
+    border-top: 1px solid #eee;
+    margin-top: 6px;
+    padding-top: 8px;
+  }
 
   /* --- Bucket-List --- */
-  .kt-bl-entry{
-    display:flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items:center;
-    margin-bottom: 14px;
-  }
-  .kt-bl-entry select{ flex: 0 0 auto; cursor:pointer; }
-  .kt-bl-entry #kt-bl-topic{ flex: 1 1 140px; }
-  .kt-bl-entry #kt-bl-sum{ flex: 0 1 90px; }
-
   .kt-bl-row{
     display:flex;
     align-items:center;
     gap: 10px;
-    padding: 7px 2px;
-    border-bottom: 1px dashed var(--line);
-    font-size: 12.5px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f2f2f5;
   }
-  .kt-bl-check{
-    flex: 0 0 18px;
-    width: 18px; height: 18px;
+  .kt-bl-row .kt-t{ flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .kt-bl-row.done .kt-t{ font-style: italic; }
+  .kt-bl-row .kt-bt{ font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  .kt-plan.strike{ text-decoration: line-through; color: #8e8e93; margin-right: 6px; }
+  .kt-ist{ color: #1a7f37; font-weight: 700; }
+  .konsum-overlay .kt-chk{
+    width: 26px; height: 26px;
+    flex: 0 0 26px;
     padding: 0;
-    border: 1.5px solid var(--ink-soft);
-    background: transparent;
-    color: transparent;
+    border-radius: 8px;
+    border: 1.5px solid #c7c7cc;
+    background: #fff;
     display:flex; align-items:center; justify-content:center;
-    font-size: 11px; line-height: 1;
-    cursor: pointer;
+    font-size: 15px;
+    color: #fff;
   }
-  .kt-bl-check.on{
-    background: var(--brass);
-    border-color: var(--brass-deep);
-    color: var(--ink);
-  }
-  .kt-bl-check:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
-  .kt-bl-mo{
-    flex: 0 0 30px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    color: var(--ink-soft);
-  }
-  .kt-bl-topic{
-    flex: 1 1 auto;
-    min-width: 0;
-    color: var(--ink);
-    overflow-wrap: anywhere;
-  }
-  .kt-bl-row.done .kt-bl-topic{ color: var(--ink-soft); }
-  .kt-bl-amt{
-    flex: 0 0 76px;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .kt-bl-amt.plan{ color: var(--ink-soft); }
-  .kt-bl-diff{
-    flex: 0 0 62px;
-    text-align: right;
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .kt-bl-hint{ flex: 0 0 auto; font-size: 11px; color: var(--ink-soft); }
-  .kt-bl-edit{ flex: 0 0 84px; width: 84px; }
-  .kt-bl-ok, .kt-bl-cancel{
-    flex: 0 0 auto;
-    border: none;
-    background: transparent;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 13px;
-    padding: 4px 6px;
-    cursor: pointer;
-  }
-  .kt-bl-ok{ color: var(--ok); }
-  .kt-bl-cancel{ color: var(--ink-soft); }
-  .kt-bl-ok:focus-visible, .kt-bl-cancel:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
-  .kt-bl-foot{
+  .konsum-overlay .kt-chk.on{ background: #34c759; border-color: #34c759; }
+  .kt-ist-row{
     display:flex;
+    gap: 6px;
+    padding: 8px 0;
     align-items:center;
-    gap: 10px;
-    margin-top: 6px;
-    padding: 11px 2px 2px;
-    border-top: 1px solid var(--ink);
-    font-weight: 600;
-    font-size: 12.5px;
+    border-bottom: 1px solid #f2f2f5;
   }
+  .kt-ist-row .kt-hint{ flex: 1; margin-top: 0; }
+  .kt-ist-row input{ width: 100px; flex: 0 0 100px; }
 
-  /* --- Fußzeile --- */
-  .kt-tools{
+  /* --- Sichern / Laden ---
+     Bewusst NICHT position:fixed wie in der Vorlage: hier scrollt das
+     Overlay selbst, eine am Bildfenster klebende Leiste läge über allem. */
+  .kt-actions{
     display:flex;
-    align-items:center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 22px;
-    padding-top: 16px;
-    border-top: 1px dashed var(--line);
+    gap: 8px;
+    justify-content:center;
+    border-top: 1px solid #e2e2e7;
+    margin-top: 16px;
+    padding-top: 12px;
   }
-  .kt-tools label{
-    font-size: 10.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-  }
-  .kt-tools input{ width: 110px; }
-  .kt-saved{
-    font-size: 11px;
-    color: var(--ok);
-    opacity: 0;
-    transition: opacity .25s;
-  }
-  .kt-saved.on{ opacity: 1; }
+  .kt-actions button{ flex: 1; max-width: 200px; }
 
-  @media (max-width: 720px){
-    .kt-grid{ grid-template-columns: 1fr; gap: 20px; }
-    .kt-trow, .kt-tfoot{ grid-template-columns: 40px 1fr 1fr 1fr; }
-    .kt-trow .kt-carry, .kt-trow .kt-posten,
-    .kt-tfoot .kt-carry, .kt-tfoot .kt-posten{ display:none; }
-    /* Monatsname und Übertragszeile untereinander — nebeneinander wird es
-       auf schmalen Displays zu eng. */
-    .kt-plan-head{ flex-direction: column; align-items: flex-start; gap: 2px; }
+  @media (max-width: 420px){
+    .konsum-overlay .receipt-body{ padding: 10px; }
+    .kt-topf .kt-val{ font-size: 28px; }
+    .kt-add input.kt-b{ width: 72px; flex: 0 0 72px; }
   }
 
   /* ---------- Pen-Tracker ----------

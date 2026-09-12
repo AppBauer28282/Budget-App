@@ -5,16 +5,16 @@
    abgeschlossenen Monat direkt die schreibgeschützte Belegansicht gezeigt —
    ein editierbares "sheet" existiert für abgeschlossene Monate gar nicht.
    ============================================================================= */
-import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=20';
-import { el } from './dom.js?v=20';
-import { monthKey } from './utils.js?v=20';
-import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey } from './storage.js?v=20';
-import { renderMonth } from './render.js?v=20';
+import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=21';
+import { el } from './dom.js?v=21';
+import { monthKey } from './utils.js?v=21';
+import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey } from './storage.js?v=21';
+import { renderMonth } from './render.js?v=21';
 // Zirkulärer Import: receipt.js importiert umgekehrt showOverview aus diesem
 // Modul (für den Rückweg von der Belegansicht eines abgeschlossenen Monats
 // zur Übersicht). Sicher, weil beide Seiten die importierte Funktion erst
 // in späteren Event-Handlern aufrufen, nie beim Modul-Start.
-import { openReceipt } from './receipt.js?v=20';
+import { openReceipt } from './receipt.js?v=21';
 
 export function showOverview(){
   el.sheet.hidden = true;

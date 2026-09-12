@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=20';
+import { openOverlay, closeOverlay } from './overlays.js?v=21';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
