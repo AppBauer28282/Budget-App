@@ -20,7 +20,7 @@
 //   sed -i "s/js?v=ALT/js?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v21';
+export const APP_VERSION = 'v22';
 export const APP_VERSION_DATE = '2026-09-12';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
@@ -98,26 +98,26 @@ export const FC_LABELS = { lebensmittel: 'Lebensmittel', konsum: 'Konsum', sprit
 // Forecast" — eigene Palette, damit sie sich von den echten Kategorien
 // unterscheiden lassen.
 export const SLICE_COLORS = {
-  fixed:          '#14202b', // ink — abgehakte + offene Fixkosten zusammen
-  einkauf:        '#5b7a5e',
-  benzin:         '#b5543a',
-  gesundheit:     '#3f7f93',
-  eltern:         '#7d6a9c',
-  konsum_cat:     '#a3455c',
-  freizeit:       '#3f5f8a',
-  urlaub:         '#7a8a4a',
-  jahresfix:      '#c2a23a',
-  kfz_sonstige:   '#8a7355',
-  sparen:         '#3c6e4f',
-  ruecklagen:     '#6f5b3e',
-  aufloesung:     '#b06b8f',
-  fc_lebensmittel:'#8fae7a',
-  fc_konsum:      '#d98b7c',
-  fc_sprit:       '#e0a458',
-  fc_sonstiges:   '#9fa8c4',
+  fixed:          '#1c1c1e', // ink — abgehakte + offene Fixkosten zusammen
+  einkauf:        '#34c759',
+  benzin:         '#ff3b30',
+  gesundheit:     '#32ade6',
+  eltern:         '#af52de',
+  konsum_cat:     '#ff2d55',
+  freizeit:       '#0a84ff',
+  urlaub:         '#30b0c7',
+  jahresfix:      '#ffcc00',
+  kfz_sonstige:   '#a2845e',
+  sparen:         '#248a3d',
+  ruecklagen:     '#5856d6',
+  aufloesung:     '#ff9500',
+  fc_lebensmittel:'#8ed99f',
+  fc_konsum:      '#ff9aa8',
+  fc_sprit:       '#ffc46b',
+  fc_sonstiges:   '#a9a7e8',
   // Nur für das Drei-Segmente-Übersichtsdiagramm ganz unten in der Analyse.
   // "Fix" und "Sparen" nutzen bewusst dieselben Töne wie die gleichnamigen
   // Posten im oberen Diagramm, damit man sie wiedererkennt.
-  summary_ausgaben: '#8f3f3f'
+  summary_ausgaben: '#ff3b30'
 };
 

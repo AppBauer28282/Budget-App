@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=21';
+import { openOverlay, closeOverlay } from './overlays.js?v=22';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -49,9 +49,9 @@ const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
 // Gedeckte Farben passend zur Papier-Optik der App (die Vorlage kam aus einem
 // dunklen Layout, deren Signalfarben würden hier herausstechen).
-const DOSE_COLORS = ['#3c6e4f', '#a8783f', '#4a6b82', '#7f5a2e', '#8f6b9c', '#9c3b2e', '#5c7a4a', '#6b6b8f'];
-const FORECAST_COLOR = '#8b949c';
-const NO_DOSE_COLOR = '#b9bfc4';
+const DOSE_COLORS = ['#0a84ff', '#34c759', '#ff9500', '#af52de', '#30b0c7', '#ff2d55', '#ffcc00', '#5856d6'];
+const FORECAST_COLOR = '#c7c7cc';
+const NO_DOSE_COLOR = '#e2e2e7';
 const BMI_LIMIT = 30;                // Grenze, ab der die BMI-Linie eingezeichnet wird
 
 const MONTHS_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];

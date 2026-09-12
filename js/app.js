@@ -4,20 +4,20 @@
    die sich selbst um ihre Event-Listener kümmern (Navigation, Ereignisse,
    Beleg-/Diagrammansicht, Sichern/Wiederherstellen, Cloud-Sync/Login).
    ============================================================================= */
-import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=21';
-import { el } from './dom.js?v=21';
-import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=21';
+import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=22';
+import { el } from './dom.js?v=22';
+import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=22';
 
-import './navigation.js?v=21';
-import './events.js?v=21';
-import './receipt.js?v=21';
-import './charts.js?v=21';
-import './backup.js?v=21';
-import './analysis.js?v=21';
-import './salary-calc.js?v=21';
-import './konsumtopf.js?v=21';
-import './pentracker.js?v=21';
-import './cloud-sync.js?v=21';
+import './navigation.js?v=22';
+import './events.js?v=22';
+import './receipt.js?v=22';
+import './charts.js?v=22';
+import './backup.js?v=22';
+import './analysis.js?v=22';
+import './salary-calc.js?v=22';
+import './konsumtopf.js?v=22';
+import './pentracker.js?v=22';
+import './cloud-sync.js?v=22';
 
 buildAddMonthSelects();
 fillSelect(el.catSelect, categoryDefs);

@@ -2,17 +2,30 @@
      DESIGN-TOKENS
      Zentrale Farb- und Linienwerte. Änderungen hier wirken
      sich auf die gesamte Seite aus.
+
+     Die Namen stammen aus der früheren Papier-Optik und sind
+     geblieben, damit nicht jede Regel angefasst werden muss.
+     Ihre Rolle ist heute:
+       --ink       Haupttext
+       --ink-soft  Nebentext
+       --paper     Seitenhintergrund (und Text auf dunklem Grund)
+       --paper-2   Kartenfläche / Feldfüllung
+       --brass     Aktionsfarbe (Knöpfe, Links, Fokus)
      ========================================================= */
   :root{
-    --ink: #14202b;
-    --ink-soft: #3c4a56;
-    --paper: #eef0ea;
-    --paper-2: #e2e4dc;
-    --brass: #a8783f;
-    --brass-deep: #7f5a2e;
-    --line: rgba(20,32,43,0.16);
-    --error: #9c3b2e;
-    --ok: #3c6e4f;
+    --ink: #1c1c1e;
+    --ink-soft: #6b6b70;
+    --paper: #f2f2f7;
+    --paper-2: #ffffff;
+    --brass: #0a84ff;
+    --brass-deep: #0060df;
+    --line: #e2e2e7;
+    --line-stark: #d8d8dd;
+    --error: #c0392b;
+    --ok: #1a7f37;
+    --radius: 14px;
+    --radius-klein: 10px;
+    --schatten: 0 1px 2px rgba(0,0,0,0.06);
   }
 
   *{ box-sizing: border-box; }
@@ -20,7 +33,7 @@
   body{
     background: var(--paper);
     color: var(--ink);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     display:flex;
     align-items:flex-start;
     justify-content:center;
@@ -29,33 +42,16 @@
     min-height:100%;
   }
 
-  /* Dekoratives Raster im Hintergrund. pointer-events:none, damit es
-     keine Klicks abfängt. */
-  body::before{
-    content:"";
-    position:fixed; inset:0;
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 42px 42px;
-    opacity:0.35;
-    pointer-events:none;
-  }
-
+  /* Die Seite selbst trägt keinen eigenen Kasten mehr: Inhalte liegen als
+     weiße Karten auf grauem Grund, wie in iOS üblich. */
   .sheet{
     position:relative;
     width:100%;
     max-width: 560px;
-    background: var(--paper-2);
-    border: 1px solid var(--line);
-    box-shadow: 0 30px 60px -20px rgba(20,32,43,0.35);
-    padding: 44px 40px 36px;
+    padding: 8px 0 24px;
   }
-  /* Auf kleinen Displays (iPhone) weniger Innenabstand, damit mehr Platz
-     für Inhalte bleibt. */
   @media (max-width: 520px){
-    body{ padding: 20px 12px; }
-    .sheet{ padding: 28px 20px 24px; }
+    body{ padding: 12px; }
   }
 
   .eyebrow{
@@ -66,7 +62,7 @@
     margin: 0 0 10px;
   }
   h1{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: clamp(24px, 4vw, 30px);
     margin: 0 0 8px;
@@ -87,18 +83,20 @@
     color: var(--ink-soft);
   }
   .add-month-row select{
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
-    padding: 8px 12px;
-    background: var(--paper);
-    border: 1px solid var(--line);
+    padding: 10px 12px;
+    background: var(--paper-2);
+    border: 1px solid var(--line-stark);
+    border-radius: var(--radius-klein);
     color: var(--ink);
     cursor:pointer;
     outline:none;
   }
   .add-month-row select:focus-visible{
-    border-color: var(--brass);
-    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+    border-color: transparent;
+    outline: 2px solid var(--brass);
+    outline-offset: -1px;
   }
 
   /* ---------- Übersichtsseite: Monat hinzufügen ---------- */
@@ -111,14 +109,14 @@
   .add-month-row select{ flex: 1 1 120px; min-width: 0; }
   .add-month-row button{
     flex: 1 1 auto;
-    padding: 9px 16px;
-    background: var(--ink);
-    color: var(--paper);
+    padding: 10px 16px;
+    background: var(--brass);
+    color: #fff;
     border: none;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    border-radius: var(--radius-klein);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
     cursor:pointer;
   }
   .add-month-row button:hover{ background: var(--brass-deep); }
@@ -126,11 +124,11 @@
   /* ---------- Übersichtsseite: Monatslisten ---------- */
   .month-list{
     list-style:none;
-    margin: 0 0 4px;
+    margin: 0;
     padding: 0;
-    border-top: 1px solid var(--line);
   }
-  .month-list li{ border-bottom: 1px solid var(--line); }
+  /* Trennlinien nur zwischen den Zeilen — am Kartenrand stört eine Linie. */
+  .month-list li + li{ border-top: 1px solid var(--line); }
   /* Zeile aus zwei Geschwister-Buttons: öffnet den Monat, bzw. löscht ihn.
      Kein Button im Button (ungültiges HTML) — deshalb zwei Buttons
      nebeneinander statt der Löschen-Aktion innerhalb der Öffnen-Fläche. */
@@ -149,7 +147,7 @@
     background:none;
     border:none;
     color: var(--ink);
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13.5px;
     text-align:left;
     cursor:pointer;
@@ -172,7 +170,7 @@
     background:none;
     border:none;
     color: var(--error);
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     padding: 4px 2px 4px 8px;
     cursor:pointer;
@@ -221,16 +219,19 @@
 
   /* ---------- Gehalt (Schieberegler + Speichern) ---------- */
   .salary-box{
-    margin-bottom: 24px;
+    margin: 10px 0;
     padding: 16px 18px;
-    background: var(--paper);
-    border: 1px solid var(--line);
+    background: var(--paper-2);
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--schatten);
   }
   .salary-head{
     display:flex;
+    flex-wrap: wrap;
     justify-content:space-between;
     align-items:baseline;
-    gap: 10px;
+    gap: 4px 10px;
     margin-bottom: 10px;
   }
   .salary-label{
@@ -240,11 +241,10 @@
     color: var(--ink-soft);
   }
   .salary-value{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 20px;
     color: var(--ink);
-    white-space: nowrap;
   }
   #salary-slider{
     width: 100%;
@@ -262,13 +262,13 @@
   .salary-save-btn{
     width:100%;
     padding: 12px;
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--brass);
+    color: #fff;
     border: none;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    border-radius: var(--radius-klein);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
     cursor:pointer;
   }
   .salary-save-btn:hover{ background: var(--brass-deep); }
@@ -279,9 +279,11 @@
     justify-content:space-between;
     align-items:center;
     gap: 10px;
-    margin-bottom: 16px;
-    padding: 2px 2px 12px;
-    border-bottom: 1px solid var(--line);
+    margin: 10px 0;
+    padding: 14px 16px;
+    background: var(--paper-2);
+    border-radius: var(--radius);
+    box-shadow: var(--schatten);
   }
   .salary-fixed-label{
     font-size: 10.5px;
@@ -291,21 +293,20 @@
   }
   .salary-fixed-right{ display:flex; align-items:center; gap: 10px; }
   .salary-fixed-value{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 20px;
     color: var(--ink);
-    white-space: nowrap;
   }
   /* Kleiner roter Kreis-Button zum Löschen — bewusst auffällig, da destruktiv. */
   .salary-delete-btn{
     width: 24px; height: 24px;
     display:flex; align-items:center; justify-content:center;
     background: transparent;
-    border: 1.5px solid var(--error);
+    border: none;
     border-radius: 50%;
     color: var(--error);
-    font-size: 12px;
+    font-size: 15px;
     line-height:1;
     padding:0;
     cursor:pointer;
@@ -322,20 +323,22 @@
     gap: 12px;
     padding: 18px 20px;
     background: var(--ink);
-    color: var(--paper);
-    margin-bottom: 28px;
+    color: #fff;
+    border-radius: 16px;
+    margin: 10px 0;
   }
   .balance .label{
     font-size: 10.5px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(238,240,234,0.6);
+    color: rgba(255,255,255,0.6);
   }
   .balance .amount{
-    font-family:'Fraunces', serif;
-    font-weight:600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight:700;
     font-size: 30px;
-    color: var(--paper);
+    letter-spacing: -0.5px;
+    color: #fff;
     white-space: nowrap;
   }
   /* Negativer Kontostand wird farblich hervorgehoben. */
@@ -431,7 +434,7 @@
     gap: 8px;
     font-size: 12.5px;
     padding: 6px 2px;
-    border-bottom: 1px dashed var(--line);
+    border-bottom: 1px solid var(--line);
   }
   .cat-entry-text{
     flex:1;
@@ -477,12 +480,13 @@
     gap: 10px;
     padding: 12px 14px;
     background: var(--ink);
-    color: var(--paper);
+    color: #fff;
+    border-radius: var(--radius-klein);
     font-size: 13px;
     margin-bottom: 20px;
   }
   .cat-grand-total-amount{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 17px;
     white-space: nowrap;
@@ -496,7 +500,7 @@
   }
   .cat-entry-row input,
   .cat-entry-row select{
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 9px 10px;
     background: var(--paper);
@@ -510,18 +514,18 @@
   .cat-entry-row input:focus-visible,
   .cat-entry-row select:focus-visible{
     border-color: var(--brass);
-    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+    box-shadow: 0 0 0 3px rgba(10,132,255,0.25);
   }
   .cat-add-btn{
     flex: 1 1 auto;
     padding: 10px 18px;
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--brass);
+    color: #fff;
     border: none;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    border-radius: var(--radius-klein);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
     cursor:pointer;
   }
   .cat-add-btn:hover{ background: var(--brass-deep); }
@@ -546,7 +550,7 @@
   }
   /* Bewusst klein und dezent (vorher zu groß/prominent). */
   .forecast-row-value{
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     font-weight:500;
     color: var(--ink-soft);
@@ -575,7 +579,7 @@
     color: var(--ink-soft);
   }
   .forecast-result-value{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 21px;
     color: var(--brass-deep);
@@ -588,11 +592,12 @@
     margin-top: 16px;
     padding: 10px 12px;
     background: rgba(20,32,43,0.05);
-    border: 1px dashed var(--line);
+    border: 1px solid var(--line);
     display:flex;
     justify-content:space-between;
     align-items:center;
     gap: 10px;
+    border-radius: var(--radius);
   }
   .forecast-static-label{ font-size: 12.5px; color: var(--ink-soft); }
   .forecast-static .forecast-slider-val{
@@ -627,7 +632,7 @@
   }
   .forecast-note textarea{
     width:100%;
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     padding: 10px 12px;
     background: var(--paper);
@@ -639,11 +644,17 @@
   }
   .forecast-note textarea:focus-visible{
     border-color: var(--brass);
-    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+    box-shadow: 0 0 0 3px rgba(10,132,255,0.25);
   }
 
   /* ---------- Ein-/ausklappbare Bereiche ---------- */
-  .section{ margin-top: 28px; }
+  .section{
+    margin-top: 10px;
+    background: var(--paper-2);
+    border-radius: var(--radius);
+    box-shadow: var(--schatten);
+    padding: 4px 14px;
+  }
   .section summary.section-summary{
     list-style:none;
     cursor:pointer;
@@ -651,20 +662,22 @@
     align-items:center;
     justify-content:space-between;
     gap: 12px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--line);
-    font-family:'Fraunces', serif;
+    padding: 12px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 17px;
     color: var(--ink);
   }
+  /* Trennlinie nur, wenn der Abschnitt offen ist — sonst schwebt sie am
+     unteren Kartenrand. */
+  .section[open] summary.section-summary{ border-bottom: 1px solid var(--line); }
   /* Standard-Dreieck des <details>-Elements in allen Browsern ausblenden. */
   .section summary.section-summary::-webkit-details-marker{ display:none; }
   .section summary.section-summary::marker{ content:""; }
   /* Plus/Minus zeigt den Auf-/Zuklapp-Zustand an. */
   .section summary.section-summary::after{
     content: "＋";
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 15px;
     font-weight:400;
     color: var(--brass-deep);
@@ -674,7 +687,7 @@
     outline: 2px solid var(--brass);
     outline-offset: 2px;
   }
-  .section-body{ padding-top: 18px; }
+  .section-body{ padding: 14px 0; }
 
   /* Kleine Summe neben dem Titel, nur sichtbar wenn der Bereich eingeklappt
      ist — im aufgeklappten Zustand steht die Summe ohnehin schon im Inhalt. */
@@ -689,7 +702,7 @@
     min-width: 0;
   }
   .section-summary-total{
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 11px;
     font-weight:400;
     color: var(--ink-soft);
@@ -705,7 +718,7 @@
   .backup-box{
     margin-top: 18px;
     padding-top: 18px;
-    border-top: 1px dashed var(--line);
+    border-top: 1px solid var(--line);
   }
   .backup-hint{
     font-size: 11px;
@@ -728,7 +741,7 @@
   .app-version{
     margin-top: 22px;
     padding-top: 12px;
-    border-top: 1px dashed var(--line);
+    border-top: 1px solid var(--line);
     font-size: 10.5px;
     letter-spacing: 0.06em;
     text-align: center;
@@ -751,20 +764,21 @@
   .receipt-btn{
     display: block; /* wichtig für <label class="receipt-btn">, die sonst inline bleiben und width:100% ignorieren würden */
     width: 100%;
-    margin-top: 26px;
+    margin-top: 10px;
     padding: 12px 20px;
-    background: transparent;
-    border: 1px solid var(--ink);
-    color: var(--ink);
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11.5px;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
+    background: var(--paper-2);
+    border: none;
+    border-radius: var(--radius-klein);
+    box-shadow: var(--schatten);
+    color: var(--brass);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
     cursor:pointer;
     text-align: center;
     box-sizing: border-box;
   }
-  .receipt-btn:hover{ background: var(--ink); color: var(--paper); }
+  .receipt-btn:hover{ background: #e8e8ed; }
 
   .receipt-overlay{
     position: fixed;
@@ -788,9 +802,11 @@
   .receipt-card{
     width:100%;
     max-width: 380px;
-    background: #fbfaf6; /* leicht wärmeres Weiß, wirkt wie Bon-Papier */
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--paper);
     box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: var(--ink);
   }
   .receipt-head{
@@ -798,13 +814,13 @@
     justify-content:space-between;
     align-items:center;
     padding: 16px 18px;
-    border-bottom: 1px dashed var(--line);
+    border-bottom: 1px solid var(--line);
     position: sticky;
     top: 0;
-    background: #fbfaf6;
+    background: var(--paper);
   }
   .receipt-head h2{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 18px;
     margin: 0;
@@ -840,7 +856,7 @@
     font-weight: 600;
     margin: 18px 0 8px;
     padding-top: 12px;
-    border-top: 1px dashed var(--line);
+    border-top: 1px solid var(--line);
   }
   .receipt-section-title:first-of-type{ border-top: none; padding-top: 0; margin-top: 0; }
   .receipt-subgroup{
@@ -875,7 +891,7 @@
     font-weight: 600;
   }
   .receipt-total-line.grand{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px;
     border-top: 2px double var(--ink);
     padding-top: 12px;
@@ -884,12 +900,12 @@
 
   /* ---------- Diagrammansicht (Tortendiagramme) ---------- */
   .chart-section-title{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 15px;
     margin: 0 0 14px;
     padding-top: 18px;
-    border-top: 1px dashed var(--line);
+    border-top: 1px solid var(--line);
   }
   /* Kein Trennstrich vor dem allerersten Abschnitt. */
   .chart-section-title:first-of-type{ border-top:none; padding-top:0; }
@@ -952,7 +968,7 @@
     margin-bottom: 18px;
   }
   .analysis-filter-row select{
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 8px 12px;
     background: var(--paper);
@@ -979,7 +995,7 @@
     background:none;
     border:none;
     color: var(--ink-soft);
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 10.5px;
     letter-spacing: 0.04em;
     text-decoration: underline;
@@ -1059,9 +1075,10 @@
     box-shadow: 0 30px 60px -20px rgba(20,32,43,0.35);
     padding: 36px 30px;
     text-align:center;
+    border-radius: var(--radius);
   }
   .lock-title{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 24px;
     margin: 0 0 10px;
@@ -1074,7 +1091,7 @@
   }
   #lock-pin{
     width: 100%;
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 26px;
     letter-spacing: 0.5em;
     text-align:center;
@@ -1086,19 +1103,20 @@
     margin-bottom: 16px;
   }
   #lock-pin:focus-visible{
-    border-color: var(--brass);
-    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+    border-color: transparent;
+    outline: 2px solid var(--brass);
+    outline-offset: -1px;
   }
   .lock-submit-btn{
     width:100%;
     padding: 13px;
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--brass);
+    color: #fff;
     border: none;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    border-radius: var(--radius-klein);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
     cursor:pointer;
   }
   .lock-submit-btn:hover{ background: var(--brass-deep); }
@@ -1121,7 +1139,7 @@
   .pin-change-input{
     display:block;
     width: 100%;
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 18px;
     letter-spacing: 0.3em;
     text-align:center;
@@ -1134,7 +1152,7 @@
   }
   .pin-change-input:focus-visible{
     border-color: var(--brass);
-    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+    box-shadow: 0 0 0 3px rgba(10,132,255,0.25);
   }
 
   /* ---------- Werkzeug-Symbol rechts oben (Übersicht) ---------- */
@@ -1151,14 +1169,15 @@
     flex-shrink: 0;
     width: 38px; height: 38px;
     display:flex; align-items:center; justify-content:center;
-    background: transparent;
-    border: 1px solid var(--ink);
+    background: var(--paper-2);
+    border: none;
     border-radius: 50%;
-    color: var(--ink);
+    box-shadow: var(--schatten);
+    color: var(--brass);
     padding: 0;
     cursor: pointer;
   }
-  .icon-btn:hover{ background: var(--ink); color: var(--paper); }
+  .icon-btn:hover{ background: #e8e8ed; }
   .icon-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
   .icon-btn svg{ width: 21px; height: 21px; display:block; }
 
@@ -1183,7 +1202,7 @@
     color: var(--brass-deep);
     margin: 24px 0 14px;
     padding-top: 16px;
-    border-top: 1px dashed var(--line);
+    border-top: 1px solid var(--line);
   }
   .sc-section-title:first-of-type{
     margin-top: 0; padding-top: 0; border-top: none;
@@ -1206,7 +1225,7 @@
   }
   .sc-field select,
   .sc-field input[type="text"]{
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px;   /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 8px 10px;
     background: var(--paper);
@@ -1219,7 +1238,7 @@
   .sc-field select:focus,
   .sc-field input[type="text"]:focus{
     border-color: var(--brass);
-    box-shadow: 0 0 0 3px rgba(168,120,63,0.18);
+    box-shadow: 0 0 0 3px rgba(10,132,255,0.25);
   }
   .sc-field input[type="range"]{
     width:100%;
@@ -1247,13 +1266,13 @@
   }
   .sc-cap-spaced{ margin-top: 16px; }
   .sc-big{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 32px;
     line-height: 1.1;
   }
   .sc-mid{
-    font-family:'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight:600;
     font-size: 20px;
   }
@@ -1276,9 +1295,10 @@
     display:inline-flex;
     align-self: flex-start;   /* sonst zieht die Spalte den Rahmen auf volle Breite */
     border: 1px solid var(--line);
+    border-radius: var(--radius);
   }
   .sc-seg button{
-    font-family:'IBM Plex Mono', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 12px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1300,7 +1320,7 @@
     justify-content:space-between;
     gap: 12px;
     padding: 6px 0;
-    border-bottom: 1px dashed var(--line);
+    border-bottom: 1px solid var(--line);
     font-size: 12.5px;
   }
   .sc-row span:last-child{ white-space: nowrap; }
@@ -1616,6 +1636,8 @@
     background: var(--line);
     border: 1px solid var(--line);
     margin-bottom: 22px;
+    border-radius: var(--radius);
+    overflow: hidden;
   }
   .pt-kpi{
     background: var(--paper-2);
@@ -1632,7 +1654,7 @@
     color: var(--ink-soft);
   }
   .pt-kpi-value{
-    font-family: 'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight: 600;
     font-size: 17px;
     line-height: 1.2;
@@ -1657,11 +1679,11 @@
     cursor: pointer;
     transition: background .15s, color .15s;
   }
-  .pt-btn:hover{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .pt-btn:hover{ background: #e8e8ed; }
   .pt-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
-  .pt-btn-primary{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
-  .pt-btn-primary:hover{ background: var(--ink-soft); border-color: var(--ink-soft); }
-  .pt-btn-accent{ background: var(--brass); color: var(--paper); border-color: var(--brass); }
+  .pt-btn-primary{ background: var(--brass); color: #fff; border-color: var(--brass); }
+  .pt-btn-primary:hover{ background: var(--brass-deep); border-color: var(--brass-deep); }
+  .pt-btn-accent{ background: var(--brass); color: #fff; border-color: var(--brass); }
   .pt-btn-accent:hover{ background: var(--brass-deep); border-color: var(--brass-deep); }
   .pt-btn-danger{ color: var(--error); }
   .pt-btn-danger:hover{ background: var(--error); color: var(--paper); border-color: var(--error); }
@@ -1681,14 +1703,14 @@
     gap: 4px;
     padding: 26px 18px;
     text-align: center;
-    border: 1px dashed var(--line);
+    border: 1px solid var(--line);
     font-size: 11.5px;
     color: var(--ink-soft);
   }
   .pt-empty strong{ font-size: 13px; color: var(--ink); font-weight: 600; }
 
   /* Pen-Karten */
-  .pt-pen-card{ border: 1px solid var(--line); margin-bottom: 10px; }
+  .pt-pen-card{ border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
   .pt-pen-card.closed{ opacity: 0.66; }
   .pt-pen-head{
     display: flex;
@@ -1748,14 +1770,14 @@
   .pt-inline-row{ display: flex; gap: 8px; }
   .pt-inline-row input{ flex: 1; min-width: 0; }
 
-  .pt-week-list{ border-top: 1px dashed var(--line); }
+  .pt-week-list{ border-top: 1px solid var(--line); }
   .pt-week-row{
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
     padding: 8px 0;
-    border-bottom: 1px dashed var(--line);
+    border-bottom: 1px solid var(--line);
     font-size: 11.5px;
   }
   .pt-week-inner{ display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex: 1; min-width: 0; }
@@ -1780,7 +1802,7 @@
   .pt-pen-forecast{ margin: 0; font-size: 10px; color: var(--ink-soft); text-align: right; }
 
   /* Gewichtsliste */
-  .pt-weight-card{ border: 1px solid var(--line); padding: 0 12px; }
+  .pt-weight-card{ border: 1px solid var(--line); border-radius: var(--radius); padding: 0 12px; }
   .pt-weight-row{
     display: flex;
     align-items: center;
@@ -1803,7 +1825,7 @@
   .pt-chart-summary > div{ display: flex; flex-direction: column; gap: 2px; }
   .pt-chart-summary-right{ text-align: right; }
   .pt-chart-summary-label{ font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
-  .pt-chart-summary-value{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 19px; }
+  .pt-chart-summary-value{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 19px; }
   .pt-chart-empty{ margin: 0; padding: 26px 10px; text-align: center; font-size: 11.5px; color: var(--ink-soft); }
 
   .pt-chart-wrap{ display: flex; gap: 6px; }
@@ -1838,8 +1860,8 @@
     overflow-y: hidden;
   }
   .pt-gridline{ position: absolute; left: 0; border-top: 1px solid var(--line); pointer-events: none; }
-  .pt-goalline{ position: absolute; left: 0; border-top: 2px dashed var(--error); pointer-events: none; z-index: 2; }
-  .pt-bmiline{ position: absolute; left: 0; border-top: 2px dashed var(--ok); pointer-events: none; z-index: 2; }
+  .pt-goalline{ position: absolute; left: 0; border-top: 2px solid var(--error); pointer-events: none; z-index: 2; }
+  .pt-bmiline{ position: absolute; left: 0; border-top: 2px solid var(--ok); pointer-events: none; z-index: 2; }
   .pt-line-label{
     position: absolute;
     left: 2px;
@@ -1865,7 +1887,7 @@
     padding-bottom: 18px;
     flex-shrink: 0;
   }
-  .pt-bar-col.month-start{ border-left: 1px dashed var(--line); }
+  .pt-bar-col.month-start{ border-left: 1px solid var(--line); }
   .pt-bar-col.forecast-start{ border-left: 1px solid var(--ink-soft); }
   .pt-bar{
     position: absolute;
@@ -1919,7 +1941,7 @@
   .pt-dialog-narrow{ max-width: 330px; }
   .pt-dialog-close{ position: absolute; top: 12px; right: 12px; }
   .pt-dialog-title{
-    font-family: 'Fraunces', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight: 600;
     font-size: 18px;
     margin: 0 0 4px;
@@ -1973,7 +1995,7 @@
   .pt-dose:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
   .pt-dose.selected{ background: var(--brass); border-color: var(--brass); color: var(--paper); }
 
-  .pt-img{ display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+  .pt-img{ display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius-klein); }
 
   @media (max-width: 520px){
     .pt-field-row{ grid-template-columns: 1fr; }
@@ -1997,3 +2019,62 @@
   @media (max-width: 340px){
     .pt-kpi-grid{ grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* =========================================================
+     iOS-FORMGEBUNG — Nachzügler
+     Greift für Bedienelemente, die oben nicht einzeln erfasst
+     sind. Steht bewusst am Ende, damit es die vorangegangenen
+     Regeln überschreibt, ohne dass jede einzelne angefasst
+     werden muss. Der Konsumtopf bringt seine eigenen Regeln
+     mit und bleibt deshalb ausgenommen.
+     ========================================================= */
+  :where(.sheet, .receipt-card):not(.konsum-overlay *) :is(input[type="text"], input[type="number"],
+  input[type="password"], input[type="tel"], input[type="date"], select, textarea){
+    border-radius: var(--radius-klein);
+    border: 1px solid var(--line-stark);
+    background: var(--paper-2);
+  }
+  :where(.sheet, .receipt-card):not(.konsum-overlay *) :is(input, select, textarea):focus,
+  :where(.sheet, .receipt-card):not(.konsum-overlay *) :is(input, select, textarea):focus-visible{
+    border-color: transparent;
+    outline: 2px solid var(--brass);
+    outline-offset: -1px;
+    box-shadow: none;
+  }
+  /* Knöpfe: abgerundet und ohne Versalien-Sperrschrift. */
+  .sheet button:not(.icon-btn),
+  .receipt-card:not(.konsum-overlay .receipt-card) button:not(.kt-chk){
+    border-radius: var(--radius-klein);
+  }
+  .cat-add-btn, .receipt-btn, .backup-box label.receipt-btn,
+  .sc-apply, .pt-btn, .sc-seg button, .month-list-item{
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  /* Segmentierte Auswahl im Gehaltsrechner wie ein iOS-Segmented-Control:
+     grauer Träger, die aktive Auswahl als weiße Pille darauf. */
+  .sc-seg{ background: #e8e8ed; border: none; padding: 2px; gap: 2px; }
+  .sc-seg button{
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    background: transparent;
+    color: var(--ink);
+    padding: 7px 18px;
+  }
+  .sc-seg button[aria-pressed="true"]{
+    background: var(--paper-2);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+  /* Schieberegler in Systemblau. */
+  .sheet input[type="range"]{ accent-color: var(--brass); }
+
+  /* Knöpfe innerhalb einer Karte tragen keinen eigenen Schatten — sonst
+     wirkt eine Karte in der Karte. Stattdessen dezente Füllung. */
+  .section-body .receipt-btn,
+  .section-body .salary-save-btn.ghost{
+    background: #f2f2f7;
+    box-shadow: none;
+  }
+  .section-body .receipt-btn:hover{ background: #e8e8ed; }
