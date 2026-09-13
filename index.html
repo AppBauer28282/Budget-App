@@ -99,6 +99,17 @@
           <path d="M17.8 7.2 15.1 13.6h5.4z"/>
         </svg>
       </button>
+      <button type="button" class="icon-btn" id="auszahlung-btn"
+              aria-label="Auszahlungs-Tracker öffnen" title="Auszahlungen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M4 19.5v-6"/>
+          <path d="M9.3 19.5v-9.5"/>
+          <path d="M14.7 19.5v-4.5"/>
+          <path d="M20 19.5V6"/>
+          <path d="M3 21.2h18"/>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -684,6 +695,143 @@
   </div>
 </div>
 
+<!-- Auszahlungs-Tracker: eigenständiges Werkzeug hinter dem Balken-Symbol
+     rechts oben. Erfasst je Jahr Gruppen mit Positionen und zwölf Monatswerten
+     und wertet sie als Jahrestabelle, Gesamtübersicht und Balkendiagramme aus.
+     Behält bewusst die eigene Optik der Vorlage — alle Regeln dazu hängen in
+     styles.css an .az-overlay bzw. .az-dialog. Speichert unter einem eigenen
+     Schlüssel und rührt die Budget-Daten nicht an. -->
+<div class="receipt-overlay az-overlay" id="auszahlung-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="auszahlung-title">
+    <div class="receipt-head">
+      <h2 id="auszahlung-title">Auszahlungs-Tracker</h2>
+      <button type="button" class="receipt-close" id="auszahlung-close" aria-label="Auszahlungs-Tracker schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+
+      <div id="az-warn" hidden></div>
+
+      <div class="az-toolbar">
+        <label>Monat:
+          <select id="az-month"></select>
+        </label>
+        <label>Jahr:
+          <select id="az-year"></select>
+        </label>
+      </div>
+
+      <div class="az-grand-total" id="az-grand-total"></div>
+
+      <div id="az-groups"></div>
+
+      <div class="az-btn-row">
+        <button type="button" class="az-primary" id="az-add-group">+ Neue Gruppe</button>
+        <button type="button" class="az-primary az-save-btn" id="az-save">Speichern</button>
+      </div>
+      <div class="az-save-status-row">
+        <span id="az-save-status" class="az-save-status"></span>
+      </div>
+
+      <div class="az-section-heading">
+        <hr class="az-divider">
+        <h3>Analyse</h3>
+        <hr class="az-divider">
+      </div>
+
+      <div class="az-btn-row">
+        <button type="button" class="az-primary" id="az-overview-btn">Übersicht</button>
+        <button type="button" class="az-primary" id="az-total-overview-btn">Übersicht Total</button>
+      </div>
+
+      <div class="az-btn-row az-btn-row-2">
+        <button type="button" class="az-primary" id="az-chart-btn">Diagramm</button>
+        <button type="button" class="az-primary" id="az-total-chart-btn">Diagramm Total</button>
+      </div>
+
+      <div class="az-section-heading">
+        <hr class="az-divider">
+        <h3>Einstellungen</h3>
+        <hr class="az-divider">
+      </div>
+
+      <div class="az-btn-row">
+        <button type="button" class="az-subtle" id="az-export">Export (JSON)</button>
+        <label class="az-subtle az-import-label" for="az-file">Import (JSON)</label>
+        <input type="file" id="az-file" accept="application/json,.json" class="visually-hidden">
+      </div>
+      <p class="az-msg" id="az-msg" role="status"></p>
+
+      <p class="az-footnote">
+        Es werden nur die tatsächlich ausgezahlten Beträge erfasst — keine Renditeberechnung.
+        Änderungen werden automatisch gesichert; „Speichern“ schreibt sofort.
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<!-- Unterfenster des Auszahlungs-Trackers. Liegen über seinem Fenster
+     (z-index 150), aber unter dem PIN-Sperrbildschirm (200). -->
+<div class="az-dialog" id="az-dlg-overview" hidden>
+  <div class="az-dialog-card" role="dialog" aria-modal="true" aria-labelledby="az-dlg-overview-title">
+    <div class="az-dialog-head">
+      <h3 id="az-dlg-overview-title">Übersicht</h3>
+      <button type="button" class="az-subtle" data-az-close aria-label="Schließen">Schließen ✕</button>
+    </div>
+    <div class="az-table-scroll"><table id="az-overview-table"></table></div>
+    <div class="az-grand-total az-grand-total-small" id="az-overview-sum"></div>
+  </div>
+</div>
+
+<div class="az-dialog" id="az-dlg-total" hidden>
+  <div class="az-dialog-card" role="dialog" aria-modal="true" aria-labelledby="az-dlg-total-title">
+    <div class="az-dialog-head">
+      <h3 id="az-dlg-total-title">Übersicht Total</h3>
+      <button type="button" class="az-subtle" data-az-close aria-label="Schließen">Schließen ✕</button>
+    </div>
+    <div class="az-table-scroll"><table id="az-total-table"></table></div>
+    <div class="az-grand-total az-grand-total-small" id="az-total-sum"></div>
+  </div>
+</div>
+
+<div class="az-dialog" id="az-dlg-chart" hidden>
+  <div class="az-dialog-card" role="dialog" aria-modal="true" aria-labelledby="az-dlg-chart-title">
+    <div class="az-dialog-head">
+      <h3 id="az-dlg-chart-title">Diagramm</h3>
+      <button type="button" class="az-subtle" data-az-close aria-label="Schließen">Schließen ✕</button>
+    </div>
+    <div id="az-chart" class="az-chart-container"></div>
+    <p class="az-footnote">Balken zeigen die Auszahlungssumme je Monat. Der orange Balken (Ø) zeigt den Durchschnitt der bisherigen Monate.</p>
+  </div>
+</div>
+
+<div class="az-dialog" id="az-dlg-totalchart" hidden>
+  <div class="az-dialog-card" role="dialog" aria-modal="true" aria-labelledby="az-dlg-totalchart-title">
+    <div class="az-dialog-head">
+      <h3 id="az-dlg-totalchart-title">Diagramm Total</h3>
+      <button type="button" class="az-subtle" data-az-close aria-label="Schließen">Schließen ✕</button>
+    </div>
+    <div id="az-total-chart" class="az-chart-container"></div>
+    <p class="az-footnote">Balken zeigen die Auszahlungssumme je Zeitraum. Der orange Balken (Ø) zeigt den Durchschnitt über alle Zeiträume.</p>
+  </div>
+</div>
+
+<div class="az-dialog" id="az-dlg-export" hidden>
+  <div class="az-dialog-card az-dialog-card-narrow" role="dialog" aria-modal="true" aria-labelledby="az-dlg-export-title">
+    <div class="az-dialog-head">
+      <h3 id="az-dlg-export-title">Export</h3>
+      <button type="button" class="az-subtle" data-az-close aria-label="Schließen">Schließen ✕</button>
+    </div>
+    <p class="az-export-hint" id="az-export-status"></p>
+    <label class="visually-hidden" for="az-export-text">Sicherung als Text</label>
+    <textarea class="az-export-text" id="az-export-text" readonly></textarea>
+    <div class="az-export-actions">
+      <button type="button" class="az-primary" id="az-download-again">Datei erneut herunterladen</button>
+      <button type="button" class="az-subtle" id="az-copy-export">Text kopieren</button>
+    </div>
+  </div>
+</div>
+
 <!-- Kleine Dialoge des Pen-Trackers. Liegen über dem Pen-Tracker-Fenster
      (z-index 150), aber unter dem PIN-Sperrbildschirm (200). -->
 <div class="pt-dialog" id="pt-dlg-pen" hidden>
@@ -848,7 +996,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=23"></script>
+<script type="module" src="js/app.js?v=24"></script>
 
 </body>
 </html>

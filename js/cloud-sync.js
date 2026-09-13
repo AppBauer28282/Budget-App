@@ -15,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=23';
+import { el } from './dom.js?v=24';
 import {
   allData, currentMonthKey, writeStorage,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=23';
-import { renderMonth } from './render.js?v=23';
-import { renderOverview } from './navigation.js?v=23';
+} from './storage.js?v=24';
+import { renderMonth } from './render.js?v=24';
+import { renderOverview } from './navigation.js?v=24';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).
@@ -161,6 +161,33 @@ window.__onPentrackerLocalSave = function(data){
   setPtLocalUpdatedAt(ts);
   if(!auth.currentUser) return;
   pentrackerDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: data })
+    .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
+};
+
+// ---------- Auszahlungs-Tracker-Sync ----------
+// Gleicher Mechanismus, eigenes Dokument. Auch hier gilt: im Quellcode steht
+// nie ein Anfangsbestand — der Tracker startet leer, bis der Nutzer selbst
+// etwas einträgt oder eine Sicherungsdatei einliest. Positionsnamen verraten
+// Banken und Anlagen und haben in einem öffentlichen Repository nichts zu
+// suchen, in Firestore hinter dem PIN-Login dagegen schon.
+const auszahlungDocRef = (uid) => db.collection('auszahlungen').doc(uid);
+const AZ_LOCAL_UPDATED_KEY = 'kontor_auszahlungen_updated_at';
+function getAzLocalUpdatedAt(){
+  const raw = localStorage.getItem(AZ_LOCAL_UPDATED_KEY);
+  const n = raw ? parseInt(raw, 10) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+function setAzLocalUpdatedAt(ts){
+  try{ localStorage.setItem(AZ_LOCAL_UPDATED_KEY, String(ts)); }catch(e){}
+}
+let suppressAuszahlungPush = false;
+
+window.__onAuszahlungLocalSave = function(data){
+  if(suppressAuszahlungPush) return;
+  const ts = Date.now();
+  setAzLocalUpdatedAt(ts);
+  if(!auth.currentUser) return;
+  auszahlungDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: data })
     .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
 };
 
@@ -450,6 +477,38 @@ auth.onAuthStateChanged(async (user) => {
       }catch(err){ /* Pen-Tracker bleibt lokal nutzbar, auch ohne Cloud */ }
     }
 
+    // Gleicher Abgleich für den Auszahlungs-Tracker, ebenfalls als eigener
+    // Versuch — ein Fehler hier darf den Budget-Login nicht aufhalten.
+    if(window.__auszahlungCloud){
+      try{
+        const azSnap = await auszahlungDocRef(user.uid).get();
+        if(azSnap.exists){
+          const raw = azSnap.data() || {};
+          const isNewFormat = raw.data && typeof raw.data === 'object';
+          const cloudPayload = isNewFormat ? raw.data : raw;
+          const cloudUpdatedAt = Number(raw.updatedAt) || 0;
+          const localUpdatedAt = getAzLocalUpdatedAt();
+          const cloudWins = localUpdatedAt === 0 || cloudUpdatedAt > localUpdatedAt;
+
+          if(cloudWins){
+            suppressAuszahlungPush = true;
+            window.__auszahlungCloud.replaceAllData(cloudPayload);
+            suppressAuszahlungPush = false;
+            setAzLocalUpdatedAt(cloudUpdatedAt || Date.now());
+          } else {
+            const ts = localUpdatedAt;
+            await auszahlungDocRef(user.uid).set({ updatedAt: ts, data: window.__auszahlungCloud.getSnapshot() });
+          }
+        } else {
+          // Allererster Login: aktuellen lokalen Stand hochladen (meist leer,
+          // außer es wurde vorher schon lokal etwas eingetragen).
+          const ts = Date.now();
+          setAzLocalUpdatedAt(ts);
+          await auszahlungDocRef(user.uid).set({ updatedAt: ts, data: window.__auszahlungCloud.getSnapshot() });
+        }
+      }catch(err){ /* Tracker bleibt lokal nutzbar, auch ohne Cloud */ }
+    }
+
     lockPin.value = '';
     lockStatus.textContent = '';
     lockSubmit.disabled = false;
@@ -461,13 +520,16 @@ auth.onAuthStateChanged(async (user) => {
     // aufheben, damit der Sperrbildschirm nicht blockiert dargestellt wird.
     document.body.style.overflow = '';
     ['receipt-overlay','chart-overlay','pin-overlay','analysis-overlay',
-     'salary-calc-overlay','konsum-overlay','pentracker-overlay'].forEach(id => {
+     'salary-calc-overlay','konsum-overlay','pentracker-overlay',
+     'auszahlung-overlay'].forEach(id => {
       const ov = document.getElementById(id);
       if(ov) ov.hidden = true;
     });
     // Die kleinen Dialoge des Pen-Trackers liegen außerhalb seines Fensters
     // und müssen deshalb einzeln geschlossen werden.
     document.querySelectorAll('.pt-dialog').forEach(dlg => { dlg.hidden = true; });
+    // Ebenso die Unterfenster des Auszahlungs-Trackers.
+    document.querySelectorAll('.az-dialog').forEach(dlg => { dlg.hidden = true; });
     sheetEl.hidden = true;
     overviewEl.hidden = true;
     lockOverlay.hidden = false;
