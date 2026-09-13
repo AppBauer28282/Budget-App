@@ -110,6 +110,14 @@
           <path d="M3 21.2h18"/>
         </svg>
       </button>
+      <button type="button" class="icon-btn" id="vermoegen-btn"
+              aria-label="Vermögens-Tracker öffnen" title="Vermögen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M3.5 16.8 9.3 11l3.4 3.4L20.4 6.7"/>
+          <path d="M15.2 6.7h5.2v5.2"/>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -832,6 +840,38 @@
   </div>
 </div>
 
+<!-- Vermögens-Tracker: eigenständiges Werkzeug hinter dem Trendpfeil rechts
+     oben. Erfasst je Monat Positionen mit Anlageklasse, Bezeichnung und
+     Betrag und wertet daraus Gesamtvermögen, Meilensteine und die Aufteilung
+     aus. Anders als der Auszahlungs-Tracker ist er auf die iOS-Optik der App
+     umgestellt und erbt deren Gestaltung — er steht deshalb bewusst NICHT in
+     den Ausnahmen am Ende von styles.css. Der Rumpf ist nur ein Gerüst; die
+     Ansichten baut js/vermoegen.js hinein. -->
+<div class="receipt-overlay vt-overlay" id="vermoegen-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="vermoegen-title">
+    <div class="receipt-head">
+      <h2 id="vermoegen-title">Vermögen</h2>
+      <button type="button" class="receipt-close" id="vermoegen-close" aria-label="Vermögens-Tracker schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+
+      <div id="vt-warn" hidden></div>
+
+      <div class="vt-subhead">
+        <button type="button" class="vt-btn-ghost" id="vt-back" hidden>‹ Übersicht</button>
+        <span class="vt-brand" id="vt-brand"></span>
+        <span class="vt-spacer"></span>
+        <button type="button" class="vt-btn vt-btn-sm" id="vt-top-action" hidden></button>
+      </div>
+
+      <div id="vt-app"></div>
+      <p class="vt-msg" id="vt-msg" role="status"></p>
+      <input type="file" id="vt-file" accept="application/json,.json" class="visually-hidden">
+
+    </div>
+  </div>
+</div>
+
 <!-- Kleine Dialoge des Pen-Trackers. Liegen über dem Pen-Tracker-Fenster
      (z-index 150), aber unter dem PIN-Sperrbildschirm (200). -->
 <div class="pt-dialog" id="pt-dlg-pen" hidden>
@@ -996,7 +1036,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=24"></script>
+<script type="module" src="js/app.js?v=25"></script>
 
 </body>
 </html>

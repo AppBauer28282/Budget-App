@@ -3,8 +3,8 @@
    Alle Summen werden einmal pro Aktualisierung in einem Durchlauf berechnet
    und weitergereicht, statt dieselben Werte mehrfach zu ermitteln.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, fcKeys } from './constants.js?v=24';
-import { getMonthData, currentMonthKey } from './storage.js?v=24';
+import { items, categoryDefs, savingDefs, fcKeys } from './constants.js?v=25';
+import { getMonthData, currentMonthKey } from './storage.js?v=25';
 
 export function sumEntries(list){
   let total = 0;

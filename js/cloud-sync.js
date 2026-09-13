@@ -15,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=24';
+import { el } from './dom.js?v=25';
 import {
   allData, currentMonthKey, writeStorage,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=24';
-import { renderMonth } from './render.js?v=24';
-import { renderOverview } from './navigation.js?v=24';
+} from './storage.js?v=25';
+import { renderMonth } from './render.js?v=25';
+import { renderOverview } from './navigation.js?v=25';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).
@@ -188,6 +188,32 @@ window.__onAuszahlungLocalSave = function(data){
   setAzLocalUpdatedAt(ts);
   if(!auth.currentUser) return;
   auszahlungDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: data })
+    .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
+};
+
+// ---------- Vermögens-Tracker-Sync ----------
+// Gleicher Mechanismus, eigenes Dokument. Auch hier steht im Quellcode nie ein
+// Anfangsbestand — aus Monatsständen ließe sich das gesamte Vermögen ablesen,
+// in einem öffentlichen Repository haben sie nichts zu suchen. Hinter dem
+// PIN-Login in Firestore dagegen schon.
+const vermoegenDocRef = (uid) => db.collection('vermoegen').doc(uid);
+const VM_LOCAL_UPDATED_KEY = 'kontor_vermoegen_updated_at';
+function getVmLocalUpdatedAt(){
+  const raw = localStorage.getItem(VM_LOCAL_UPDATED_KEY);
+  const n = raw ? parseInt(raw, 10) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+function setVmLocalUpdatedAt(ts){
+  try{ localStorage.setItem(VM_LOCAL_UPDATED_KEY, String(ts)); }catch(e){}
+}
+let suppressVermoegenPush = false;
+
+window.__onVermoegenLocalSave = function(data){
+  if(suppressVermoegenPush) return;
+  const ts = Date.now();
+  setVmLocalUpdatedAt(ts);
+  if(!auth.currentUser) return;
+  vermoegenDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: data })
     .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
 };
 
@@ -509,6 +535,36 @@ auth.onAuthStateChanged(async (user) => {
       }catch(err){ /* Tracker bleibt lokal nutzbar, auch ohne Cloud */ }
     }
 
+    // Gleicher Abgleich für den Vermögens-Tracker, ebenfalls als eigener
+    // Versuch — ein Fehler hier darf den Budget-Login nicht aufhalten.
+    if(window.__vermoegenCloud){
+      try{
+        const vmSnap = await vermoegenDocRef(user.uid).get();
+        if(vmSnap.exists){
+          const raw = vmSnap.data() || {};
+          const isNewFormat = raw.data && typeof raw.data === 'object';
+          const cloudPayload = isNewFormat ? raw.data : raw;
+          const cloudUpdatedAt = Number(raw.updatedAt) || 0;
+          const localUpdatedAt = getVmLocalUpdatedAt();
+          const cloudWins = localUpdatedAt === 0 || cloudUpdatedAt > localUpdatedAt;
+
+          if(cloudWins){
+            suppressVermoegenPush = true;
+            window.__vermoegenCloud.replaceAllData(cloudPayload);
+            suppressVermoegenPush = false;
+            setVmLocalUpdatedAt(cloudUpdatedAt || Date.now());
+          } else {
+            const ts = localUpdatedAt;
+            await vermoegenDocRef(user.uid).set({ updatedAt: ts, data: window.__vermoegenCloud.getSnapshot() });
+          }
+        } else {
+          const ts = Date.now();
+          setVmLocalUpdatedAt(ts);
+          await vermoegenDocRef(user.uid).set({ updatedAt: ts, data: window.__vermoegenCloud.getSnapshot() });
+        }
+      }catch(err){ /* Tracker bleibt lokal nutzbar, auch ohne Cloud */ }
+    }
+
     lockPin.value = '';
     lockStatus.textContent = '';
     lockSubmit.disabled = false;
@@ -521,7 +577,7 @@ auth.onAuthStateChanged(async (user) => {
     document.body.style.overflow = '';
     ['receipt-overlay','chart-overlay','pin-overlay','analysis-overlay',
      'salary-calc-overlay','konsum-overlay','pentracker-overlay',
-     'auszahlung-overlay'].forEach(id => {
+     'auszahlung-overlay','vermoegen-overlay'].forEach(id => {
       const ov = document.getElementById(id);
       if(ov) ov.hidden = true;
     });
@@ -530,6 +586,9 @@ auth.onAuthStateChanged(async (user) => {
     document.querySelectorAll('.pt-dialog').forEach(dlg => { dlg.hidden = true; });
     // Ebenso die Unterfenster des Auszahlungs-Trackers.
     document.querySelectorAll('.az-dialog').forEach(dlg => { dlg.hidden = true; });
+    // Die Dialoge des Vermögens-Trackers werden dynamisch erzeugt und deshalb
+    // entfernt statt versteckt.
+    document.querySelectorAll('.vt-modal-overlay, .vt-toast').forEach(n => n.remove());
     sheetEl.hidden = true;
     overviewEl.hidden = true;
     lockOverlay.hidden = false;
