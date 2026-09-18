@@ -23,7 +23,7 @@
    Alle IDs sind mit "vt-" vorangestellt. Die kleinen Dialoge hängen an
    document.body und liegen über dem Fenster (siehe styles.css).
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=25';
+import { openOverlay, closeOverlay } from './overlays.js?v=26';
 
 const STORE_KEY = 'vermoegen.v1';
 

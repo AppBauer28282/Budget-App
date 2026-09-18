@@ -1155,31 +1155,10 @@
     box-shadow: 0 0 0 3px rgba(10,132,255,0.25);
   }
 
-  /* ---------- Werkzeug-Symbol rechts oben (Übersicht) ---------- */
-  /* Titelblock und Symbol nebeneinander; der Titelblock darf schrumpfen
-     (min-width:0), damit lange Überschriften das Symbol nicht wegdrücken. */
-  .overview-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap: 16px;
-  }
+  /* ---------- Kopfzeile der Übersicht ----------
+     Trug früher rechts die Werkzeug-Symbole; die sitzen jetzt als Kacheln
+     auf dem Startbildschirm. Geblieben ist der reine Titelblock. */
   .overview-head-titles{ min-width: 0; }
-  .icon-btn{
-    flex-shrink: 0;
-    width: 38px; height: 38px;
-    display:flex; align-items:center; justify-content:center;
-    background: var(--paper-2);
-    border: none;
-    border-radius: 50%;
-    box-shadow: var(--schatten);
-    color: var(--brass);
-    padding: 0;
-    cursor: pointer;
-  }
-  .icon-btn:hover{ background: #e8e8ed; }
-  .icon-btn:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
-  .icon-btn svg{ width: 21px; height: 21px; display:block; }
 
   /* ---------- Gehaltsrechner (eigenes Fenster) ---------- */
   /* Breiter als die übrigen Overlays, da der Rechner ein zweispaltiges
@@ -1351,26 +1330,140 @@
     .sc-grid{ grid-template-columns: 1fr; }
   }
 
-  /* ---------- Werkzeug-Symbole rechts oben (mehrere nebeneinander) ---------- */
-  .overview-head-tools{
-    display:flex;
-    gap: 8px;
-    flex-shrink: 0;
+  /* ---------- Startbildschirm: alle Apps als Kacheln ----------
+     Löst die frühere Symbolleiste oben rechts ab. Dort standen fünf 38px
+     große Symbole ohne Beschriftung nebeneinander und drängten die
+     Überschrift auf schmalen Geräten in die zweite Zeile; als Kacheln mit
+     Namen ist zugleich ohne Raten erkennbar, was sich hinter jedem Symbol
+     verbirgt. */
+  .home-head{ margin-bottom: 18px; }
+
+  /* Rückweg aus dem Monatsbudget zu den Kacheln. Bewusst ein einziger
+     Knopf aus Pfeil und Text statt eines runden Pfeils mit danebenstehender
+     Beschriftung: Die Beschriftung sah in Blau klickbar aus, war es aber
+     nicht. Gleiche Form wie der Rückweg innerhalb des Vermögens-Trackers. */
+  .home-back-row{ margin-bottom: 12px; }
+  #overview-screen .home-back-btn{
+    background: none;
+    border: none;
+    padding: 4px 2px;
+    margin-left: -2px;
+    color: var(--brass);
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: var(--radius-klein);
   }
-  /* Mit fünf Werkzeugen belegt die Symbolleiste 222px. Auf schmalen Geräten
-     bleiben der Überschrift dann zu wenige Pixel und "Deine Monate" (braucht
-     157px bei 24px Schrift) bricht auf zwei Zeilen um. Gemessen: mit 32px
-     großen Symbolen, 4px Abstand dazwischen und 10px zur Überschrift schrumpft
-     die Leiste auf 176px — damit bleibt die Überschrift ab 375px (iPhone SE,
-     13 mini) wieder einzeilig. Darunter (360px, 320px) bricht sie um; das ist
-     hingenommen, da nichts überläuft und beide Zeilen lesbar bleiben. Ab 430px
-     (iPhone 14/16 Pro Max) reicht der Platz ohnehin, dort bleiben die Symbole
-     unverändert bei 38px. */
-  @media (max-width: 420px){
-    .overview-head{ gap: 10px; }
-    .overview-head-tools{ gap: 4px; }
-    .overview-head-tools .icon-btn{ width: 32px; height: 32px; }
-    .overview-head-tools .icon-btn svg{ width: 18px; height: 18px; }
+  #overview-screen .home-back-btn:hover{ text-decoration: underline; }
+  #overview-screen .home-back-btn:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+
+  .home-gruppe{
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 22px 2px 10px;
+  }
+
+  /* Zwei Spalten: bei fünf Werkzeugen steht das letzte allein in der letzten
+     Zeile — bewusst so gelassen, statt es über die volle Breite zu ziehen,
+     damit alle Werkzeug-Kacheln gleich groß bleiben.
+
+     minmax(0,1fr) statt 1fr: Mit "1fr" darf eine Spalte nicht unter ihre
+     Mindestbreite schrumpfen; die Kacheln liefen dadurch auf schmalen Geräten
+     rechts aus dem Bild (unsichtbar, weil body overflow-x:hidden trägt). */
+  .home-raster{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* Die ID-Verankerung ist nötig: die globale Regel ".sheet button" würde den
+     Kacheln sonst den kleinen 10px-Radius der übrigen Knöpfe geben. */
+  #home-screen .home-tile{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    background: var(--paper-2);
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--schatten);
+    padding: 14px;
+    cursor: pointer;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  #home-screen .home-tile:hover{ background: #fafafc; }
+  #home-screen .home-tile:active{ background: #f0f0f4; }
+  #home-screen .home-tile:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+
+  /* Die große Kachel des Monatsbudgets: volle Breite, Symbol daneben. */
+  #home-screen .home-tile-gross{
+    padding: 18px;
+    gap: 14px;
+  }
+
+  /* Werkzeug-Kacheln stellen das Symbol ÜBER den Text. Nebeneinander bräuchte
+     eine Kachel bei zwei Spalten mindestens Symbol + "Auszahlungen" in einer
+     Zeile (gemessen ~180px) — das passt erst ab 430px. Übereinander bestimmt
+     nur noch das längste Wort die Mindestbreite, damit bleiben zwei Spalten
+     bis hinunter zu 320px erhalten. */
+  #home-screen .home-raster .home-tile{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .home-tile-icon{
+    flex-shrink: 0;
+    width: 42px; height: 42px;
+    display:flex; align-items:center; justify-content:center;
+    background: #eaf3ff;
+    border-radius: 12px;
+    color: var(--brass);
+  }
+  .home-tile-icon svg{ width: 22px; height: 22px; display:block; }
+  .home-tile-gross .home-tile-icon{ width: 52px; height: 52px; border-radius: 14px; }
+  .home-tile-gross .home-tile-icon svg{ width: 27px; height: 27px; }
+
+  /* min-width:0 erlaubt dem Text, in der Rasterspalte zu schrumpfen, statt
+     die Kachel auseinanderzudrücken. */
+  .home-tile-text{ display:flex; flex-direction:column; gap: 2px; min-width: 0; }
+  .home-tile-name{
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .home-tile-gross .home-tile-name{ font-size: 19px; }
+  .home-tile-sub{
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.3;
+  }
+  .home-tile-gross .home-tile-sub{ font-size: 13px; }
+
+  /* Fußbereich: PIN und Abmelden betreffen die ganze App, nicht nur das
+     Budget — deshalb stehen sie hier statt in dessen Einstellungen. */
+  .home-fuss{
+    margin-top: 26px;
+    display:flex;
+    flex-direction:column;
+    gap: 8px;
+  }
+  .home-fuss .app-version{ margin-top: 4px; }
+
+  /* Sehr schmale Geräte: eine Spalte, sonst passt "Gehaltsrechner" nicht mehr
+     in eine halbe Spaltenbreite. Der Grenzwert ist gemessen, nicht geschätzt. */
+  @media (max-width: 329px){
+    .home-raster{ grid-template-columns: 1fr; }
   }
 
   /* ---------- Konsumtopf (eigenes Fenster) ----------
@@ -2536,7 +2629,7 @@
     box-shadow: none;
   }
   /* Knöpfe: abgerundet und ohne Versalien-Sperrschrift. */
-  .sheet button:not(.icon-btn),
+  .sheet button,
   .receipt-card:not(.konsum-overlay .receipt-card):not(.az-overlay .receipt-card) button:not(.kt-chk){
     border-radius: var(--radius-klein);
   }

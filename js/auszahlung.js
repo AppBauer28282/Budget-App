@@ -24,7 +24,7 @@
    die Vorlage baute Zeichenketten zusammen und hatte dabei eine Lücke bei den
    Spaltenköpfen der Gesamtübersicht.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=25';
+import { openOverlay, closeOverlay } from './overlays.js?v=26';
 
 const STORE_KEY = 'auszahlungen.v1';
 const SVG_NS = 'http://www.w3.org/2000/svg';

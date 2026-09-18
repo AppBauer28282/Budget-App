@@ -55,69 +55,136 @@
   </div>
 </div>
 
-<!-- Erst nach erfolgreichem Login sichtbar (JS entfernt das hidden-Attribut). -->
-<!-- Übersichtsseite: erster Screen nach dem Login. Zeigt alle angelegten
-     Monate, getrennt in offen (bearbeitbar, max. 3 gleichzeitig) und
-     abgeschlossen (nur noch Belegansicht, schreibgeschützt). -->
-<div class="sheet" id="overview-screen" hidden>
-  <!-- Kopfzeile: Titel links, Werkzeug-Symbol (Geldsack) rechts oben. -->
-  <div class="overview-head">
-    <div class="overview-head-titles">
-      <p class="eyebrow">Monatsbudget</p>
-      <h1>Deine Monate</h1>
-    </div>
-    <div class="overview-head-tools">
-      <button type="button" class="icon-btn" id="salary-calc-btn"
-              aria-label="Gehaltsrechner öffnen" title="Gehaltsrechner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+<!-- Startbildschirm nach der PIN-Eingabe: alle Anwendungen als Kacheln.
+     Das Monatsbudget als große Kachel oben, die fünf Werkzeuge darunter.
+     Die Werkzeug-Knöpfe tragen bewusst dieselben IDs wie früher die
+     Symbole oben rechts — so öffnen die Werkzeug-Module ihr Fenster
+     unverändert, ohne dass eines davon angefasst werden musste. -->
+<div class="sheet" id="home-screen" hidden>
+  <div class="home-head">
+    <p class="eyebrow">Kontor</p>
+    <h1>Alle Apps</h1>
+  </div>
+
+  <button type="button" class="home-tile home-tile-gross" id="budget-tile"
+          aria-label="Monatsbudget öffnen">
+    <span class="home-tile-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+           stroke-linecap="round" stroke-linejoin="round" focusable="false">
+        <rect x="3.2" y="4.2" width="17.6" height="16.6" rx="2.6"/>
+        <path d="M3.2 9.1h17.6"/>
+        <path d="M8.2 2.8v2.8"/>
+        <path d="M15.8 2.8v2.8"/>
+        <path d="M7.4 13h4.2"/>
+        <path d="M7.4 16.7h8.4"/>
+      </svg>
+    </span>
+    <span class="home-tile-text">
+      <span class="home-tile-name">Monatsbudget</span>
+      <span class="home-tile-sub">Fixkosten, Ausgaben und Rücklagen je Monat</span>
+    </span>
+  </button>
+
+  <p class="home-gruppe">Werkzeuge</p>
+  <div class="home-raster">
+      <button type="button" class="home-tile" id="salary-calc-btn" aria-label="Gehaltsrechner öffnen">
+        <span class="home-tile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <rect x="2.5" y="6.5" width="19" height="11" rx="2"/>
           <circle cx="12" cy="12" r="2.4"/>
           <path d="M6.1 12h.01"/>
           <path d="M17.9 12h.01"/>
-        </svg>
+          </svg>
+        </span>
+        <span class="home-tile-text">
+          <span class="home-tile-name">Gehaltsrechner</span>
+          <span class="home-tile-sub">Brutto und Netto</span>
+        </span>
       </button>
-      <button type="button" class="icon-btn" id="konsum-btn"
-              aria-label="Konsumtopf öffnen" title="Konsumtopf">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <button type="button" class="home-tile" id="konsum-btn" aria-label="Konsumtopf öffnen">
+        <span class="home-tile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M10.1 2.6h3.8l-1.1 3.1h-1.6z"/>
           <path d="M11.2 5.7C8 6.9 5.2 10.4 5.2 14.1c0 4.2 2.8 6.4 6.8 6.4s6.8-2.2 6.8-6.4c0-3.7-2.8-7.2-6-8.4"/>
           <path d="M14 11.9a3.1 3.1 0 1 0 0 4.4"/>
           <path d="M9.4 13.3h4.1"/>
           <path d="M9.4 14.9h4.1"/>
-        </svg>
+          </svg>
+        </span>
+        <span class="home-tile-text">
+          <span class="home-tile-name">Konsumtopf</span>
+          <span class="home-tile-sub">Topf für den Monat</span>
+        </span>
       </button>
-      <button type="button" class="icon-btn" id="pentracker-btn"
-              aria-label="Pen-Tracker öffnen" title="Pen-Tracker">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <button type="button" class="home-tile" id="pentracker-btn" aria-label="Pen-Tracker öffnen">
+        <span class="home-tile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M12 4.1v16"/>
           <path d="M7.9 20.1h8.2"/>
           <path d="M3.4 6.9h2.6c1.9 0 4.3-.9 6-1.8 1.7.9 4.1 1.8 6 1.8h2.6"/>
           <path d="M6.2 7.2 3.5 13.6h5.4z"/>
           <path d="M17.8 7.2 15.1 13.6h5.4z"/>
-        </svg>
+          </svg>
+        </span>
+        <span class="home-tile-text">
+          <span class="home-tile-name">Pen-Tracker</span>
+          <span class="home-tile-sub">Einheiten, Gewicht</span>
+        </span>
       </button>
-      <button type="button" class="icon-btn" id="auszahlung-btn"
-              aria-label="Auszahlungs-Tracker öffnen" title="Auszahlungen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <button type="button" class="home-tile" id="auszahlung-btn" aria-label="Auszahlungs-Tracker öffnen">
+        <span class="home-tile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M4 19.5v-6"/>
           <path d="M9.3 19.5v-9.5"/>
           <path d="M14.7 19.5v-4.5"/>
           <path d="M20 19.5V6"/>
           <path d="M3 21.2h18"/>
-        </svg>
+          </svg>
+        </span>
+        <span class="home-tile-text">
+          <span class="home-tile-name">Auszahlungen</span>
+          <span class="home-tile-sub">Jahre und Verlauf</span>
+        </span>
       </button>
-      <button type="button" class="icon-btn" id="vermoegen-btn"
-              aria-label="Vermögens-Tracker öffnen" title="Vermögen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <button type="button" class="home-tile" id="vermoegen-btn" aria-label="Vermögens-Tracker öffnen">
+        <span class="home-tile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M3.5 16.8 9.3 11l3.4 3.4L20.4 6.7"/>
           <path d="M15.2 6.7h5.2v5.2"/>
-        </svg>
+          </svg>
+        </span>
+        <span class="home-tile-text">
+          <span class="home-tile-name">Vermögen</span>
+          <span class="home-tile-sub">Stände je Monat</span>
+        </span>
       </button>
+  </div>
+
+  <div class="home-fuss">
+    <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
+    <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
+    <p class="app-version" id="app-version"></p>
+  </div>
+</div>
+
+<!-- Erst nach erfolgreichem Login sichtbar (JS entfernt das hidden-Attribut). -->
+<!-- Übersichtsseite: erster Screen nach dem Login. Zeigt alle angelegten
+     Monate, getrennt in offen (bearbeitbar, max. 3 gleichzeitig) und
+     abgeschlossen (nur noch Belegansicht, schreibgeschützt). -->
+<div class="sheet" id="overview-screen" hidden>
+  <div class="home-back-row">
+    <button type="button" class="home-back-btn" id="back-to-home-btn">‹ Alle Apps</button>
+  </div>
+
+  <div class="overview-head">
+    <div class="overview-head-titles">
+      <p class="eyebrow">Monatsbudget</p>
+      <h1>Deine Monate</h1>
     </div>
   </div>
 
@@ -147,7 +214,7 @@
   <button type="button" class="receipt-btn" id="analysis-btn">Analyse</button>
 
   <details class="section">
-    <summary class="section-summary">Einstellungen</summary>
+    <summary class="section-summary">Sichern &amp; Wiederherstellen</summary>
     <div class="section-body">
       <div class="backup-box">
         <p class="backup-hint">Alle Monate lokal sichern oder eine gesicherte Datei wieder einlesen.</p>
@@ -156,11 +223,6 @@
         <input type="file" id="import-file" accept="application/json,.json" hidden>
         <div class="backup-msg" id="backup-msg" role="status"></div>
       </div>
-
-      <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
-      <button type="button" class="receipt-btn" id="signout-btn">Abmelden</button>
-
-      <p class="app-version" id="app-version"></p>
     </div>
   </details>
 </div>
@@ -1036,7 +1098,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=25"></script>
+<script type="module" src="js/app.js?v=26"></script>
 
 </body>
 </html>

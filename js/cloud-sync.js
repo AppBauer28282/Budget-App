@@ -15,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=25';
+import { el } from './dom.js?v=26';
 import {
   allData, currentMonthKey, writeStorage,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=25';
-import { renderMonth } from './render.js?v=25';
-import { renderOverview } from './navigation.js?v=25';
+} from './storage.js?v=26';
+import { renderMonth } from './render.js?v=26';
+import { renderOverview } from './navigation.js?v=26';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).
@@ -64,6 +64,7 @@ window.__budgetCloud = {
 
 const sheetEl = el.sheet;
 const overviewEl = el.overviewScreen;
+const homeEl = document.getElementById('home-screen');
 const lockOverlay = document.getElementById('lock-overlay');
 const lockPin = document.getElementById('lock-pin');
 const lockSubmit = document.getElementById('lock-submit');
@@ -569,7 +570,10 @@ auth.onAuthStateChanged(async (user) => {
     lockStatus.textContent = '';
     lockSubmit.disabled = false;
     lockOverlay.hidden = true;
-    overviewEl.hidden = false;
+    // Nach dem Entsperren kommt die Kachelseite, nicht mehr direkt das
+    // Budget. start() zeichnet die Monatslisten trotzdem schon jetzt, damit
+    // die Übersicht beim Antippen der Kachel sofort steht.
+    homeEl.hidden = false;
     window.__budgetCloud.start();
   } else {
     // Abgemeldet: alle offenen Fenster schließen und die Scroll-Sperre
@@ -591,6 +595,7 @@ auth.onAuthStateChanged(async (user) => {
     document.querySelectorAll('.vt-modal-overlay, .vt-toast').forEach(n => n.remove());
     sheetEl.hidden = true;
     overviewEl.hidden = true;
+    homeEl.hidden = true;
     lockOverlay.hidden = false;
     lockSubmit.disabled = false;
     lockStatus.textContent = '';
