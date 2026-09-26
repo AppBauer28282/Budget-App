@@ -20,7 +20,7 @@
    Oberfläche kollidieren. Aufbau der Listen über die DOM-API statt über
    innerHTML, wie überall sonst in dieser App.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=26';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=27';
 
 const STORE_KEY = 'konsumtopf.v3';
 const STORE_VERSION = 2;
@@ -45,6 +45,9 @@ const $ = (id) => document.getElementById(id);
 const ktBtn          = $('konsum-btn');
 const ktOverlay      = $('konsum-overlay');
 const ktClose        = $('konsum-close');
+// Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
+// openAppScreen/closeAppScreen in js/overlays.js).
+const homeScreenEl   = $('home-screen');
 const ktWarn         = $('kt-warn');
 const ktJahr         = $('kt-jahr');
 const ktStart        = $('kt-start');
@@ -769,17 +772,16 @@ function init(){
     reader.readAsText(datei);
   });
 
-  /* --- Fenster --- */
-  function openKonsum(){ openOverlay(ktOverlay, ktClose); }
+  /* --- Fenster ---
+     Öffnet sich als eigener Bildschirm anstelle der Kachelseite — nicht mehr
+     als schwebendes Overlay darüber (siehe js/overlays.js). */
+  function openKonsum(){ openAppScreen(ktOverlay, homeScreenEl, ktClose); }
   function closeKonsum(){
     blEditId = null;
-    closeOverlay(ktOverlay, ktBtn);
+    closeAppScreen(ktOverlay, homeScreenEl, ktBtn);
   }
   ktBtn.addEventListener('click', openKonsum);
   ktClose.addEventListener('click', closeKonsum);
-  ktOverlay.addEventListener('click', (e) => {
-    if(e.target === ktOverlay) closeKonsum();
-  });
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape' && !ktOverlay.hidden) closeKonsum();
   });
@@ -797,7 +799,7 @@ function init(){
 // Browser noch eine ältere index.html aus dem Zwischenspeicher anzeigt),
 // wird er still übersprungen und das Budget läuft normal weiter.
 const alleElementeDa = [
-  ktBtn, ktOverlay, ktClose, ktWarn, ktJahr, ktStart, ktVorjahrText, ktUebernehmen,
+  ktBtn, ktOverlay, ktClose, homeScreenEl, ktWarn, ktJahr, ktStart, ktVorjahrText, ktUebernehmen,
   ktTopfPlan, ktSumZu, ktSumAus, ktMonate,
   ktBelegBtn, ktBelegCard, ktBelegListe, ktBelegSum,
   ktBucket, ktBlName, ktBlKosten, ktBlAdd, ktBlSum,

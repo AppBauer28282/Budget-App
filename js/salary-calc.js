@@ -14,7 +14,14 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=26';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=27';
+import { clamp } from './utils.js?v=27';
+
+// Grenzen der beiden Textfelder (früher Regler-Grenzen). Werden beim
+// Berechnen angewandt, nicht beim Tippen — so kann man zwischendurch auch
+// unfertige Werte eingeben, ohne dass sie sofort zurechtgestutzt werden.
+const STUNDEN_MIN = 30, STUNDEN_MAX = 39.5;
+const PROZENT_MIN = 0, PROZENT_MAX = 10;
 
 /* ---------- Entgelttabelle & Konstanten ---------- */
 const TABELLE = {
@@ -71,6 +78,9 @@ const scDevNetto   = $('sc-dev-netto');
 const scOpenBtn    = $('salary-calc-btn');
 const scOverlay    = $('salary-calc-overlay');
 const scCloseBtn   = $('salary-calc-close');
+// Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
+// openAppScreen/closeAppScreen in js/overlays.js).
+const homeScreenEl = $('home-screen');
 
 let jahrModus = false;
 
@@ -180,8 +190,12 @@ function addRow(container, label, wert, klasse){
 function update(){
   const stufe  = scStufe.value;
   const gruppe = scGruppe.value;
-  const std    = parseFloat(scStunden.value);
-  const proz   = parseFloat(scProzent.value);
+  // Freie Texteingabe statt Regler — geklemmt auf einen sinnvollen Bereich,
+  // damit ein Tippfehler (oder eine leere/unsinnige Eingabe) nicht zu einem
+  // absurden Gehalt führt. Die Echo-Anzeige daneben zeigt immer den
+  // tatsächlich verwendeten (geklemmten) Wert, damit das nie unbemerkt bleibt.
+  const std    = clamp(parseKomma(scStunden.value), STUNDEN_MIN, STUNDEN_MAX);
+  const proz   = clamp(parseKomma(scProzent.value), PROZENT_MIN, PROZENT_MAX);
   const kvz    = parseKomma(scKvz.value);
   const tabelle = TABELLE[stufe][gruppe];
 
@@ -250,20 +264,19 @@ function setModus(jahr){
 }
 
 /* ---------- Fenster öffnen/schließen ---------- */
+// Öffnet sich als eigener Bildschirm anstelle der Kachelseite — nicht mehr
+// als schwebendes Overlay darüber (siehe js/overlays.js).
 function openSalaryCalc(){
-  openOverlay(scOverlay, scCloseBtn);
+  openAppScreen(scOverlay, homeScreenEl, scCloseBtn);
 }
 function closeSalaryCalc(){
-  closeOverlay(scOverlay, scOpenBtn);
+  closeAppScreen(scOverlay, homeScreenEl, scOpenBtn);
 }
 
 /* ---------- Ereignisse & Start ---------- */
 function init(){
   scOpenBtn.addEventListener('click', openSalaryCalc);
   scCloseBtn.addEventListener('click', closeSalaryCalc);
-  scOverlay.addEventListener('click', (e) => {
-    if(e.target === scOverlay) closeSalaryCalc();
-  });
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape' && !scOverlay.hidden) closeSalaryCalc();
   });
@@ -291,7 +304,7 @@ const alleElementeDa = [
   scStufe, scGruppe, scStunden, scStundenVal, scProzent, scProzentVal,
   scMonatOut, scDevMonat, scJahrOut, scDevJahr, scGrowth, scKvz,
   scBtnMonat, scBtnJahr, scRows, scNettoCap, scNettoOut, scDevNetto,
-  scOpenBtn, scOverlay, scCloseBtn
+  scOpenBtn, scOverlay, scCloseBtn, homeScreenEl
 ].every(node => node !== null && node !== undefined);
 
 if(alleElementeDa) init();

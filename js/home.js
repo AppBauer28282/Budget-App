@@ -14,8 +14,8 @@
    kommt damit von selbst wieder die Kachelseite zum Vorschein; dafür ist hier
    nichts zu tun.
    ============================================================================= */
-import { el } from './dom.js?v=26';
-import { showOverview } from './navigation.js?v=26';
+import { el } from './dom.js?v=27';
+import { showOverview } from './navigation.js?v=27';
 
 const homeScreen   = document.getElementById('home-screen');
 const budgetTile   = document.getElementById('budget-tile');

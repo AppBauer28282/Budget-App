@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=26';
-import { clamp, monthKey } from './utils.js?v=26';
+} from './constants.js?v=27';
+import { clamp, monthKey } from './utils.js?v=27';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=26';
+import { showBackupMsg } from './backup.js?v=27';
 
 export function emptyMonthData(){
   const categories = Object.create(null);
@@ -43,7 +43,11 @@ export function emptyMonthData(){
     // Restsaldo der Kreditkarte, vom Nutzer eingetragen (Cent) — null = noch
     // nicht erfasst. Der Gesamtsaldo selbst ist eine feste Konstante
     // (CARD_TOTAL_CENTS), wird also nicht pro Monat gespeichert.
-    card: { restsaldoCents: null }
+    // "eltern": Ausgaben, die über die Kreditkarte für die Eltern liefen und
+    // von ihnen zurückerstattet werden — dieselbe Form wie categories[key]
+    // (Einträge mit Bezeichnung), damit sanitizeEntries direkt wiederverwendet
+    // werden kann.
+    card: { restsaldoCents: null, eltern: [] }
   };
 }
 
@@ -119,6 +123,7 @@ export function sanitizeMonthData(raw){
   if(cardCents !== null){
     month.card.restsaldoCents = clamp(cardCents, 0, CARD_TOTAL_CENTS);
   }
+  month.card.eltern = sanitizeEntries(rawCard.eltern, true);
 
   return month;
 }

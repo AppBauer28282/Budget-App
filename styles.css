@@ -633,7 +633,7 @@
   .forecast-note textarea{
     width:100%;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 13px;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 10px 12px;
     background: var(--paper);
     border: 1px solid var(--line);
@@ -1766,6 +1766,10 @@
     color: #1a1a1a;
     cursor: pointer;
   }
+  /* select braucht mindestens 16px, sonst zoomt iOS Safari beim Antippen
+     hinein — Knöpfe sind davon nicht betroffen, bleiben also bei 14px. */
+  .az-overlay select,
+  .az-dialog select{ font-size: 16px; }
   .az-overlay select{ -webkit-appearance: menulist; appearance: menulist; }
   .az-overlay .az-primary,
   .az-dialog .az-primary{ background: var(--az-dark2); color: #fff; border: none; }
@@ -1789,20 +1793,21 @@
   }
   .az-group-head{ background: #eef2f7; padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
   .az-overlay input.az-group-name{
-    border: none; background: transparent; font-weight: 700; font-size: 14px;
+    border: none; background: transparent; font-weight: 700; font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 2px; flex: 1; min-width: 0; border-radius: 0;
   }
   .az-overlay input.az-group-name:focus{ background: #fffbe0; outline: none; }
   .az-pos-row{ display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-top: 1px solid #eee; }
   .az-pos-row:nth-child(even){ background: var(--az-row-alt); }
   .az-overlay input.az-pos-name{
-    border: none; background: transparent; font-size: 14px;
+    border: none; background: transparent; font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     flex: 1; min-width: 0; padding: 4px; border-radius: 0;
   }
   .az-overlay input.az-pos-name:focus{ background: #fffbe0; outline: none; }
   .az-overlay input.az-val-cell{
     width: 100px; flex: 0 0 100px; border: 1px solid #dcdfe4; border-radius: 6px;
-    padding: 6px; text-align: right; font-size: 14px; background: #fff;
+    padding: 6px; text-align: right; font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    background: #fff;
   }
   .az-overlay .az-del-btn{
     border: none; background: transparent; color: #a33; font-size: 14px; padding: 6px 8px; flex-shrink: 0;
@@ -2009,6 +2014,9 @@
   .vt-overlay .pos-head{ display:flex; align-items: baseline; gap: 10px; margin: 20px 0 7px; }
   .vt-overlay .pos-head h2{ font-size: 14px; margin: 0; font-weight: 600; color: var(--ink-soft); }
   .vt-overlay .pos-list{ display:flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  /* Erbt sonst die 13px von .pos-list — Eingabefelder brauchen mindestens
+     16px, sonst zoomt iOS Safari beim Antippen hinein. */
+  .vt-overlay .pos select, .vt-overlay .pos input{ font-size: 16px; }
   .vt-overlay .pos{
     background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--radius-klein);
     padding: 7px 9px; display: grid; gap: 6px;
@@ -2555,7 +2563,7 @@
     width: 100%;
     box-sizing: border-box;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
     padding: 9px 10px;
     background: var(--paper-2);
     border: 1px solid var(--line);
@@ -2605,6 +2613,37 @@
      Spalten zurückfallen. */
   @media (max-width: 340px){
     .pt-kpi-grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* =========================================================
+     WERKZEUGE ÖFFNEN SICH VOLLSTÄNDIG — NICHT ALS APP-IN-APP
+     Gehaltsrechner, Konsumtopf, Pen-Tracker, Auszahlungs- und
+     Vermögens-Tracker öffneten sich bisher als schwebendes Overlay
+     (abgedunkelter Hintergrund, freistehende Karte mit Schatten) ÜBER
+     der Kachelseite. Jetzt wechseln sie wie das Monatsbudget selbst
+     vollständig den Bildschirm (js/overlays.js: openAppScreen/
+     closeAppScreen tauschen [hidden] statt eine Ebene draufzulegen).
+
+     Bewusst NUR die äußere "Hülle" wird hier neutralisiert (Position,
+     Hintergrund, Schatten, Eckenrundung) — jede der bestehenden,
+     werkzeugeigenen Regeln für .receipt-card/.receipt-head/.receipt-body
+     (Farben, Breiten, Innenabstände) bleibt unverändert erhalten, da sie
+     an denselben Klassen hängt und hier keine einzige Eigenschaft davon
+     angefasst wird. Deshalb genügt dieser eine zusätzliche Block, statt
+     die fünf Werkzeuge einzeln umzuschreiben. */
+  .salary-calc-overlay, .konsum-overlay, .pt-overlay, .az-overlay, .vt-overlay{
+    position: static;
+    background: none;
+    padding: 8px 0 24px;   /* wie .sheet */
+    overflow-y: visible;
+    z-index: auto;
+    width: 100%;
+  }
+  .salary-calc-overlay .receipt-card, .konsum-overlay .receipt-card,
+  .pt-overlay .receipt-card, .az-overlay .receipt-card, .vt-overlay .receipt-card{
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
   }
 
   /* =========================================================

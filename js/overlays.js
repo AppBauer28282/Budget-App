@@ -23,3 +23,28 @@ export function closeOverlay(overlayEl, focusBackEl, onAfterClose){
     focusBackEl.focus();
   }
 }
+
+/* ---------------------------------------------------------------------------
+   WERKZEUG-BILDSCHIRME (Gehaltsrechner, Konsumtopf, Pen-Tracker,
+   Auszahlungs- und Vermögens-Tracker)
+   Anders als die kleinen Dialoge oben öffnen sich diese fünf Werkzeuge als
+   VOLLSTÄNDIGER Bildschirmwechsel — genau wie das Monatsbudget selbst
+   (js/home.js, js/navigation.js): die Kachelseite wird verborgen, das
+   Werkzeug nimmt ihren Platz ein. Kein abgedunkelter Hintergrund, keine
+   Scroll-Sperre — es ist kein schwebender Dialog mehr, sondern eine normale
+   Seite im Wechsel mit den anderen [hidden]-gesteuerten Bildschirmen.
+   "homeEl" ist die Kachelseite (#home-screen), die dabei ausgeblendet bzw.
+   wieder gezeigt wird. ============================================================================= */
+export function openAppScreen(screenEl, homeEl, focusEl){
+  homeEl.hidden = true;
+  screenEl.hidden = false;
+  window.scrollTo(0, 0);
+  if(focusEl) focusEl.focus();
+}
+
+export function closeAppScreen(screenEl, homeEl, focusEl){
+  screenEl.hidden = true;
+  homeEl.hidden = false;
+  window.scrollTo(0, 0);
+  if(focusEl) focusEl.focus();
+}

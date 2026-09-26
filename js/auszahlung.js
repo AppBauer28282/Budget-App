@@ -24,7 +24,7 @@
    die Vorlage baute Zeichenketten zusammen und hatte dabei eine Lücke bei den
    Spaltenköpfen der Gesamtübersicht.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=26';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=27';
 
 const STORE_KEY = 'auszahlungen.v1';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -49,6 +49,9 @@ const $ = (id) => document.getElementById(id);
 const azBtn        = $('auszahlung-btn');
 const azOverlay    = $('auszahlung-overlay');
 const azClose      = $('auszahlung-close');
+// Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
+// openAppScreen/closeAppScreen in js/overlays.js).
+const homeScreenEl = $('home-screen');
 const azWarn       = $('az-warn');
 const azMonth      = $('az-month');
 const azYear       = $('az-year');
@@ -945,23 +948,22 @@ function init(){
     reader.readAsText(datei);
   });
 
-  /* --- Fenster --- */
+  /* --- Fenster — öffnet sich als eigener Bildschirm anstelle der
+     Kachelseite, nicht mehr als schwebendes Overlay darüber (siehe
+     js/overlays.js). --- */
   function oeffneTracker(){
     zeigeMeldung('');
     azSaveStatus.textContent = '';
     azSaveStatus.classList.remove('saved');
-    openOverlay(azOverlay, azClose);
+    openAppScreen(azOverlay, homeScreenEl, azClose);
     render();
   }
   function schliesseTracker(){
     schliesseAlleDialoge();
-    closeOverlay(azOverlay, azBtn);
+    closeAppScreen(azOverlay, homeScreenEl, azBtn);
   }
   azBtn.addEventListener('click', oeffneTracker);
   azClose.addEventListener('click', schliesseTracker);
-  azOverlay.addEventListener('click', e => {
-    if(e.target === azOverlay) schliesseTracker();
-  });
 
   // Escape schließt immer nur die oberste Ebene.
   document.addEventListener('keydown', e => {
@@ -984,7 +986,7 @@ function init(){
 // der Browser noch eine ältere index.html aus dem Zwischenspeicher anzeigt),
 // wird er still übersprungen und das Budget läuft normal weiter.
 const alleElementeDa = [
-  azBtn, azOverlay, azClose, azWarn, azMonth, azYear, azGrandTotal, azGroups,
+  azBtn, azOverlay, azClose, homeScreenEl, azWarn, azMonth, azYear, azGrandTotal, azGroups,
   azAddGroup, azSave, azSaveStatus, azMsg,
   azOverviewBtn, azTotalOverviewBtn, azChartBtn, azTotalChartBtn,
   azExport, azFile,

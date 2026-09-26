@@ -7,15 +7,15 @@
    Wird auch für abgeschlossene Monate genutzt — dort ist es die einzige
    noch zugängliche Ansicht (siehe navigation.js openMonthDetail).
    ============================================================================= */
-import { items, categoryDefs, savingDefs, fcKeys, FC_LABELS } from './constants.js?v=26';
-import { el } from './dom.js?v=26';
-import { formatCents } from './utils.js?v=26';
-import { computeTotals } from './compute.js?v=26';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=26';
-import { openOverlay, closeOverlay } from './overlays.js?v=26';
+import { items, categoryDefs, savingDefs, fcKeys, FC_LABELS } from './constants.js?v=27';
+import { el } from './dom.js?v=27';
+import { formatCents } from './utils.js?v=27';
+import { computeTotals } from './compute.js?v=27';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=27';
+import { openOverlay, closeOverlay } from './overlays.js?v=27';
 // Zirkulärer Import: navigation.js importiert umgekehrt openReceipt aus
 // diesem Modul. Sicher, siehe Kommentar in navigation.js.
-import { showOverview } from './navigation.js?v=26';
+import { showOverview } from './navigation.js?v=27';
 
 function addReceiptSectionTitle(container, text){
   const h = document.createElement('p');
@@ -87,8 +87,16 @@ function buildReceipt(){
   addReceiptSubgroup(frag, 'Sonstige Ausgaben');
   let anyCat = false;
   categoryDefs.forEach(def => {
+    // Einträge mit derselben Bezeichnung innerhalb der Kategorie werden zu
+    // einer Zeile zusammengefasst (Summe), statt jede einzelne Buchung
+    // aufzulisten — z. B. mehrere "Einkauf: Rewe"-Buchungen als eine Zeile.
+    // Reihenfolge bleibt die des ersten Auftretens.
+    const summeNachName = new Map();
     m.categories[def.key].forEach(entry => {
-      addReceiptLine(frag, def.name + ': ' + entry.name, entry.cents);
+      summeNachName.set(entry.name, (summeNachName.get(entry.name) || 0) + entry.cents);
+    });
+    summeNachName.forEach((cents, name) => {
+      addReceiptLine(frag, def.name + ': ' + name, cents);
       anyCat = true;
     });
   });

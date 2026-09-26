@@ -8,11 +8,11 @@ import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
   items, categoryDefs, savingDefs, fcKeys, FC_MAX
-} from './constants.js?v=26';
-import { el, fcSliders, fcVals } from './dom.js?v=26';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, formatCents } from './utils.js?v=26';
-import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=26';
-import { refreshTotals, renderCatList, renderSavList, showSalaryFixed, showSalarySlider } from './render.js?v=26';
+} from './constants.js?v=27';
+import { el, fcSliders, fcVals } from './dom.js?v=27';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, formatCents } from './utils.js?v=27';
+import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=27';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, showSalaryFixed, showSalarySlider } from './render.js?v=27';
 
 // --- Gehalt ---
 el.salarySlider.addEventListener('input', () => {
@@ -60,6 +60,43 @@ function saveCardRestsaldo(){
 el.cardSaveBtn.addEventListener('click', saveCardRestsaldo);
 el.cardRestsaldo.addEventListener('keydown', (e) => {
   if(e.key === 'Enter'){ e.preventDefault(); saveCardRestsaldo(); }
+});
+
+// --- Kreditkarte: Ausgaben für Eltern hinzufügen (wie Sonstige Ausgaben,
+// aber ohne Kategorie — es gibt nur diese eine Liste). ---
+function addCardElternEntry(){
+  const name = el.cardElternText.value.trim().slice(0, MAX_TEXT_LENGTH);
+  const cents = parseAmountToCents(el.cardElternAmount.value);
+
+  if(!name){
+    el.cardElternError.textContent = 'Bitte einen Text eingeben.';
+    return;
+  }
+  if(cents === null){
+    el.cardElternError.textContent = 'Bitte einen gültigen Betrag eingeben.';
+    return;
+  }
+  const list = getMonthData(currentMonthKey).card.eltern;
+  if(list.length >= MAX_ENTRIES_PER_KEY){
+    el.cardElternError.textContent = 'Maximale Anzahl Einträge erreicht.';
+    return;
+  }
+  el.cardElternError.textContent = '';
+
+  list.push({ name, cents });
+  saveAll(true);
+  renderCardElternList();
+  refreshTotals();
+
+  el.cardElternText.value = '';
+  el.cardElternAmount.value = '';
+  el.cardElternText.focus();
+}
+el.cardElternAddBtn.addEventListener('click', addCardElternEntry);
+[el.cardElternText, el.cardElternAmount].forEach(input => {
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); addCardElternEntry(); }
+  });
 });
 
 // --- Fixkosten abhaken ---
@@ -165,16 +202,20 @@ function handleRemoveClick(e){
   const m = getMonthData(currentMonthKey);
   const list = scope === 'cat' ? m.categories[key]
              : scope === 'sav' ? m.saving[key]
+             : scope === 'cardEltern' ? m.card.eltern
              : null;
   if(!list || idx >= list.length) return;
 
   list.splice(idx, 1);
   saveAll(true);
-  if(scope === 'cat') renderCatList(); else renderSavList();
+  if(scope === 'cat') renderCatList();
+  else if(scope === 'sav') renderSavList();
+  else renderCardElternList();
   refreshTotals();
 }
 el.catList.addEventListener('click', handleRemoveClick);
 el.savList.addEventListener('click', handleRemoveClick);
+el.cardElternList.addEventListener('click', handleRemoveClick);
 
 // --- Forecast-Regler --- (Liste enthält jetzt auch 'sonstiges', Schleife
 // bleibt unverändert generisch)

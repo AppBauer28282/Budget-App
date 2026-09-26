@@ -23,7 +23,7 @@
    Alle IDs sind mit "vt-" vorangestellt. Die kleinen Dialoge hängen an
    document.body und liegen über dem Fenster (siehe styles.css).
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=26';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=27';
 
 const STORE_KEY = 'vermoegen.v1';
 
@@ -45,6 +45,9 @@ const $ = (id) => document.getElementById(id);
 const vtBtn       = $('vermoegen-btn');
 const vtOverlay   = $('vermoegen-overlay');
 const vtClose     = $('vermoegen-close');
+// Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
+// openAppScreen/closeAppScreen in js/overlays.js).
+const homeScreenEl = $('home-screen');
 const vtWarn      = $('vt-warn');
 const vtMsg       = $('vt-msg');
 const vtBack      = $('vt-back');
@@ -1250,21 +1253,20 @@ function init(){
     e.target.value = '';
   });
 
-  /* --- Fenster --- */
+  /* --- Fenster — öffnet sich als eigener Bildschirm anstelle der
+     Kachelseite, nicht mehr als schwebendes Overlay darüber (siehe
+     js/overlays.js). --- */
   function oeffnen(){
     vtMsg.textContent = '';
-    openOverlay(vtOverlay, vtClose);
+    openAppScreen(vtOverlay, homeScreenEl, vtClose);
     zeigeStart();
   }
   function schliessen(){
     schliesseAlleModals();
-    closeOverlay(vtOverlay, vtBtn);
+    closeAppScreen(vtOverlay, homeScreenEl, vtBtn);
   }
   vtBtn.addEventListener('click', oeffnen);
   vtClose.addEventListener('click', schliessen);
-  vtOverlay.addEventListener('click', (e) => {
-    if(e.target === vtOverlay) schliessen();
-  });
 
   // Escape schließt immer nur die oberste Ebene: erst ein offenes Modal,
   // dann das Werkzeug selbst. Die Modals bringen einen eigenen Handler mit,
@@ -1287,7 +1289,7 @@ function init(){
 // unter keinen Umständen verhindern. Fehlt eines seiner Elemente, wird er
 // still übersprungen und das Budget läuft normal weiter.
 const alleElementeDa = [
-  vtBtn, vtOverlay, vtClose, vtWarn, vtMsg,
+  vtBtn, vtOverlay, vtClose, homeScreenEl, vtWarn, vtMsg,
   vtBack, vtBrand, vtTopAction, vtApp, vtFile
 ].every(node => node !== null && node !== undefined);
 

@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openOverlay, closeOverlay } from './overlays.js?v=26';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=27';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -60,6 +60,9 @@ const MONTHS_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Ok
 const ptBtn        = document.getElementById('pentracker-btn');
 const ptOverlay    = document.getElementById('pentracker-overlay');
 const ptClose      = document.getElementById('pentracker-close');
+// Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
+// openAppScreen/closeAppScreen in js/overlays.js).
+const homeScreenEl = document.getElementById('home-screen');
 const ptWarning    = document.getElementById('pt-storage-warning');
 
 const kpiWeight     = document.getElementById('pt-kpi-weight');
@@ -1126,20 +1129,18 @@ function init(){
     }
   };
 
-  /* Fenster */
+  /* Fenster — öffnet sich als eigener Bildschirm anstelle der Kachelseite,
+     nicht mehr als schwebendes Overlay darüber (siehe js/overlays.js). */
   ptBtn.addEventListener('click', () => {
-    openOverlay(ptOverlay, ptClose);
+    openAppScreen(ptOverlay, homeScreenEl, ptClose);
     renderAll();
   });
   function closePenTracker(){
     closeAllDialogs();
     settleConfirm(false);
-    closeOverlay(ptOverlay, ptBtn);
+    closeAppScreen(ptOverlay, homeScreenEl, ptBtn);
   }
   ptClose.addEventListener('click', closePenTracker);
-  ptOverlay.addEventListener('click', e => {
-    if(e.target === ptOverlay) closePenTracker();
-  });
 
   /* Ein Escape schließt immer nur die oberste Ebene. */
   document.addEventListener('keydown', e => {
@@ -1409,7 +1410,7 @@ function init(){
    Browser noch eine ältere index.html aus dem Zwischenspeicher anzeigt), wird
    er still übersprungen und das Budget läuft normal weiter. */
 const alleElementeDa = [
-  ptBtn, ptOverlay, ptClose, ptWarning,
+  ptBtn, ptOverlay, ptClose, homeScreenEl, ptWarning,
   kpiWeight, kpiChange, kpiChangePct, kpiAvg, kpiBmi, kpiRest, kpiProgress,
   kpiTargetDate, kpiWeeks, kpiCostDose, kpiCostKg, kpiTotalCost,
   penCount, penList, newPenBtn, weightCount, weightList, newWeightBtn,

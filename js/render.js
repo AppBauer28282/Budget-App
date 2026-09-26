@@ -5,11 +5,11 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=26';
-import { el, fcSliders, fcVals } from './dom.js?v=26';
-import { formatCents } from './utils.js?v=26';
-import { computeTotals, sumEntries } from './compute.js?v=26';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=26';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=27';
+import { el, fcSliders, fcVals } from './dom.js?v=27';
+import { formatCents } from './utils.js?v=27';
+import { computeTotals, sumEntries } from './compute.js?v=27';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=27';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung
@@ -147,6 +147,8 @@ export function refreshTotals(){
   el.cardTotal.textContent = formatCents(CARD_TOTAL_CENTS);
   el.cardCatTotal.textContent = formatCents(t.categoryTotal);
 
+  el.cardElternRow.textContent = formatCents(t.cardElternTotal);
+
   if(m.card.restsaldoCents === null){
     el.cardUsed.textContent = '–';
     el.cardDiff.textContent = '–';
@@ -155,7 +157,11 @@ export function refreshTotals(){
     el.cardSummaryTotal.classList.remove('negative');
   } else {
     const used = CARD_TOTAL_CENTS - m.card.restsaldoCents;
-    const diff = used - t.categoryTotal;
+    // Ausgaben für die Eltern liefen zwar über die Karte (stecken also in
+    // "used"), zählen aber nicht als eigene Ausgabe — deshalb werden sie
+    // hier wieder herausgerechnet, sonst würde die Differenz fälschlich
+    // eine Lücke zeigen, obwohl das Geld zurückerstattet wird.
+    const diff = used - t.categoryTotal - t.cardElternTotal;
     el.cardUsed.textContent = formatCents(used);
     el.cardDiff.textContent = formatCents(diff);
     el.cardDiff.classList.toggle('negative', diff < 0);
@@ -164,6 +170,27 @@ export function refreshTotals(){
     el.cardSummaryTotal.textContent = formatCents(diff);
     el.cardSummaryTotal.classList.toggle('negative', diff < 0);
   }
+}
+
+export function renderCardElternList(){
+  const m = getMonthData(currentMonthKey);
+  const entries = m.card.eltern;
+  const total = sumEntries(entries);
+  const frag = document.createDocumentFragment();
+
+  if(entries.length === 0){
+    const empty = document.createElement('p');
+    empty.className = 'cat-empty';
+    empty.textContent = 'Noch keine Einträge diesen Monat.';
+    frag.appendChild(empty);
+  } else {
+    entries.forEach((entry, idx) => {
+      frag.appendChild(buildEntryLine('cardEltern', 'eltern', idx, entry, true, false));
+    });
+  }
+
+  el.cardElternList.replaceChildren(frag);
+  el.cardElternSubtotal.textContent = formatCents(total);
 }
 
 /* ---------------------------------------------------------------------------
@@ -290,6 +317,8 @@ export function renderMonth(){
   el.cardRestsaldo.value = m.card.restsaldoCents === null
     ? '' : String(m.card.restsaldoCents / 100);
   el.cardError.textContent = '';
+  el.cardElternError.textContent = '';
+  renderCardElternList();
 
   refreshTotals();
 }

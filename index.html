@@ -411,6 +411,27 @@
       </div>
       <div class="cat-error" id="card-error" role="alert"></div>
 
+      <!-- Ausgaben, die zwar über die Kreditkarte laufen, aber für die
+           Eltern bezahlt und von ihnen zurückerstattet werden — deshalb
+           zählen sie nicht als eigene Ausgabe und werden von der Differenz
+           wieder abgezogen. -->
+      <p class="cat-group-name">Ausgaben für Eltern (wird zurückerstattet)</p>
+      <div class="cat-list" id="card-eltern-list"></div>
+      <div class="cat-grand-total">
+        <span>Zwischensumme</span>
+        <span class="cat-grand-total-amount" id="card-eltern-subtotal">0,00 €</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="card-eltern-text">Bezeichnung</label>
+        <input type="text" id="card-eltern-text" maxlength="80" autocomplete="off" enterkeyhint="done">
+        <label class="visually-hidden" for="card-eltern-amount">Betrag in Euro</label>
+        <input type="number" id="card-eltern-amount" placeholder="€" step="0.01" min="0" max="1000000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="card-eltern-add-btn">Hinzufügen</button>
+      </div>
+      <div class="cat-error" id="card-eltern-error" role="alert"></div>
+
       <div class="forecast-row">
         <span class="forecast-row-label">Verbraucht (Gesamtsaldo − Restsaldo)</span>
         <span class="forecast-row-value" id="card-used">–</span>
@@ -418,6 +439,10 @@
       <div class="forecast-row">
         <span class="forecast-row-label">Sonstige Ausgaben (Ist)</span>
         <span class="forecast-row-value" id="card-cat-total">–</span>
+      </div>
+      <div class="forecast-row">
+        <span class="forecast-row-label">Ausgaben für Eltern</span>
+        <span class="forecast-row-value" id="card-eltern-row">–</span>
       </div>
 
       <div class="forecast-result-box">
@@ -553,13 +578,15 @@
 
         <div class="sc-field">
           <label for="sc-stunden">Wochenstunden</label>
-          <input type="range" id="sc-stunden" min="30" max="39.5" step="0.5" value="39.5">
+          <input type="text" id="sc-stunden" value="39,5" inputmode="decimal"
+                 autocomplete="off" enterkeyhint="done">
           <span class="sc-val sc-num" id="sc-stunden-val"></span>
         </div>
 
         <div class="sc-field">
-          <label for="sc-prozent">Erhöhung</label>
-          <input type="range" id="sc-prozent" min="0" max="10" step="0.1" value="0">
+          <label for="sc-prozent">Erhöhung in %</label>
+          <input type="text" id="sc-prozent" value="0" inputmode="decimal"
+                 autocomplete="off" enterkeyhint="done">
           <span class="sc-val sc-num" id="sc-prozent-val"></span>
         </div>
       </div>
@@ -1098,7 +1125,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=26"></script>
+<script type="module" src="js/app.js?v=27"></script>
 
 </body>
 </html>
