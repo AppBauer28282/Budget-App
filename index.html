@@ -238,7 +238,7 @@
   <h1>Budget im Blick</h1>
 
   <!-- Gehalt: variiert monatlich. Gespeichert = fixierte Zeile mit Löschen-Button.
-       Noch nicht gespeichert / nach Löschen = Schieberegler zum Einstellen. -->
+       Noch nicht gespeichert / nach Löschen = Textfeld zum Eintragen. -->
   <div class="salary-fixed" id="salary-fixed" hidden>
     <span class="salary-fixed-label">Gehalt</span>
     <span class="salary-fixed-right">
@@ -253,12 +253,12 @@
       <label for="salary-slider" class="salary-label">Gehalt diesen Monat</label>
       <span class="salary-value" id="salary-value">–</span>
     </div>
-    <input type="range" id="salary-slider" min="2000" max="8000" step="10" value="3250"
-           aria-label="Gehalt in Euro">
+    <input type="text" id="salary-slider" inputmode="decimal" autocomplete="off"
+           enterkeyhint="done" placeholder="z. B. 3.250" aria-label="Gehalt in Euro">
     <div class="salary-range-labels">
-      <span>2.000 €</span>
-      <span>8.000 €</span>
+      <span>erlaubt: 2.000 € bis 8.000 €</span>
     </div>
+    <div class="cat-error" id="salary-error" role="alert"></div>
     <button type="button" class="salary-save-btn" id="salary-save-btn">Speichern</button>
   </div>
 
@@ -355,8 +355,8 @@
           <span id="fc-lebensmittel-label">Lebensmittel</span>
           <span class="forecast-slider-val" id="fc-lebensmittel-val">0,00 €</span>
         </div>
-        <input type="range" id="fc-lebensmittel" min="0" max="800" step="5" value="0"
-               aria-labelledby="fc-lebensmittel-label">
+        <input type="text" id="fc-lebensmittel" inputmode="decimal" autocomplete="off" enterkeyhint="done"
+               placeholder="0" aria-labelledby="fc-lebensmittel-label">
       </div>
 
       <div class="forecast-slider">
@@ -364,8 +364,8 @@
           <span id="fc-konsum-label">Konsum</span>
           <span class="forecast-slider-val" id="fc-konsum-val">0,00 €</span>
         </div>
-        <input type="range" id="fc-konsum" min="0" max="2000" step="5" value="0"
-               aria-labelledby="fc-konsum-label">
+        <input type="text" id="fc-konsum" inputmode="decimal" autocomplete="off" enterkeyhint="done"
+               placeholder="0" aria-labelledby="fc-konsum-label">
       </div>
 
       <div class="forecast-slider">
@@ -373,8 +373,8 @@
           <span id="fc-sprit-label">Sprit</span>
           <span class="forecast-slider-val" id="fc-sprit-val">0,00 €</span>
         </div>
-        <input type="range" id="fc-sprit" min="0" max="300" step="5" value="0"
-               aria-labelledby="fc-sprit-label">
+        <input type="text" id="fc-sprit" inputmode="decimal" autocomplete="off" enterkeyhint="done"
+               placeholder="0" aria-labelledby="fc-sprit-label">
       </div>
 
       <div class="forecast-slider">
@@ -382,8 +382,8 @@
           <span id="fc-sonstiges-label">Sonstiges</span>
           <span class="forecast-slider-val" id="fc-sonstiges-val">0,00 €</span>
         </div>
-        <input type="range" id="fc-sonstiges" min="0" max="1000" step="5" value="0"
-               aria-labelledby="fc-sonstiges-label">
+        <input type="text" id="fc-sonstiges" inputmode="decimal" autocomplete="off" enterkeyhint="done"
+               placeholder="0" aria-labelledby="fc-sonstiges-label">
       </div>
 
       <div class="forecast-note">
@@ -1125,7 +1125,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=27"></script>
+<script type="module" src="js/app.js?v=28"></script>
 
 </body>
 </html>

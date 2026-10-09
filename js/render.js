@@ -5,11 +5,11 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=27';
-import { el, fcSliders, fcVals } from './dom.js?v=27';
-import { formatCents } from './utils.js?v=27';
-import { computeTotals, sumEntries } from './compute.js?v=27';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=27';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=28';
+import { el, fcSliders, fcVals } from './dom.js?v=28';
+import { formatCents } from './utils.js?v=28';
+import { computeTotals, sumEntries } from './compute.js?v=28';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=28';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung
@@ -292,20 +292,21 @@ export function renderMonth(){
   renderSavList();
 
   // Gehalt: je nach Monat entweder fixierte Zeile (gespeichert) oder
-  // Regler (noch nicht gespeichert) anzeigen.
+  // Eingabefeld (noch nicht gespeichert) anzeigen.
+  el.salaryError.textContent = '';
   if(m.salary === null){
-    el.salarySlider.value = String(SALARY_MIN_CENTS / 100 + 1250); // 3.250 € Startwert
+    el.salarySlider.value = '';
     el.salaryValue.textContent = 'noch nicht gespeichert';
     showSalarySlider();
   } else {
-    el.salarySlider.value = String(m.salary / 100);
+    el.salarySlider.value = String(m.salary / 100).replace('.', ',');
     el.salaryValue.textContent = formatCents(m.salary);
     showSalaryFixed(m.salary);
   }
 
   // Forecast-Regler auf gespeicherte Werte.
   fcKeys.forEach(k => {
-    fcSliders[k].value = String(m.forecast[k] / 100);
+    fcSliders[k].value = m.forecast[k] === 0 ? '' : String(m.forecast[k] / 100).replace('.', ',');
     fcVals[k].textContent = formatCents(m.forecast[k]);
   });
 

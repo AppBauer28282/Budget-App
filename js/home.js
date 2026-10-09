@@ -10,12 +10,13 @@
    Listener an — dieses Modul weiß von den Werkzeugen also gar nichts und
    kümmert sich nur um den Wechsel zwischen Kachelseite und Monatsbudget.
 
-   Die Werkzeuge öffnen sich als Overlay ÜBER der Kachelseite. Beim Schließen
-   kommt damit von selbst wieder die Kachelseite zum Vorschein; dafür ist hier
-   nichts zu tun.
+   Die Werkzeuge öffnen sich als eigener Bildschirm anstelle der Kachelseite
+   (openAppScreen/closeAppScreen in js/overlays.js) und blenden sie beim
+   Schließen selbst wieder ein; dafür ist hier nichts zu tun.
    ============================================================================= */
-import { el } from './dom.js?v=27';
-import { showOverview } from './navigation.js?v=27';
+import { el } from './dom.js?v=28';
+import { showOverview } from './navigation.js?v=28';
+import { scrollToTop } from './overlays.js?v=28';
 
 const homeScreen   = document.getElementById('home-screen');
 const budgetTile   = document.getElementById('budget-tile');
@@ -27,7 +28,7 @@ export function showHome(){
   el.sheet.hidden = true;
   el.overviewScreen.hidden = true;
   homeScreen.hidden = false;
-  window.scrollTo(0, 0);
+  scrollToTop();
 }
 
 function openBudget(){
@@ -36,7 +37,7 @@ function openBudget(){
   // neu — wichtig, falls zwischenzeitlich ein Cloud-Abgleich gelaufen ist,
   // während die Kachelseite oben lag.
   showOverview();
-  window.scrollTo(0, 0);
+  scrollToTop();
 }
 
 budgetTile.addEventListener('click', openBudget);

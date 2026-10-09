@@ -248,9 +248,11 @@
   }
   #salary-slider{
     width: 100%;
-    accent-color: var(--brass);
     margin: 6px 0;
-    cursor:pointer;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    color: var(--ink);
   }
   .salary-range-labels{
     display:flex;
@@ -617,10 +619,14 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  .forecast-slider input[type="range"]{
+  .forecast-slider input[type="text"]{
     width:100%;
-    accent-color: var(--brass);
-    cursor:pointer;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
   }
 
   .forecast-note{ margin-top: 20px; }
@@ -2644,6 +2650,15 @@
     box-shadow: none;
     border-radius: 0;
     overflow: visible;
+  }
+  /* Die Kopfzeile (Titel + ✕) blieb beim Scrollen oben kleben und deckte
+     Inhalte ab. Als vollständige Seite scrollt sie jetzt mit — wie die
+     Überschrift im Monatsbudget. Gilt nur für die fünf Werkzeuge; die
+     kleinen Dialoge (Beleg, Diagramm, Analyse) behalten die klebende Zeile,
+     dort scrollt der Dialog selbst. */
+  .salary-calc-overlay .receipt-head, .konsum-overlay .receipt-head,
+  .pt-overlay .receipt-head, .az-overlay .receipt-head, .vt-overlay .receipt-head{
+    position: static;
   }
 
   /* =========================================================

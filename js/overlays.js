@@ -35,16 +35,25 @@ export function closeOverlay(overlayEl, focusBackEl, onAfterClose){
    Seite im Wechsel mit den anderen [hidden]-gesteuerten Bildschirmen.
    "homeEl" ist die Kachelseite (#home-screen), die dabei ausgeblendet bzw.
    wieder gezeigt wird. ============================================================================= */
+// Die Seite scrollt über <body> (html/body haben height:100% und
+// overflow-x:hidden), nicht über das Fenster — window.scrollTo allein setzt
+// die Position deshalb nicht zurück.
+export function scrollToTop(){
+  window.scrollTo(0, 0);
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+}
+
 export function openAppScreen(screenEl, homeEl, focusEl){
   homeEl.hidden = true;
   screenEl.hidden = false;
-  window.scrollTo(0, 0);
+  scrollToTop();
   if(focusEl) focusEl.focus();
 }
 
 export function closeAppScreen(screenEl, homeEl, focusEl){
   screenEl.hidden = true;
   homeEl.hidden = false;
-  window.scrollTo(0, 0);
+  scrollToTop();
   if(focusEl) focusEl.focus();
 }

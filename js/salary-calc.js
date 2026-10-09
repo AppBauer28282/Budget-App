@@ -14,8 +14,8 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=27';
-import { clamp } from './utils.js?v=27';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=28';
+import { clamp } from './utils.js?v=28';
 
 // Grenzen der beiden Textfelder (früher Regler-Grenzen). Werden beim
 // Berechnen angewandt, nicht beim Tippen — so kann man zwischendurch auch

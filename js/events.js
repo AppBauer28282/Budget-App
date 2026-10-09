@@ -8,35 +8,52 @@ import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
   items, categoryDefs, savingDefs, fcKeys, FC_MAX
-} from './constants.js?v=27';
-import { el, fcSliders, fcVals } from './dom.js?v=27';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, formatCents } from './utils.js?v=27';
-import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=27';
-import { refreshTotals, renderCatList, renderSavList, renderCardElternList, showSalaryFixed, showSalarySlider } from './render.js?v=27';
+} from './constants.js?v=28';
+import { el, fcSliders, fcVals } from './dom.js?v=28';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=28';
+import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=28';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, showSalaryFixed, showSalarySlider } from './render.js?v=28';
 
-// --- Gehalt ---
+// --- Gehalt (Textfeld statt Regler: exakte Eingabe) ---
 el.salarySlider.addEventListener('input', () => {
   // Nur Anzeige aktualisieren; gespeichert wird erst per Klick auf Speichern.
-  const cents = Number(el.salarySlider.value) * 100;
-  el.salaryValue.textContent = formatCents(cents);
+  const cents = parseEuroInputToCents(el.salarySlider.value);
+  el.salaryValue.textContent = cents === null ? 'noch nicht gespeichert' : formatCents(cents);
+  el.salaryError.textContent = '';
 });
 
-el.salarySaveBtn.addEventListener('click', () => {
-  const cents = clamp(Math.round(Number(el.salarySlider.value) * 100),
-                      SALARY_MIN_CENTS, SALARY_MAX_CENTS);
+function saveSalary(){
+  const cents = parseEuroInputToCents(el.salarySlider.value);
+  if(cents === null){
+    el.salaryError.textContent = 'Bitte einen gültigen Betrag eingeben.';
+    return;
+  }
+  if(cents < SALARY_MIN_CENTS || cents > SALARY_MAX_CENTS){
+    el.salaryError.textContent = 'Das Gehalt muss zwischen ' + formatCents(SALARY_MIN_CENTS) +
+      ' und ' + formatCents(SALARY_MAX_CENTS) + ' liegen.';
+    return;
+  }
+  el.salaryError.textContent = '';
   getMonthData(currentMonthKey).salary = cents;
   saveAll(true);
   refreshTotals();
-  // Regler-Fenster verschwindet sofort, Gehalt steht als fixierte Zeile
+  // Eingabefeld verschwindet sofort, Gehalt steht als fixierte Zeile
   // direkt über "Verbleibend".
   showSalaryFixed(cents);
+}
+el.salarySaveBtn.addEventListener('click', saveSalary);
+el.salarySlider.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){ e.preventDefault(); saveSalary(); }
 });
 
 el.salaryDeleteBtn.addEventListener('click', () => {
   getMonthData(currentMonthKey).salary = null;
   saveAll(true);
   refreshTotals();
-  // Regler wieder einblenden, damit ein neues Gehalt eingestellt werden kann.
+  // Eingabefeld wieder einblenden, damit ein neues Gehalt eingetragen werden kann.
+  el.salarySlider.value = '';
+  el.salaryValue.textContent = 'noch nicht gespeichert';
+  el.salaryError.textContent = '';
   showSalarySlider();
   el.salarySlider.focus();
 });
@@ -220,12 +237,20 @@ el.cardElternList.addEventListener('click', handleRemoveClick);
 // --- Forecast-Regler --- (Liste enthält jetzt auch 'sonstiges', Schleife
 // bleibt unverändert generisch)
 fcKeys.forEach(k => {
+  // Textfeld statt Regler. Leer/ungültig zählt als 0; zu große Werte werden auf
+  // die Obergrenze geklemmt. Die Echo-Anzeige zeigt immer den verwendeten
+  // Wert, beim Verlassen des Feldes wird das Feld selbst darauf zurückgesetzt.
+  const read = () => clamp(parseEuroInputToCents(fcSliders[k].value) || 0, 0, FC_MAX[k]);
   fcSliders[k].addEventListener('input', () => {
-    const cents = clamp(Math.round(Number(fcSliders[k].value) * 100), 0, FC_MAX[k]);
+    const cents = read();
     fcVals[k].textContent = formatCents(cents);
     getMonthData(currentMonthKey).forecast[k] = cents;
     saveAll();          // gebündelt, siehe writeStorage
     refreshTotals();
+  });
+  fcSliders[k].addEventListener('blur', () => {
+    const cents = read();
+    fcSliders[k].value = cents === 0 ? '' : String(cents / 100).replace('.', ',');
   });
 });
 

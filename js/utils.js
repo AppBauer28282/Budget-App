@@ -1,7 +1,7 @@
 /* =============================================================================
    HILFSFUNKTIONEN
    ============================================================================= */
-import { AMOUNT_MAX_CENTS } from './constants.js?v=27';
+import { AMOUNT_MAX_CENTS } from './constants.js?v=28';
 
 // Formatiert Cent-Beträge als deutsche Euro-Angabe.
 // Intl.NumberFormat wird einmal erzeugt statt bei jedem Aufruf neu (deutlich
@@ -37,6 +37,24 @@ export function parseNonNegativeAmountToCents(raw){
   if(!Number.isFinite(value) || value < 0) return null;
   const cents = Math.round(value * 100);
   if(cents < 0 || cents > AMOUNT_MAX_CENTS) return null;
+  return cents;
+}
+
+// Für freie Betragsfelder (Gehalt, Forecast): Komma ODER Punkt als Dezimal-
+// trenner, zusätzlich Punkt als Tausendertrenner ("3.250" = 3250, "3.250,50").
+// 0 ist erlaubt. Gibt null zurück bei leerer oder ungültiger Eingabe.
+export function parseEuroInputToCents(raw){
+  if(typeof raw !== 'string') return null;
+  let t = raw.trim().replace(/\s/g, '').replace(/€/g, '');
+  if(t === '') return null;
+  if(t.indexOf(',') > -1){
+    t = t.replace(/\./g, '').replace(',', '.');
+  } else if(/^\d{1,3}(\.\d{3})+$/.test(t)){
+    t = t.replace(/\./g, '');   // nur Tausenderpunkte
+  }
+  if(!/^\d+(\.\d+)?$/.test(t)) return null;
+  const cents = Math.round(Number(t) * 100);
+  if(!Number.isFinite(cents) || cents < 0 || cents > AMOUNT_MAX_CENTS) return null;
   return cents;
 }
 
