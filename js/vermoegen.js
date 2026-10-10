@@ -23,7 +23,7 @@
    Alle IDs sind mit "vt-" vorangestellt. Die kleinen Dialoge hängen an
    document.body und liegen über dem Fenster (siehe styles.css).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=28';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=29';
 
 const STORE_KEY = 'vermoegen.v1';
 

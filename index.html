@@ -648,7 +648,7 @@
 
       <div id="kt-warn" hidden></div>
 
-      <p class="kt-sub">Jahresplanung mit Übertrag &amp; Bucket List</p>
+      <p class="kt-sub">Zwei Töpfe mit Übertrag &amp; Bucket List</p>
 
       <div class="kt-card">
         <div class="kt-row">
@@ -656,20 +656,15 @@
             <label for="kt-jahr">Jahr</label>
             <select id="kt-jahr"></select>
           </div>
-          <div style="flex:1">
-            <label for="kt-start">Startguthaben (Übertrag)</label>
-            <input type="text" id="kt-start" inputmode="decimal" maxlength="12"
-                   autocomplete="off" placeholder="0">
-          </div>
-        </div>
-        <div class="kt-hint">
-          <span id="kt-vorjahr-text"></span>
-          <button type="button" class="kt-gh" id="kt-uebernehmen" hidden>übernehmen</button>
         </div>
       </div>
 
+      <!-- Die drei aufklappbaren Bereiche "Konsum", "Gesundheit/Lifestyle"
+           und "Zufluss" baut js/konsumtopf.js hier per DOM-API auf. -->
+      <div id="kt-bereiche"></div>
+
       <div class="kt-card kt-topf">
-        <div class="kt-lbl">Topfstand Jahresende (geplant)</div>
+        <div class="kt-lbl">Topfstand Jahresende (geplant, beide Töpfe)</div>
         <div class="kt-val" id="kt-topf-plan">0 €</div>
         <div class="kt-mini">
           <div>Zuflüsse gesamt: <b id="kt-sum-zu">0 €</b></div>
@@ -677,13 +672,11 @@
         </div>
       </div>
 
-      <div id="kt-monate"></div>
-
       <button type="button" class="kt-gh" id="kt-beleg-btn" aria-expanded="false"
               aria-controls="kt-beleg-card">Beleg anzeigen</button>
       <div class="kt-card" id="kt-beleg-card" hidden>
         <div id="kt-beleg-liste"></div>
-        <div class="kt-sum tot"><span>Summe Ausgaben</span><b id="kt-beleg-sum">0 €</b></div>
+        <div class="kt-sum tot"><span>Summe Ausgaben (beide Töpfe)</span><b id="kt-beleg-sum">0 €</b></div>
       </div>
 
       <p class="kt-h2">Bucket List</p>
@@ -1125,7 +1118,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=28"></script>
+<script type="module" src="js/app.js?v=29"></script>
 
 </body>
 </html>

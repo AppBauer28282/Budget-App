@@ -1,11 +1,17 @@
 /* =============================================================================
    KONSUMTOPF
-   Eigenständiges Planungswerkzeug hinter dem Geldsack-Symbol rechts oben.
-   Verwaltet mehrere Jahre: je Jahr ein Startguthaben und zwölf Monate mit
-   Zufluss und geplanten Ausgabenposten. Der Rest eines Monats wandert als
-   Übertrag in den Folgemonat, der Endstand eines Jahres lässt sich als
-   Startguthaben ins Folgejahr übernehmen. Dazu eine Beleg-Ansicht über alle
-   Posten eines Jahres und eine davon unabhängige Bucket-List.
+   Eigenständiges Planungswerkzeug hinter der Konsumtopf-Kachel.
+   Verwaltet mehrere Jahre mit je ZWEI Töpfen — "Konsum" und
+   "Gesundheit/Lifestyle". Jeder Topf hat ein eigenes Startguthaben und
+   zwölf Monate mit Zufluss und geplanten Ausgabenposten. Der Rest eines
+   Monats wandert als Übertrag in den Folgemonat, der Endstand eines Jahres
+   lässt sich je Topf als Startguthaben ins Folgejahr übernehmen.
+
+   Oberfläche: drei aufklappbare Bereiche. In den beiden Töpfen werden nur
+   Ausgaben eingetragen (je Monat ein gelber "Notizzettel"); die Zuflüsse
+   beider Töpfe pflegt der dritte Bereich "Zufluss" für alle Monate an einer
+   Stelle. Dazu eine Beleg-Ansicht über alle Posten eines Jahres und eine
+   davon unabhängige Bucket-List.
 
    Bewusst getrennt vom Budget: eigener Speicherschlüssel, keine Berührung
    mit allData. Wie beim Gehaltsrechner holt sich das Modul alle Elemente
@@ -20,10 +26,16 @@
    Oberfläche kollidieren. Aufbau der Listen über die DOM-API statt über
    innerHTML, wie überall sonst in dieser App.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=28';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=29';
 
 const STORE_KEY = 'konsumtopf.v3';
-const STORE_VERSION = 2;
+const STORE_VERSION = 3;
+
+// Die beiden Töpfe. "kurz" steht dort, wo wenig Platz ist (Zufluss-Kacheln).
+const TOEPFE = [
+  { key: 'konsum',    name: 'Konsum',               kurz: 'Konsum' },
+  { key: 'lifestyle', name: 'Gesundheit/Lifestyle', kurz: 'Lifestyle' }
+];
 
 const MON = ['Januar','Februar','März','April','Mai','Juni','Juli',
              'August','September','Oktober','November','Dezember'];
@@ -50,13 +62,10 @@ const ktClose        = $('konsum-close');
 const homeScreenEl   = $('home-screen');
 const ktWarn         = $('kt-warn');
 const ktJahr         = $('kt-jahr');
-const ktStart        = $('kt-start');
-const ktVorjahrText  = $('kt-vorjahr-text');
-const ktUebernehmen  = $('kt-uebernehmen');
 const ktTopfPlan     = $('kt-topf-plan');
 const ktSumZu        = $('kt-sum-zu');
 const ktSumAus       = $('kt-sum-aus');
-const ktMonate       = $('kt-monate');
+const ktBereiche     = $('kt-bereiche');
 const ktBelegBtn     = $('kt-beleg-btn');
 const ktBelegCard    = $('kt-beleg-card');
 const ktBelegListe   = $('kt-beleg-liste');
@@ -106,10 +115,15 @@ function elem(tag, className, text){
    "raw.data && typeof raw.data === 'object'", ob ein Firestore-Dokument im
    neuen Umschlagformat vorliegt — ein gleichnamiges Feld hier würde diese
    Erkennung in die Irre führen. */
-function leeresJahr(){
+function leererTopf(){
   const monate = [];
   for(let i = 0; i < 12; i++) monate.push({ zufluss: 0, posten: [] });
   return { start: 0, monate };
+}
+function leeresJahr(){
+  const toepfe = {};
+  TOEPFE.forEach(t => { toepfe[t.key] = leererTopf(); });
+  return { toepfe };
 }
 function leererStand(){
   const jetzt = new Date().getFullYear();
@@ -120,10 +134,13 @@ function leererStand(){
 
 let state = leererStand();
 let aktiv = state.aktiv;
-let offen = {};          // aufgeklappte Monate
-// Halb getippte Eingaben der "neue Ausgabe"-Zeile je Monat. Die Monatsliste
-// wird bei jeder Änderung neu aufgebaut — ohne diesen Zwischenspeicher wäre
-// eine angefangene Eingabe danach weg.
+// Welcher der drei Bereiche offen ist: null, 'konsum', 'lifestyle' oder
+// 'zufluss'. Immer höchstens einer — wie bei den Monaten.
+let bereich = null;
+let offen = {};          // aufgeklappte Monate, Schlüssel "topf-monat"
+// Halb getippte Eingaben der "neue Ausgabe"-Zeile je Topf und Monat. Die
+// Liste wird bei jeder Änderung neu aufgebaut — ohne diesen Zwischenspeicher
+// wäre eine angefangene Eingabe danach weg.
 let entwurf = {};
 let blEditId = null;     // Bucket-Eintrag, der gerade den Ist-Betrag abfragt
 let storageOk = true;
@@ -145,20 +162,16 @@ function applyData(d){
       .slice(-MAX_JAHRE);          // bei Überlänge die neuesten Jahre behalten
 
     schluessel.forEach(k => {
-      const roh = d.jahre[k] || {};
+      const roh = (d.jahre[k] && typeof d.jahre[k] === 'object') ? d.jahre[k] : {};
       const jahr = leeresJahr();
-      jahr.start = klemme(roh.start);
-      const monate = Array.isArray(roh.monate) ? roh.monate : [];
-      for(let i = 0; i < 12; i++){
-        const m = monate[i] || {};
-        jahr.monate[i].zufluss = klemme(m.zufluss);
-        jahr.monate[i].posten = Array.isArray(m.posten)
-          ? m.posten.slice(0, MAX_POSTEN).map(p => ({
-              id: String((p && p.id) || newId()).slice(0, 24),
-              name: String((p && p.name) || '').slice(0, MAX_TEXT),
-              betrag: klemme(p && p.betrag)
-            }))
-          : [];
+      if(roh.toepfe && typeof roh.toepfe === 'object'){
+        TOEPFE.forEach(t => { jahr.toepfe[t.key] = pruefeTopf(roh.toepfe[t.key]); });
+      } else {
+        // Altes Format (bis v2, ein einziger Topf: {start, monate}) — der
+        // komplette Bestand wird zum Topf "Konsum", Lifestyle bleibt leer.
+        // So funktionieren der bisherige lokale Stand, der Cloud-Stand und
+        // alte Exportdateien ohne Zutun weiter.
+        jahr.toepfe.konsum = pruefeTopf(roh);
       }
       sauber.jahre[k] = jahr;
     });
@@ -191,11 +204,33 @@ function applyData(d){
   }
 }
 
+// Prüft einen einzelnen Topf {start, monate[12]} — alles Fremde fällt weg,
+// Beträge werden begrenzt.
+function pruefeTopf(roh){
+  const topf = leererTopf();
+  if(!roh || typeof roh !== 'object') return topf;
+  topf.start = klemme(roh.start);
+  const monate = Array.isArray(roh.monate) ? roh.monate : [];
+  for(let i = 0; i < 12; i++){
+    const m = (monate[i] && typeof monate[i] === 'object') ? monate[i] : {};
+    topf.monate[i].zufluss = klemme(m.zufluss);
+    topf.monate[i].posten = Array.isArray(m.posten)
+      ? m.posten.slice(0, MAX_POSTEN).map(p => ({
+          id: String((p && p.id) || newId()).slice(0, 24),
+          name: String((p && p.name) || '').slice(0, MAX_TEXT),
+          betrag: klemme(p && p.betrag)
+        }))
+      : [];
+  }
+  return topf;
+}
+
 function J(){
   const k = String(aktiv);
   if(!state.jahre[k]) state.jahre[k] = leeresJahr();
   return state.jahre[k];
 }
+function T(key){ return J().toepfe[key]; }
 
 /* ---------- Speichern ---------- */
 function zeigeWarnung(){
@@ -259,12 +294,13 @@ function load(){
 }
 
 /* ---------- Berechnung ---------- */
-function berechneFuer(jahr){
+function berechneFuer(jahr, key){
   const j = state.jahre[String(jahr)];
+  const topf = j ? j.toepfe[key] : null;
   const out = [];
-  let uebertrag = j ? j.start : 0;
+  let uebertrag = topf ? topf.start : 0;
   for(let i = 0; i < 12; i++){
-    const m = (j && j.monate[i]) ? j.monate[i] : { zufluss: 0, posten: [] };
+    const m = (topf && topf.monate[i]) ? topf.monate[i] : { zufluss: 0, posten: [] };
     let aus = 0;
     m.posten.forEach(p => { aus += p.betrag; });
     const rest = uebertrag + m.zufluss - aus;
@@ -273,7 +309,31 @@ function berechneFuer(jahr){
   }
   return out;
 }
-function berechne(){ return berechneFuer(aktiv); }
+function berechne(key){ return berechneFuer(aktiv, key); }
+
+// Letzter Monat (0–11), der für "Drin / Verplant" zählt: im laufenden Jahr
+// der aktuelle Kalendermonat, in vergangenen Jahren alle zwölf, in künftigen
+// Jahren keiner (-1).
+function bezugsMonat(){
+  const heute = new Date();
+  const jahr = heute.getFullYear();
+  if(aktiv < jahr) return 11;
+  if(aktiv > jahr) return -1;
+  return heute.getMonth();
+}
+
+// Kennzahlen eines Topfs bis einschließlich Bezugsmonat:
+// drin = Startguthaben + Zuflüsse, verplant = Ausgaben, rest = drin − verplant.
+function kennzahlen(key){
+  const bis = bezugsMonat();
+  const topf = T(key);
+  let drin = topf.start, verplant = 0;
+  for(let i = 0; i <= bis; i++){
+    drin += topf.monate[i].zufluss;
+    topf.monate[i].posten.forEach(p => { verplant += p.betrag; });
+  }
+  return { drin, verplant, rest: drin - verplant };
+}
 
 /* Zwei-Klick-Löschen: kein nativer Dialog, der erste Klick schärft nur. */
 function armDelete(btn, fn){
@@ -305,27 +365,19 @@ function renderKopf(){
     frag.appendChild(opt);
   });
   ktJahr.replaceChildren(frag);
-
-  ktStart.value = J().start ? String(Math.round(J().start)) : '';
-
-  if(state.jahre[String(aktiv - 1)]){
-    const rest = berechneFuer(aktiv - 1)[11].rest;
-    ktVorjahrText.textContent = 'Endstand ' + (aktiv - 1) + ' (geplant): ' + eur(rest) + ' · ';
-    ktUebernehmen.hidden = false;
-  } else {
-    ktVorjahrText.textContent = 'Kein Vorjahr vorhanden – Startguthaben manuell eintragen.';
-    ktUebernehmen.hidden = true;
-  }
 }
 
+// Topfstand-Karte: Summe beider Töpfe.
 function renderTopf(){
-  const c = berechne();
-  let zu = 0, aus = 0;
-  J().monate.forEach(m => {
-    zu += m.zufluss;
-    m.posten.forEach(p => { aus += p.betrag; });
+  let ende = 0, zu = 0, aus = 0;
+  TOEPFE.forEach(t => {
+    ende += berechne(t.key)[11].rest;
+    T(t.key).monate.forEach(m => {
+      zu += m.zufluss;
+      m.posten.forEach(p => { aus += p.betrag; });
+    });
   });
-  ktTopfPlan.textContent = eur(c[11].rest);
+  ktTopfPlan.textContent = eur(ende);
   ktSumZu.textContent = eur(zu);
   ktSumAus.textContent = eur(aus);
 }
@@ -337,72 +389,105 @@ function summenZeile(label, wert, klasse){
   return row;
 }
 
-function renderMonate(){
-  const c = berechne();
-  const j = J();
-  const frag = document.createDocumentFragment();
+// Aufklappbarer Kopf (Bereich oder Monat): Tastatur wie ein Knopf.
+function klappKopf(klasse, offenJetzt, umschalten){
+  const head = elem('div', klasse);
+  head.tabIndex = 0;
+  head.setAttribute('role', 'button');
+  head.setAttribute('aria-expanded', offenJetzt ? 'true' : 'false');
+  head.addEventListener('click', umschalten);
+  head.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); umschalten(); }
+  });
+  return head;
+}
 
-  // Der Neuaufbau ersetzt auch das Feld, in dem gerade getippt wird. Fokus
-  // und Cursorposition werden deshalb gemerkt und unten wiederhergestellt.
-  const aktivesEl = document.activeElement;
-  const fokusId = (aktivesEl && ktMonate.contains(aktivesEl)) ? aktivesEl.id : null;
-  let cursorVon = null, cursorBis = null;
-  if(fokusId){
-    try{ cursorVon = aktivesEl.selectionStart; cursorBis = aktivesEl.selectionEnd; }catch(e){ /* kein Textfeld */ }
+// Betragsfeld, das schon beim Tippen übernimmt (nicht erst beim Verlassen —
+// sonst ginge eine Eingabe verloren, die nie den Fokus abgibt).
+function betragsFeld(id, wert, label, beiEingabe){
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.id = id;
+  inp.inputMode = 'decimal';
+  inp.maxLength = 12;
+  inp.autocomplete = 'off';
+  inp.placeholder = '0';
+  inp.value = wert ? String(Math.round(wert)) : '';
+  if(label) inp.setAttribute('aria-label', label);
+  inp.addEventListener('input', () => {
+    beiEingabe(klemme(inp.value));
+    save();
+    renderAbgeleitet();
+  });
+  return inp;
+}
+
+function kennzahlZeile(k){
+  const z = elem('div', 'kt-kz');
+  const feld = (label, wert, klasse) => {
+    const f = elem('div', 'kt-kz-f' + (klasse ? ' ' + klasse : ''));
+    f.appendChild(elem('span', null, label));
+    f.appendChild(elem('b', null, eur(wert)));
+    return f;
+  };
+  z.appendChild(feld('Drin', k.drin));
+  z.appendChild(feld('Verplant', k.verplant));
+  z.appendChild(feld('Rest', k.rest, k.rest < 0 ? 'neg' : 'pos'));
+  return z;
+}
+
+// --- Inhalt eines Topfs: Startguthaben + zwölf Monate mit Notizzetteln ---
+function topfInhalt(t){
+  const topf = T(t.key);
+  const box = elem('div', 'kt-bbody');
+
+  // Startguthaben dieses Topfs, samt Übernahme des eigenen Vorjahresendstands.
+  const startFeld = elem('div', 'kt-startfeld');
+  const startId = 'kt-start-' + t.key;
+  const lab = elem('label', null, 'Startguthaben ' + aktiv + ' (Übertrag)');
+  lab.setAttribute('for', startId);
+  startFeld.appendChild(lab);
+  startFeld.appendChild(betragsFeld(startId, topf.start, null, v => { topf.start = v; }));
+  const hint = elem('div', 'kt-hint');
+  if(state.jahre[String(aktiv - 1)]){
+    const rest = berechneFuer(aktiv - 1, t.key)[11].rest;
+    hint.appendChild(document.createTextNode('Endstand ' + (aktiv - 1) + ' (geplant): ' + eur(rest) + ' · '));
+    const ueb = elem('button', 'kt-gh', 'übernehmen');
+    ueb.type = 'button';
+    ueb.id = 'kt-uebernehmen-' + t.key;
+    ueb.addEventListener('click', () => {
+      topf.start = berechneFuer(aktiv - 1, t.key)[11].rest;
+      save();
+      render();
+    });
+    hint.appendChild(ueb);
+  } else {
+    hint.textContent = 'Kein Vorjahr vorhanden – Startguthaben manuell eintragen.';
   }
+  startFeld.appendChild(hint);
+  box.appendChild(startFeld);
 
-  c.forEach(x => {
-    const m = j.monate[x.i];
-    const card = elem('div', 'kt-card');
+  berechne(t.key).forEach(x => {
+    const m = topf.monate[x.i];
+    const okey = t.key + '-' + x.i;
+    const card = elem('div', 'kt-card kt-monat');
 
-    // --- Kopfzeile (klappt den Monat auf/zu) ---
-    const head = elem('div', 'kt-mhead');
-    head.tabIndex = 0;
-    head.setAttribute('role', 'button');
-    head.setAttribute('aria-expanded', offen[x.i] ? 'true' : 'false');
-
+    const head = klappKopf('kt-mhead', offen[okey], () => { offen[okey] = !offen[okey]; renderBereiche(); });
     const name = elem('div', 'kt-mname', MON[x.i]);
-    name.appendChild(elem('small', null,
-      'Übertrag ' + eur(x.ue) + ' · Zufluss ' + eur(x.zu)));
+    name.appendChild(elem('small', null, 'Übertrag ' + eur(x.ue) + ' · Zufluss ' + eur(x.zu)));
     head.appendChild(name);
     head.appendChild(elem('div', 'kt-badge' + (x.rest < 0 ? ' neg' : ''), eur(x.rest)));
-
-    const umschalten = () => { offen[x.i] = !offen[x.i]; renderMonate(); };
-    head.addEventListener('click', umschalten);
-    head.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); umschalten(); }
-    });
     card.appendChild(head);
 
-    // --- Rumpf ---
-    const body = elem('div', 'kt-mbody' + (offen[x.i] ? ' open' : ''));
+    if(offen[okey]){
+      const body = elem('div', 'kt-mbody open');
 
-    if(offen[x.i]){
-      const zuFeld = elem('div');
-      const zuLabel = elem('label', null, 'Zufluss in den Topf');
-      const zuId = 'kt-zufluss-' + x.i;
-      zuLabel.setAttribute('for', zuId);
-      zuFeld.appendChild(zuLabel);
-      const zi = document.createElement('input');
-      zi.type = 'text';
-      zi.id = zuId;
-      zi.inputMode = 'decimal';
-      zi.maxLength = 12;
-      zi.autocomplete = 'off';
-      zi.placeholder = '0';
-      zi.value = m.zufluss ? String(Math.round(m.zufluss)) : '';
-      // Schon beim Tippen übernehmen, nicht erst beim Verlassen des Feldes —
-      // sonst ginge eine Eingabe verloren, die nie den Fokus abgibt. Der
-      // Neuaufbau der Liste ist dank Fokus-Rettung oben unkritisch.
-      zi.addEventListener('input', () => {
-        m.zufluss = klemme(zi.value);
-        save();
-        renderAbgeleitet();
-      });
-      zuFeld.appendChild(zi);
-      body.appendChild(zuFeld);
-
-      const liste = elem('div', 'kt-posten-liste');
+      // Notizzettel: alle Ausgaben des Monats auf einem gelben Zettel,
+      // unten die Summe.
+      const zettel = elem('div', 'kt-zettel');
+      if(m.posten.length === 0){
+        zettel.appendChild(elem('div', 'kt-zettel-leer', 'Noch keine Ausgaben in diesem Monat.'));
+      }
       m.posten.forEach(p => {
         const row = elem('div', 'kt-posten');
         row.appendChild(elem('div', 'kt-nm', p.name));
@@ -416,16 +501,20 @@ function renderMonate(){
           render();
         }));
         row.appendChild(del);
-        liste.appendChild(row);
+        zettel.appendChild(row);
       });
-      body.appendChild(liste);
+      const summe = elem('div', 'kt-zettel-sum');
+      summe.appendChild(elem('span', null, 'Summe ' + MON[x.i]));
+      summe.appendChild(elem('b', null, eur(x.aus)));
+      zettel.appendChild(summe);
+      body.appendChild(zettel);
 
-      // --- Neuer Posten ---
+      // --- Neue Ausgabe ---
       const add = elem('div', 'kt-add');
-      const skizze = entwurf[x.i] || { name: '', betrag: '' };
+      const skizze = entwurf[okey] || { name: '', betrag: '' };
       const an = document.createElement('input');
       an.type = 'text';
-      an.id = 'kt-add-name-' + x.i;
+      an.id = 'kt-add-name-' + okey;
       an.className = 'kt-n';
       an.maxLength = MAX_TEXT;
       an.autocomplete = 'off';
@@ -434,7 +523,7 @@ function renderMonate(){
       an.setAttribute('aria-label', 'Bezeichnung der Ausgabe');
       const ab = document.createElement('input');
       ab.type = 'text';
-      ab.id = 'kt-add-betrag-' + x.i;
+      ab.id = 'kt-add-betrag-' + okey;
       ab.className = 'kt-b';
       ab.inputMode = 'decimal';
       ab.maxLength = 12;
@@ -442,12 +531,9 @@ function renderMonate(){
       ab.placeholder = '€';
       ab.value = skizze.betrag;
       ab.setAttribute('aria-label', 'Betrag der Ausgabe');
-      an.addEventListener('input', () => {
-        entwurf[x.i] = { name: an.value, betrag: ab.value };
-      });
-      ab.addEventListener('input', () => {
-        entwurf[x.i] = { name: an.value, betrag: ab.value };
-      });
+      const merke = () => { entwurf[okey] = { name: an.value, betrag: ab.value }; };
+      an.addEventListener('input', merke);
+      ab.addEventListener('input', merke);
       const addBtn = elem('button', 'kt-pri', '+');
       addBtn.type = 'button';
       addBtn.setAttribute('aria-label', 'Ausgabe hinzufügen');
@@ -458,10 +544,15 @@ function renderMonate(){
         if(!n && !b) return;
         if(m.posten.length >= MAX_POSTEN) return;
         m.posten.push({ id: newId(), name: (n || 'Ausgabe').slice(0, MAX_TEXT), betrag: b });
-        delete entwurf[x.i];
-        offen[x.i] = true;
+        delete entwurf[okey];
+        offen[okey] = true;
+        // Fokus vorher lösen: sonst schriebe die Fokus-Rettung in
+        // renderBereiche den eben getippten Text ins frisch geleerte Feld.
+        if(document.activeElement) document.activeElement.blur();
         save();
         render();
+        const neu = document.getElementById('kt-add-name-' + okey);
+        if(neu) neu.focus();
       }
       addBtn.addEventListener('click', postenAnlegen);
       [an, ab].forEach(node => {
@@ -481,17 +572,97 @@ function renderMonate(){
       s.appendChild(summenZeile('− Ausgaben', eur(x.aus)));
       s.appendChild(summenZeile('Rest → Folgemonat', eur(x.rest), 'tot'));
       body.appendChild(s);
+      card.appendChild(body);
     }
+    box.appendChild(card);
+  });
+  return box;
+}
 
-    card.appendChild(body);
+// --- Inhalt "Zufluss": alle Monate untereinander, je zwei Kacheln ---
+function zuflussInhalt(){
+  const box = elem('div', 'kt-bbody');
+  box.appendChild(elem('div', 'kt-hint kt-zu-hint',
+    'Zufluss je Monat in den Topf. In den Töpfen selbst werden nur Ausgaben eingetragen.'));
+  for(let i = 0; i < 12; i++){
+    const row = elem('div', 'kt-zu-row');
+    row.appendChild(elem('div', 'kt-zu-mon', MON[i]));
+    const kacheln = elem('div', 'kt-zu-kacheln');
+    TOEPFE.forEach(t => {
+      const m = T(t.key).monate[i];
+      const kachel = elem('div', 'kt-zu-kachel kt-zu-' + t.key);
+      const id = 'kt-zu-' + t.key + '-' + i;
+      const lab = elem('label', null, t.kurz);
+      lab.setAttribute('for', id);
+      kachel.appendChild(lab);
+      kachel.appendChild(betragsFeld(id, m.zufluss, null, v => { m.zufluss = v; }));
+      kacheln.appendChild(kachel);
+    });
+    row.appendChild(kacheln);
+    box.appendChild(row);
+  }
+  return box;
+}
+
+function renderBereiche(){
+  // Der Neuaufbau ersetzt auch das Feld, in dem gerade getippt wird. Fokus,
+  // getippter Text und Cursorposition werden deshalb gemerkt und unten
+  // wiederhergestellt — der Text wörtlich, damit z. B. ein halb getipptes
+  // "12," nicht zu "12" umgeschrieben wird.
+  const aktivesEl = document.activeElement;
+  const fokusId = (aktivesEl && ktBereiche.contains(aktivesEl)) ? aktivesEl.id : null;
+  let cursorVon = null, cursorBis = null, fokusWert = null;
+  if(fokusId){
+    if(aktivesEl.tagName === 'INPUT') fokusWert = aktivesEl.value;
+    try{ cursorVon = aktivesEl.selectionStart; cursorBis = aktivesEl.selectionEnd; }catch(e){ /* kein Textfeld */ }
+  }
+
+  const frag = document.createDocumentFragment();
+
+  TOEPFE.forEach(t => {
+    const auf = bereich === t.key;
+    const card = elem('div', 'kt-bereich kt-bereich-' + t.key + (auf ? ' open' : ''));
+    const head = klappKopf('kt-bhead', auf, () => { bereich = auf ? null : t.key; renderBereiche(); });
+    head.id = 'kt-bereich-' + t.key;
+    const titel = elem('div', 'kt-btitel');
+    titel.appendChild(elem('span', null, t.name));
+    titel.appendChild(elem('span', 'kt-pfeil', auf ? '▾' : '▸'));
+    head.appendChild(titel);
+    head.appendChild(kennzahlZeile(kennzahlen(t.key)));
+    card.appendChild(head);
+    if(auf) card.appendChild(topfInhalt(t));
     frag.appendChild(card);
   });
 
-  ktMonate.replaceChildren(frag);
+  // Dritter Bereich: Zufluss
+  const zuAuf = bereich === 'zufluss';
+  const zuCard = elem('div', 'kt-bereich kt-bereich-zufluss' + (zuAuf ? ' open' : ''));
+  const zuHead = klappKopf('kt-bhead', zuAuf, () => { bereich = zuAuf ? null : 'zufluss'; renderBereiche(); });
+  zuHead.id = 'kt-bereich-zufluss';
+  const zuTitel = elem('div', 'kt-btitel');
+  zuTitel.appendChild(elem('span', null, 'Zufluss'));
+  zuTitel.appendChild(elem('span', 'kt-pfeil', zuAuf ? '▾' : '▸'));
+  zuHead.appendChild(zuTitel);
+  const zuZeile = elem('div', 'kt-kz');
+  TOEPFE.forEach(t => {
+    let summe = 0;
+    T(t.key).monate.forEach(m => { summe += m.zufluss; });
+    const f = elem('div', 'kt-kz-f');
+    f.appendChild(elem('span', null, t.kurz + ' ' + aktiv));
+    f.appendChild(elem('b', null, eur(summe)));
+    zuZeile.appendChild(f);
+  });
+  zuHead.appendChild(zuZeile);
+  zuCard.appendChild(zuHead);
+  if(zuAuf) zuCard.appendChild(zuflussInhalt());
+  frag.appendChild(zuCard);
+
+  ktBereiche.replaceChildren(frag);
 
   if(fokusId){
     const wieder = document.getElementById(fokusId);
     if(wieder){
+      if(fokusWert !== null) wieder.value = fokusWert;
       wieder.focus();
       if(cursorVon !== null){
         try{ wieder.setSelectionRange(cursorVon, cursorBis); }catch(e){ /* kein Textfeld */ }
@@ -501,23 +672,31 @@ function renderMonate(){
 }
 
 function renderBeleg(){
-  const j = J();
   const frag = document.createDocumentFragment();
   let summe = 0;
 
-  j.monate.forEach((m, i) => {
-    m.posten.forEach(p => {
-      summe += p.betrag;
-      const row = elem('div', 'kt-posten');
-      const nm = elem('div', 'kt-nm');
-      // Monatsnummer als eigenes Element, der Name als reiner Text —
-      // selbst eingegebene Bezeichnungen dürfen kein Markup erzeugen.
-      nm.appendChild(elem('span', 'kt-idx', '[' + String(i + 1).padStart(2, '0') + ']'));
-      nm.appendChild(document.createTextNode(' ' + p.name));
-      row.appendChild(nm);
-      row.appendChild(elem('div', 'kt-bt', eur(p.betrag)));
-      frag.appendChild(row);
+  TOEPFE.forEach(t => {
+    let topfSumme = 0;
+    const gruppe = document.createDocumentFragment();
+    T(t.key).monate.forEach((m, i) => {
+      m.posten.forEach(p => {
+        topfSumme += p.betrag;
+        const row = elem('div', 'kt-posten');
+        const nm = elem('div', 'kt-nm');
+        // Monatsnummer als eigenes Element, der Name als reiner Text —
+        // selbst eingegebene Bezeichnungen dürfen kein Markup erzeugen.
+        nm.appendChild(elem('span', 'kt-idx', '[' + String(i + 1).padStart(2, '0') + ']'));
+        nm.appendChild(document.createTextNode(' ' + p.name));
+        row.appendChild(nm);
+        row.appendChild(elem('div', 'kt-bt', eur(p.betrag)));
+        gruppe.appendChild(row);
+      });
     });
+    if(!gruppe.childNodes.length) return;
+    frag.appendChild(elem('div', 'kt-beleg-topf', t.name));
+    frag.appendChild(gruppe);
+    frag.appendChild(summenZeile('Summe ' + t.name, eur(topfSumme)));
+    summe += topfSumme;
   });
 
   if(!frag.childNodes.length){
@@ -622,11 +801,9 @@ function renderBucket(){
   ktBlSum.textContent = eur(offenSumme);
 }
 
-// Ohne renderKopf: der Kopf enthält das Startguthaben-Feld, dessen Wert beim
-// Tippen nicht überschrieben werden darf.
 function renderAbgeleitet(){
   renderTopf();
-  renderMonate();
+  renderBereiche();
   renderBeleg();
 }
 function render(){
@@ -671,6 +848,7 @@ function init(){
       // leere neue Stand stehen und wird sofort hochgeladen — das Dokument
       // heilt sich damit selbst, statt die Oberfläche zu blockieren.
       applyData(newData);
+      bereich = null;
       offen = {};
       entwurf = {};
       blEditId = null;
@@ -683,7 +861,7 @@ function init(){
     }
   };
 
-  /* --- Kopf: Jahr & Startguthaben --- */
+  /* --- Kopf: Jahr (Startguthaben steht je Topf im aufgeklappten Topf) --- */
   ktJahr.addEventListener('change', () => {
     const gewaehlt = parseInt(ktJahr.value, 10);
     if(!isFinite(gewaehlt) || gewaehlt < MIN_JAHR || gewaehlt > MAX_JAHR) return;
@@ -695,19 +873,6 @@ function init(){
     save();
     render();
   });
-  ktStart.addEventListener('input', () => {
-    J().start = klemme(ktStart.value);
-    save();
-    renderAbgeleitet();
-  });
-  ktStart.addEventListener('change', () => { render(); });
-  ktUebernehmen.addEventListener('click', () => {
-    if(!state.jahre[String(aktiv - 1)]) return;
-    J().start = berechneFuer(aktiv - 1)[11].rest;
-    save();
-    render();
-  });
-
   /* --- Beleg --- */
   ktBelegBtn.addEventListener('click', () => {
     const sichtbar = !ktBelegCard.hidden;
@@ -760,6 +925,7 @@ function init(){
           ? geparst.data
           : geparst;
         if(applyData(roh)){
+          bereich = null;
           offen = {};
           entwurf = {};
           blEditId = null;
@@ -799,8 +965,8 @@ function init(){
 // Browser noch eine ältere index.html aus dem Zwischenspeicher anzeigt),
 // wird er still übersprungen und das Budget läuft normal weiter.
 const alleElementeDa = [
-  ktBtn, ktOverlay, ktClose, homeScreenEl, ktWarn, ktJahr, ktStart, ktVorjahrText, ktUebernehmen,
-  ktTopfPlan, ktSumZu, ktSumAus, ktMonate,
+  ktBtn, ktOverlay, ktClose, homeScreenEl, ktWarn, ktJahr,
+  ktTopfPlan, ktSumZu, ktSumAus, ktBereiche,
   ktBelegBtn, ktBelegCard, ktBelegListe, ktBelegSum,
   ktBucket, ktBlName, ktBlKosten, ktBlAdd, ktBlSum,
   ktExport, ktImport, ktFile

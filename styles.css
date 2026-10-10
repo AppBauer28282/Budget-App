@@ -1720,6 +1720,100 @@
   }
   .kt-actions button{ flex: 1; max-width: 200px; }
 
+  /* --- Drei aufklappbare Bereiche: Konsum, Gesundheit/Lifestyle, Zufluss ---
+     Kopf wie eine große Monatskarte, darunter Drin / Verplant / Rest. Die
+     farbige linke Kante unterscheidet die Töpfe auf einen Blick; dieselben
+     Farben tragen die Zufluss-Kacheln. */
+  .konsum-overlay .kt-bereich{
+    background: #fff;
+    border-radius: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    border-left: 5px solid #8e8e93;
+    overflow: hidden;
+  }
+  .konsum-overlay .kt-bereich-konsum{ border-left-color: #0a84ff; }
+  .konsum-overlay .kt-bereich-lifestyle{ border-left-color: #34c759; }
+  .konsum-overlay .kt-bereich-zufluss{ border-left-color: #ff9500; }
+  .konsum-overlay .kt-bhead{ padding: 14px 14px 12px; cursor: pointer; }
+  .konsum-overlay .kt-bhead:focus-visible{ outline: 2px solid #0a84ff; outline-offset: -2px; }
+  .konsum-overlay .kt-btitel{
+    display:flex; justify-content: space-between; align-items: center;
+    font-size: 18px; font-weight: 700;
+  }
+  .konsum-overlay .kt-pfeil{ color: #8e8e93; font-size: 16px; }
+  .konsum-overlay .kt-kz{
+    display:flex; flex-wrap: wrap; gap: 6px 16px;
+    margin-top: 8px; font-size: 12px; color: #6b6b70;
+  }
+  .konsum-overlay .kt-kz-f{ display:flex; flex-direction: column; gap: 1px; }
+  .konsum-overlay .kt-kz-f b{
+    font-size: 16px; color: #1c1c1e; font-variant-numeric: tabular-nums;
+  }
+  .konsum-overlay .kt-kz-f.pos b{ color: #1a7f37; }
+  .konsum-overlay .kt-kz-f.neg b{ color: #c0392b; }
+  .konsum-overlay .kt-bbody{
+    background: #f2f2f7;
+    border-top: 1px solid #e2e2e7;
+    padding: 12px 10px 4px;
+  }
+  .konsum-overlay .kt-startfeld{ margin-bottom: 12px; }
+  .konsum-overlay .kt-beleg-topf{
+    font-size: 12px; font-weight: 700; color: #6b6b70;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 12px 0 2px;
+  }
+  .konsum-overlay .kt-beleg-topf:first-child{ margin-top: 0; }
+
+  /* --- Notizzettel: alle Ausgaben eines Monats auf einem gelben Zettel ---
+     Leicht schräger Schatten wie ein aufgeklebter Haftzettel. */
+  .konsum-overlay .kt-zettel{
+    background: #fff6bf;
+    border-radius: 4px 4px 4px 14px;
+    padding: 8px 12px 10px;
+    margin-top: 4px;
+    box-shadow: 2px 3px 8px rgba(120, 96, 0, 0.18);
+    color: #3a3000;
+  }
+  .konsum-overlay .kt-zettel .kt-posten{ border-bottom: 1px dashed rgba(120, 96, 0, 0.25); }
+  .konsum-overlay .kt-zettel .kt-del{ color: #a08a3a; }
+  .konsum-overlay .kt-zettel-leer{ font-size: 13px; color: #8a7a3a; padding: 6px 0; }
+  .konsum-overlay .kt-zettel-sum{
+    display:flex; justify-content: space-between; gap: 10px;
+    margin-top: 8px; padding-top: 6px;
+    border-top: 2px solid rgba(120, 96, 0, 0.35);
+    font-size: 15px; font-weight: 700;
+  }
+  .konsum-overlay .kt-zettel-sum b{ font-variant-numeric: tabular-nums; }
+
+  /* --- Zufluss: Monat links, zwei Kacheln (Konsum / Lifestyle) daneben --- */
+  .konsum-overlay .kt-zu-hint{ margin: 0 2px 10px; }
+  .konsum-overlay .kt-zu-row{
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #e2e2e7;
+  }
+  .konsum-overlay .kt-zu-row:last-child{ border-bottom: none; }
+  .konsum-overlay .kt-zu-mon{ font-weight: 700; font-size: 15px; }
+  .konsum-overlay .kt-zu-kacheln{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .konsum-overlay .kt-zu-kachel{
+    background: #fff;
+    border-radius: 10px;
+    padding: 6px 8px 8px;
+    border-top: 3px solid #8e8e93;
+  }
+  .konsum-overlay .kt-zu-konsum{ border-top-color: #0a84ff; }
+  .konsum-overlay .kt-zu-lifestyle{ border-top-color: #34c759; }
+  .konsum-overlay .kt-zu-kachel label{ margin-bottom: 4px; }
+  .konsum-overlay .kt-zu-kachel input{ text-align: right; }
+
+  @media (max-width: 360px){
+    .konsum-overlay .kt-zu-row{ grid-template-columns: 1fr; gap: 4px; }
+  }
+
   @media (max-width: 420px){
     .konsum-overlay .receipt-body{ padding: 10px; }
     .kt-topf .kt-val{ font-size: 28px; }
