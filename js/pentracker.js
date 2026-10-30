@@ -29,6 +29,7 @@ const UNITS_PER_FULL_DOSE = 60;      // 1 volle Dosis = 60 Einheiten
 const DOSE_STEPS = [2.5, 5, 7.5, 10, 12.5, 15];
 
 const CHART_STEP_KG = 2.5;           // Abstand der Gitterlinien
+const CHART_LABEL_KG = 5;            // Beschriftung nur an vollen 5 kg
 const CHART_LABEL_MIN_PX = 13;       // engere Beschriftungen werden ausgedünnt
 const CHART_HEIGHT_PX = 180;
 const CHART_COL_WIDTH = 14;
@@ -590,8 +591,10 @@ function renderKpis(){
   const goal2 = state.settings.goal2Grams;
   if(goal2 != null){
     const fc2 = forecastGoal(avgLossPerWeekGrams(AVG_WINDOW), goal2);
-    const text = !fc2 ? '–' : (fc2.reached ? 'erreicht' : String(Math.ceil(fc2.weeks)));
-    kpiWeeks.appendChild(elem('span', 'pt-kpi-sub', ' (Ziel 2: ' + text + ')'));
+    const text = !fc2 ? '–' : (fc2.reached ? '0' : String(Math.ceil(fc2.weeks)));
+    const sub = elem('span', 'pt-kpi-sub', ' (' + text + ')');
+    sub.title = 'Wochen bis Ziel 2';
+    kpiWeeks.appendChild(sub);
   }
 
   const perDose = costPerDoseCents();
@@ -635,15 +638,20 @@ function buildPenCard(pen, showForecast){
   const titles = elem('span', 'pt-pen-titles');
   titles.appendChild(elem('span', 'pt-pen-title', 'Pen #' + pen.id + ' · ' + fmtNum(pen.doseMg, 1) + ' mg'));
   titles.appendChild(elem('span', 'pt-pen-meta', remaining + ' / ' + pen.totalUnits + ' Einheiten übrig'));
+
+  idRow.appendChild(titles);
+  head.appendChild(idRow);
+
+  // Geschlossener Pen: Abnahme während des Pens als umrandetes Kürzel mittig
+  // zwischen Titel und Status.
   if(pen.closed){
     const loss = penWeightLossGrams(pen);
     if(loss != null){
-      titles.appendChild(elem('span', 'pt-pen-loss',
-        (loss >= 0 ? '−' : '+') + fmtKg(Math.abs(loss)) + ' mit diesem Pen'));
+      const badge = elem('span', 'pt-pen-loss', (loss >= 0 ? '−' : '+') + fmtKg(Math.abs(loss)));
+      badge.title = 'Abnahme mit diesem Pen';
+      head.appendChild(badge);
     }
   }
-  idRow.appendChild(titles);
-  head.appendChild(idRow);
 
   const statusWrap = elem('span', 'pt-pen-status-wrap');
   statusWrap.appendChild(elem('span', 'pt-pen-status ' + (pen.closed ? 'closed' : 'active'), pen.closed ? 'Geschlossen' : 'Aktiv'));
@@ -912,9 +920,11 @@ function renderChart(){
   const goal = state.settings.goalGrams;
   const goal2 = state.settings.goal2Grams;
 
-  /* Y-Achse: 2,5-kg-Schritte, von knapp unter dem niedrigsten bis knapp über
-     den höchsten Wert (Gewicht, Prognose, beide Ziele). Ohne feste Basis bei
-     60 kg — sonst wären 2,5er-Schritte auf der Diagrammhöhe zu eng. */
+  /* Y-Achse: Gitterlinien alle 2,5 kg, beschriftet nur an vollen 5 kg.
+     Oben und unten endet die Achse auf einer beschrifteten 5-kg-Linie (z. B.
+     105 statt 107,5), damit kein unbeschrifteter Rest über dem höchsten
+     Balken steht. Ohne feste Basis bei 60 kg — sonst wären 2,5er-Schritte
+     auf der Diagrammhöhe zu eng. */
   const values = [
     ...weights.map(w => w.grams),
     ...forecast.map(p => p.grams),
@@ -924,8 +934,11 @@ function renderChart(){
   const stepG = CHART_STEP_KG * 1000;
   const highest = Math.max(...values);
   const lowest = Math.min(...values);
-  const topG = Math.ceil(highest / stepG) * stepG + stepG;
-  const bottomG = Math.max(0, Math.floor(lowest / stepG) * stepG - stepG);
+  const labelG = CHART_LABEL_KG * 1000;
+  const topG = Math.ceil(highest / labelG) * labelG;
+  // Liegt der niedrigste Wert genau auf einer 5er-Linie (etwa das Ziel), eine
+  // Linie tiefer anfangen, damit die Ziel-Linie nicht auf dem Boden klebt.
+  const bottomG = Math.max(0, Math.ceil(lowest / labelG) * labelG - labelG);
   const rangeG = Math.max(stepG, topG - bottomG);
   const gramsToPx = g => Math.max(0, ((g - bottomG) / rangeG) * CHART_HEIGHT_PX);
 
@@ -953,13 +966,15 @@ function renderChart(){
   // aus dem Tritt, weil Achse und Balkenfläche unterschiedlich hoch sind.
   const axis = elem('div', 'pt-chart-axis');
   const steps = Math.round(rangeG / stepG);
-  // Bei großer Spanne nur jede 2./4. Linie beschriften, damit nichts überlappt.
-  let labelEvery = 1;
+  // Beschriftet werden nur volle 5 kg; bei sehr großer Spanne zusätzlich
+  // nur jede 2./4. davon, damit nichts überlappt.
+  const perLabel = labelG / stepG;
+  let labelEvery = perLabel;
   while(CHART_HEIGHT_PX / steps * labelEvery < CHART_LABEL_MIN_PX) labelEvery *= 2;
   for(let s = steps; s >= 0; s--){
     if(s % labelEvery !== 0) continue;
     const value = bottomG + s * stepG;
-    const label = elem('span', null, fmtNum(value / 1000, value % 1000 === 0 ? 0 : 1));
+    const label = elem('span', null, fmtNum(value / 1000, 0));
     label.style.top = (CHART_HEIGHT_PX - gramsToPx(value)).toFixed(0) + 'px';
     axis.appendChild(label);
   }
