@@ -26,7 +26,7 @@
    Oberfläche kollidieren. Aufbau der Listen über die DOM-API statt über
    innerHTML, wie überall sonst in dieser App.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=29';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=30';
 
 const STORE_KEY = 'konsumtopf.v3';
 const STORE_VERSION = 3;
