@@ -10,17 +10,19 @@
 // Deployment, falls der Browser eine alte Version zwischenspeichert).
 //
 // WICHTIG beim Hochzählen: Dieselbe Zahl steht auch in den "?v="-Angaben
-// hinter JEDER Verknüpfung in js/*.js und hinter js/app.js in index.html.
-// Sie sorgt dafür, dass der Browser nach einem Update alle Dateien frisch
-// holt und keine alte mit einer neuen mischen kann (genau daran ist v8
-// gescheitert: neue salary-calc.js traf auf alte dom.js).
+// hinter JEDER Verknüpfung in js/*.js, hinter js/app.js in index.html UND
+// hinter styles.css in index.html. Sie sorgt dafür, dass der Browser nach
+// einem Update alle Dateien frisch holt und keine alte mit einer neuen
+// mischen kann (genau daran ist v8 gescheitert: neue salary-calc.js traf auf
+// alte dom.js; in v30 traf neues JavaScript auf ein altes styles.css aus dem
+// Zwischenspeicher — die neuen Diagrammlinien blieben unsichtbar).
 // Alle Stellen mitziehen (ALT = aktuelle Zahl, NEU = die nächste). Die
 // Zahlen hier bewusst als Platzhalter, damit ein sed über diese Datei den
 // Beispielbefehl nicht selbst mitverändert:
-//   sed -i "s/js?v=ALT/js?v=NEU/g" js/*.js index.html
+//   sed -i "s/?v=ALT\b/?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v30';
+export const APP_VERSION = 'v31';
 export const APP_VERSION_DATE = '2026-10-30';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
