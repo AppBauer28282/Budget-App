@@ -2607,7 +2607,11 @@
     justify-content: flex-end;
     box-sizing: border-box;
     min-width: 14px;
-    height: 180px;
+    /* Volle Höhe der Balkenfläche (180 px Diagramm + 18 px Monatszeile),
+       damit die senkrechten Monats-/Prognoselinien bis zur obersten
+       Gitterlinie reichen. Die Balken selbst stehen unverändert auf der
+       Linie 18 px über dem Boden. */
+    height: 198px;
     padding-bottom: 18px;
     flex-shrink: 0;
   }
