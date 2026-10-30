@@ -28,12 +28,12 @@ const STORE_VERSION = 1;
 const UNITS_PER_FULL_DOSE = 60;      // 1 volle Dosis = 60 Einheiten
 const DOSE_STEPS = [2.5, 5, 7.5, 10, 12.5, 15];
 
-const CHART_STEP_KG = 10;            // Abstand der Gitterlinien
-const CHART_BASE_KG = 60;            // Y-Achse beginnt hier, nicht bei 0
+const CHART_STEP_KG = 2.5;           // Abstand der Gitterlinien
+const CHART_LABEL_MIN_PX = 13;       // engere Beschriftungen werden ausgedünnt
 const CHART_HEIGHT_PX = 180;
 const CHART_COL_WIDTH = 14;
 const CHART_COL_GAP = 3;
-const FORECAST_WEEKS = 12;
+const FORECAST_WEEKS = 16;           // ca. 4 Monate
 const AVG_WINDOW = 4;                // Prognose auf Basis der letzten 4 Einträge
 
 // Obergrenzen: fangen unsinnige Eingaben und aufgeblähte Importdateien ab,
@@ -52,7 +52,6 @@ const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 const DOSE_COLORS = ['#0a84ff', '#34c759', '#ff9500', '#af52de', '#30b0c7', '#ff2d55', '#ffcc00', '#5856d6'];
 const FORECAST_COLOR = '#c7c7cc';
 const NO_DOSE_COLOR = '#e2e2e7';
-const BMI_LIMIT = 30;                // Grenze, ab der die BMI-Linie eingezeichnet wird
 
 const MONTHS_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 
@@ -122,6 +121,7 @@ const setHeight    = document.getElementById('pt-set-height');
 const setStartW    = document.getElementById('pt-set-start-weight');
 const setStartDate = document.getElementById('pt-set-start-date');
 const setGoal      = document.getElementById('pt-set-goal');
+const setGoal2     = document.getElementById('pt-set-goal2');
 const setError     = document.getElementById('pt-set-error');
 const setSave      = document.getElementById('pt-set-save');
 const resetAllBtn  = document.getElementById('pt-reset-all');
@@ -142,7 +142,7 @@ function emptyState(){
     version: STORE_VERSION,
     pens: [],
     weights: [],
-    settings: { heightCm: null, startGrams: null, goalGrams: null, startDate: null },
+    settings: { heightCm: null, startGrams: null, goalGrams: null, goal2Grams: null, startDate: null },
     nextPenId: 1,
     nextEntryId: 1
   };
@@ -296,6 +296,7 @@ export function sanitize(raw){
   clean.settings.heightCm   = intOrNull(s.heightCm, 1, MAX_HEIGHT_CM);
   clean.settings.startGrams = intOrNull(s.startGrams, 1, MAX_GRAMS);
   clean.settings.goalGrams  = intOrNull(s.goalGrams, 1, MAX_GRAMS);
+  clean.settings.goal2Grams = intOrNull(s.goal2Grams, 1, MAX_GRAMS);
   clean.settings.startDate  = isIsoDate(s.startDate) ? s.startDate : null;
 
   clean.nextPenId   = Math.max(maxPenId + 1, intOrNull(raw.nextPenId, 1, Number.MAX_SAFE_INTEGER) || 1);
@@ -418,6 +419,27 @@ function penForecast(pen){
   return { date: addDaysStr(last.date, Math.round(weeksLeft * 7)), weeksLeft };
 }
 
+// Abnahme während eines Pens: Gewicht zu Beginn (letzter Eintrag am oder vor
+// der ersten Spritze bzw. dem Startdatum) minus Gewicht am Ende (letzter
+// Eintrag bis eine Woche nach der letzten Spritze — so lange wirkt sie).
+function penWeightLossGrams(pen){
+  if(!pen.entries.length) return null;
+  const entries = sortedEntries(pen);
+  let von = entries[0].date;
+  if(pen.startDate && pen.startDate < von) von = pen.startDate;
+  const bis = addDaysStr(entries[entries.length - 1].date, 7);
+  const w = sortedWeights();
+  if(!w.length) return null;
+  let start = null, ende = null;
+  w.forEach(x => {
+    if(x.date <= von) start = x;
+    if(x.date <= bis) ende = x;
+  });
+  if(!start) start = w.find(x => x.date >= von && x.date <= bis) || null;
+  if(!start || !ende || start === ende || ende.date < start.date) return null;
+  return start.grams - ende.grams;
+}
+
 function totalSpentCents(){
   return state.pens.reduce((sum, pen) => sum + penUsedUnits(pen) * pricePerUnitCents(pen), 0);
 }
@@ -446,13 +468,6 @@ function bmi(grams){
   if(!grams || !h) return null;
   const m = h / 100;
   return (grams / 1000) / (m * m);
-}
-// Gewicht, ab dem der BMI die Grenze von 30 überschreitet.
-function bmiLimitGrams(){
-  const h = state.settings.heightCm;
-  if(!h) return null;
-  const m = h / 100;
-  return Math.round(BMI_LIMIT * m * m * 1000);
 }
 
 /* windowSize = Anzahl der letzten Einträge. Ohne Angabe zählt der gesamte
@@ -495,9 +510,9 @@ function goalProgressPct(){
    angefangenen Tag abgeschnitten. Hier wird auf ganze Tage gerundet — bei
    einem halben Tag Rest kann der Termin deshalb einen Tag später liegen als
    in der Vorlage. Alle übrigen Kennzahlen stimmen aufs Zeichen überein. */
-function forecastGoal(avgLoss){
+function forecastGoal(avgLoss, goalGrams){
   const now = currentGrams();
-  const goal = state.settings.goalGrams;
+  const goal = goalGrams === undefined ? state.settings.goalGrams : goalGrams;
   if(now == null || goal == null || avgLoss == null || avgLoss <= 0) return null;
   const remaining = now - goal;
   if(remaining <= 0) return { reached: true };
@@ -571,6 +586,13 @@ function renderKpis(){
     kpiTargetDate.textContent = fmtDate(fc.date);
     kpiWeeks.textContent = String(Math.ceil(fc.weeks));
   }
+  // Ziel 2 klein in Klammern hinter den Wochen fürs Hauptziel.
+  const goal2 = state.settings.goal2Grams;
+  if(goal2 != null){
+    const fc2 = forecastGoal(avgLossPerWeekGrams(AVG_WINDOW), goal2);
+    const text = !fc2 ? '–' : (fc2.reached ? 'erreicht' : String(Math.ceil(fc2.weeks)));
+    kpiWeeks.appendChild(elem('span', 'pt-kpi-sub', ' (Ziel 2: ' + text + ')'));
+  }
 
   const perDose = costPerDoseCents();
   kpiCostDose.textContent = perDose != null ? fmtEur(perDose) : '–';
@@ -613,6 +635,13 @@ function buildPenCard(pen, showForecast){
   const titles = elem('span', 'pt-pen-titles');
   titles.appendChild(elem('span', 'pt-pen-title', 'Pen #' + pen.id + ' · ' + fmtNum(pen.doseMg, 1) + ' mg'));
   titles.appendChild(elem('span', 'pt-pen-meta', remaining + ' / ' + pen.totalUnits + ' Einheiten übrig'));
+  if(pen.closed){
+    const loss = penWeightLossGrams(pen);
+    if(loss != null){
+      titles.appendChild(elem('span', 'pt-pen-loss',
+        (loss >= 0 ? '−' : '+') + fmtKg(Math.abs(loss)) + ' mit diesem Pen'));
+    }
+  }
   idRow.appendChild(titles);
   head.appendChild(idRow);
 
@@ -750,7 +779,10 @@ function buildPenCard(pen, showForecast){
     const fc = penForecast(pen);
     if(fc){
       const info = isoWeekInfo(fc.date);
-      body.appendChild(elem('p', 'pt-pen-forecast', 'Reicht voraussichtlich bis KW ' + info.week + ' · ' + fmtDate(fc.date)));
+      // Angezeigt wird der Freitag dieser Kalenderwoche statt des Montags.
+      const wochentag = (new Date(fc.date + 'T00:00:00').getDay() + 6) % 7;   // Mo = 0
+      const freitag = addDaysStr(fc.date, 4 - wochentag);
+      body.appendChild(elem('p', 'pt-pen-forecast', 'Reicht voraussichtlich bis KW ' + info.week + ' · ' + fmtDate(freitag)));
     }
   }
 
@@ -829,8 +861,9 @@ function renderWeights(){
 
 /* ---------- Verlaufsdiagramm ----------
    Balken pro Gewichtseintrag, eingefärbt nach der in dieser Kalenderwoche
-   verabreichten Dosis; dahinter zwölf Prognosewochen. Gitter-, Ziel- und
-   BMI-Linie liegen absolut über der scrollbaren Balkenfläche. */
+   verabreichten Dosis; dahinter 16 Prognosewochen (rund vier Monate).
+   Gitterlinien und die Linien für Ziel und Ziel 2 liegen absolut über der
+   scrollbaren Balkenfläche. */
 function weekDoseMap(){
   const map = Object.create(null);
   state.pens.forEach(pen => {
@@ -877,21 +910,22 @@ function renderChart(){
   }
 
   const goal = state.settings.goalGrams;
-  const bmiGrams = bmiLimitGrams();
+  const goal2 = state.settings.goal2Grams;
 
-  /* Y-Achse: feste Basis 60 kg, 10-kg-Schritte, oben bis über den höchsten Wert */
+  /* Y-Achse: 2,5-kg-Schritte, von knapp unter dem niedrigsten bis knapp über
+     den höchsten Wert (Gewicht, Prognose, beide Ziele). Ohne feste Basis bei
+     60 kg — sonst wären 2,5er-Schritte auf der Diagrammhöhe zu eng. */
   const values = [
     ...weights.map(w => w.grams),
     ...forecast.map(p => p.grams),
     ...(goal != null ? [goal] : []),
-    ...(bmiGrams != null ? [bmiGrams] : [])
+    ...(goal2 != null ? [goal2] : [])
   ];
-  const baseG = CHART_BASE_KG * 1000;
   const stepG = CHART_STEP_KG * 1000;
-  const highest = Math.max(...values, baseG + stepG);
-  const lowest = Math.min(...values, baseG);
-  const topG = Math.ceil(highest / stepG) * stepG;
-  const bottomG = Math.min(baseG, Math.floor(lowest / stepG) * stepG);
+  const highest = Math.max(...values);
+  const lowest = Math.min(...values);
+  const topG = Math.ceil(highest / stepG) * stepG + stepG;
+  const bottomG = Math.max(0, Math.floor(lowest / stepG) * stepG - stepG);
   const rangeG = Math.max(stepG, topG - bottomG);
   const gramsToPx = g => Math.max(0, ((g - bottomG) / rangeG) * CHART_HEIGHT_PX);
 
@@ -919,9 +953,13 @@ function renderChart(){
   // aus dem Tritt, weil Achse und Balkenfläche unterschiedlich hoch sind.
   const axis = elem('div', 'pt-chart-axis');
   const steps = Math.round(rangeG / stepG);
+  // Bei großer Spanne nur jede 2./4. Linie beschriften, damit nichts überlappt.
+  let labelEvery = 1;
+  while(CHART_HEIGHT_PX / steps * labelEvery < CHART_LABEL_MIN_PX) labelEvery *= 2;
   for(let s = steps; s >= 0; s--){
+    if(s % labelEvery !== 0) continue;
     const value = bottomG + s * stepG;
-    const label = elem('span', null, String(value / 1000));
+    const label = elem('span', null, fmtNum(value / 1000, value % 1000 === 0 ? 0 : 1));
     label.style.top = (CHART_HEIGHT_PX - gramsToPx(value)).toFixed(0) + 'px';
     axis.appendChild(label);
   }
@@ -942,11 +980,11 @@ function renderChart(){
     line.appendChild(elem('span', 'pt-line-label goal', 'Ziel ' + fmtKg(goal)));
     bars.appendChild(line);
   }
-  if(bmiGrams != null && bmiGrams >= bottomG && bmiGrams <= topG){
-    const line = elem('div', 'pt-bmiline');
-    line.style.top = (CHART_HEIGHT_PX - gramsToPx(bmiGrams)).toFixed(0) + 'px';
+  if(goal2 != null && goal2 >= bottomG && goal2 <= topG){
+    const line = elem('div', 'pt-goalline2');
+    line.style.top = (CHART_HEIGHT_PX - gramsToPx(goal2)).toFixed(0) + 'px';
     line.style.width = totalWidth + 'px';
-    line.appendChild(elem('span', 'pt-line-label bmi', 'BMI ' + BMI_LIMIT + ' · ' + fmtKg(bmiGrams)));
+    line.appendChild(elem('span', 'pt-line-label goal2', 'Ziel 2 ' + fmtKg(goal2)));
     bars.appendChild(line);
   }
 
@@ -1291,6 +1329,7 @@ function init(){
     setHeight.value = state.settings.heightCm != null ? String(state.settings.heightCm) : '';
     setStartW.value = state.settings.startGrams != null ? fmtNum(state.settings.startGrams / 1000, 1) : '';
     setGoal.value   = state.settings.goalGrams  != null ? fmtNum(state.settings.goalGrams / 1000, 1) : '';
+    setGoal2.value  = state.settings.goal2Grams != null ? fmtNum(state.settings.goal2Grams / 1000, 1) : '';
     setStartDate.value = state.settings.startDate || '';
     setError.hidden = true;
     openDialog(dlgSettings, setHeight);
@@ -1316,6 +1355,11 @@ function init(){
       goal = parseGrams(setGoal.value);
       if(goal === null){ showError(setError, 'Bitte ein gültiges Zielgewicht eingeben.'); return; }
     }
+    let goal2 = null;
+    if(setGoal2.value.trim() !== ''){
+      goal2 = parseGrams(setGoal2.value);
+      if(goal2 === null){ showError(setError, 'Bitte ein gültiges Gewicht für Ziel 2 eingeben.'); return; }
+    }
     const startDate = normalizeDateInput(setStartDate.value);
     if(setStartDate.value.trim() !== '' && !startDate){
       showError(setError, 'Bitte ein gültiges Startdatum wählen (TT.MM.JJJJ).');
@@ -1325,6 +1369,7 @@ function init(){
     state.settings.heightCm   = heightCm;
     state.settings.startGrams = start;
     state.settings.goalGrams  = goal;
+    state.settings.goal2Grams = goal2;
     state.settings.startDate  = startDate || null;
     setError.hidden = true;
     closeDialog(dlgSettings);
@@ -1419,7 +1464,7 @@ const alleElementeDa = [
   dlgPen, doseGrid, penStart, penPrice, penUnits, penError, penSave,
   dlgWeek, weekTitle, weekDate, weekLabelEl, weekUnits, weekError, weekSave,
   dlgWeight, weightDate, weightLabelEl, weightValue, weightError, weightSave,
-  dlgSettings, setHeight, setStartW, setStartDate, setGoal, setError, setSave, resetAllBtn,
+  dlgSettings, setHeight, setStartW, setStartDate, setGoal, setGoal2, setError, setSave, resetAllBtn,
   dlgPrices, pricesImg, dlgPriceTable, priceTableImg,
   dlgConfirm, confirmText, confirmOk, confirmCancel
 ].every(node => node !== null && node !== undefined);
