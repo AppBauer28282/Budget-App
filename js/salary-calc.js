@@ -201,10 +201,10 @@ export function renderGehaltWidget(){
   const frag = document.createDocumentFragment();
   stufen.forEach((st, i) => {
     if(i > 0){
-      // Statt eines Pfeils: Winkel mit dem Netto-Zuwachs zur Vorstufe.
+      // Übergang als kleiner Kasten mit dem Netto-Zuwachs zur Vorstufe.
       const diff = st.w.netto - stufen[i - 1].w.netto;
       const t = span('gw-schritt');
-      t.append(span('gw-winkel', '›'), span('gw-plus', (diff >= 0 ? '+' : '−') + nf(Math.abs(Math.round(diff)), 0)));
+      t.append(span('gw-plus', (diff >= 0 ? '+' : '−') + nf(Math.abs(Math.round(diff)), 0)));
       frag.appendChild(t);
     }
     const brutto = span('gw-brutto', euroGanz(st.w.brutto));
