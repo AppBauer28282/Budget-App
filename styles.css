@@ -3150,22 +3150,25 @@
   }
   .gw-reihe-titel{
     grid-column: 1 / -1;
-    display:flex; align-items:center; justify-content:space-between; gap: 8px;
     font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--ink-soft); padding-left: 2px;
   }
-  /* Mini-Kachel "gesamt": gleicher Stil wie die Übergangs-Kästen. */
+  /* Mini-Kachel "Σ" unten rechts an der letzten Spalte — Stil wie die
+     Übergangs-Kästen; ragt etwas über die Ecke hinaus und überdeckt so nur
+     den unteren Innenabstand der Spalte. */
   .gw-gesamt{
-    display:inline-flex; align-items:center; gap: 4px;
-    padding: 1px 6px;
+    position: absolute;
+    right: -5px; bottom: -11px;
+    z-index: 1;
+    padding: 0 5px;
+    line-height: 14px;
     border: 1px solid rgba(26,127,55,0.45);
     background: #eaf7ee;
     border-radius: 7px;
-    letter-spacing: 0; text-transform: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
-  .gw-gesamt-label{ font-size: 9.5px; color: var(--ok); font-weight: 600; }
   [data-theme="dark"] .gw-gesamt{ border-color: rgba(48,209,88,0.55); background: #18301f; }
-  .gw-reihe-titel + .gw-spalte ~ .gw-reihe-titel{ margin-top: 6px; }
+  .gw-reihe-titel + .gw-spalte ~ .gw-reihe-titel{ margin-top: 10px; }
   .gw-spalte{
     position: relative;
     display:flex;
@@ -3256,15 +3259,14 @@
      ~62 % der Höhe (Kreismittelpunkt liegt bei 76 %). */
   .ptw-text{
     position: absolute;
-    left: 0; right: 0; top: 67%;
-    transform: translateY(-50%);
+    /* Zahl steht auf der Grundlinie des Halbkreises (Höhe der Bogenenden). */
+    left: 0; right: 0; bottom: 3%;
     display:flex; flex-direction:column; align-items:center;
     text-align:center;
   }
   .ptw-value{ font-size: 20px; font-weight: 700; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
   .ptw-gauge.mitte .ptw-value{ font-size: 23px; }
   .ptw-gauge.seite .ptw-value{ font-size: 21px; }
-  .ptw-gauge.mitte .ptw-text{ top: 62%; }
   .ptw-unit{ font-size: 0.55em; font-weight: 600; letter-spacing: 0; color: var(--ink-soft); }
 
   @media (max-width: 359px){
