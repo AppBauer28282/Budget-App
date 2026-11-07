@@ -1096,7 +1096,7 @@ function renderChart(){
    vereinfachter Verlauf: ein Balken je Gewichtseintrag in einer Farbe (ohne
    Dosis), Prognose 3 Monate, dieselben Ziel-Linien wie im Tracker. Alles
    passt in die Kachelbreite, ohne Scrollen. */
-const WIDGET_FORECAST_WEEKS = 13;      // ca. 3 Monate
+const WIDGET_FORECAST_MONTHS = 3;
 const WIDGET_CHART_PX = 110;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -1105,24 +1105,44 @@ function svgElem(tag, attrs){
   Object.keys(attrs).forEach(k => n.setAttribute(k, attrs[k]));
   return n;
 }
-// Bogen von 135° (unten links) im Uhrzeigersinn über 12 Uhr bis 45° (unten
-// rechts). pathLength=100 erlaubt, den Fortschritt direkt in Prozent über
+// Flacher Bogen (210°, symmetrisch um 12 Uhr): von 165° über 12 Uhr bis 15°
+// (SVG-Winkel, im Uhrzeigersinn ab 3 Uhr). Weniger als ein Kreis, mehr als
+// ein Halbkreis — wie ein Tacho, ohne viel freie Fläche oben.
+// pathLength=100 erlaubt, Abschnitte direkt in Prozent über
 // stroke-dasharray zu setzen.
+const GAUGE_SWEEP = 210;
 const GAUGE_PATH = (() => {
-  const r = 44, c = 50, a = Math.PI / 4;
-  const x1 = (c - r * Math.cos(a)).toFixed(2), y = (c + r * Math.sin(a)).toFixed(2);
-  const x2 = (c + r * Math.cos(a)).toFixed(2);
-  return 'M ' + x1 + ' ' + y + ' A ' + r + ' ' + r + ' 0 1 1 ' + x2 + ' ' + y;
+  const r = 44, cx = 50, cy = 50;
+  const a1 = (270 - GAUGE_SWEEP / 2) * Math.PI / 180, a2 = (270 + GAUGE_SWEEP / 2) * Math.PI / 180;
+  const p = a => (cx + r * Math.cos(a)).toFixed(2) + ' ' + (cy + r * Math.sin(a)).toFixed(2);
+  return 'M ' + p(a1) + ' A ' + r + ' ' + r + ' 0 1 1 ' + p(a2);
 })();
+// Fünf Abschnitte à 20 % mit kleiner Lücke — wie Mini-Balken, damit man den
+// Fortschritt ungefähr ablesen kann.
+const GAUGE_SEGMENTS = 5, GAUGE_GAP = 2.4;
+
+function arcSegment(cls, from, len){
+  // "0 from len 100": unsichtbarer Strich der Länge 0, Lücke bis "from",
+  // dann der eigentliche Abschnitt.
+  return svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: cls,
+    'stroke-dasharray': '0 ' + from.toFixed(2) + ' ' + len.toFixed(2) + ' 200' });
+}
 
 function gauge(cls, valueText, unitText, pct){
   const g = elem('span', 'ptw-gauge ' + cls);
-  const svg = svgElem('svg', { viewBox: '0 0 100 86', 'aria-hidden': 'true', focusable: 'false' });
-  svg.appendChild(svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: 'ptw-track' }));
-  if(pct != null){
-    const p = Math.max(0, Math.min(100, pct));
-    svg.appendChild(svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: 'ptw-fill',
-      'stroke-dasharray': p.toFixed(2) + ' 100' }));
+  const svg = svgElem('svg', { viewBox: '0 0 100 66', 'aria-hidden': 'true', focusable: 'false' });
+  if(pct === undefined){
+    svg.appendChild(svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: 'ptw-track' }));
+  } else {
+    const p = pct == null ? 0 : Math.max(0, Math.min(100, pct));
+    const seg = 100 / GAUGE_SEGMENTS;
+    for(let k = 0; k < GAUGE_SEGMENTS; k++){
+      const from = k * seg + (k ? GAUGE_GAP / 2 : 0);
+      const to = (k + 1) * seg - (k < GAUGE_SEGMENTS - 1 ? GAUGE_GAP / 2 : 0);
+      svg.appendChild(arcSegment('ptw-track seg', from, to - from));
+      const filled = Math.min(to, p) - from;
+      if(filled > 0) svg.appendChild(arcSegment('ptw-fill', from, filled));
+    }
   }
   g.appendChild(svg);
   const text = elem('span', 'ptw-text');
@@ -1146,29 +1166,39 @@ function renderWidget(){
   const fc = goal != null ? forecastGoal(avgLossPerWeekGrams(AVG_WINDOW)) : null;
   const weeksText = goal == null || !fc ? '–' : (fc.reached ? '0' : String(Math.ceil(fc.weeks)));
   const row = elem('span', 'ptw-gauges');
-  row.appendChild(gauge('seite', now != null ? fmtNum(now / 1000, 1) : '–', 'kg aktuell', null));
+  row.appendChild(gauge('seite', now != null ? fmtNum(now / 1000, 1) : '–', 'kg aktuell'));
   row.appendChild(gauge('mitte',
     loss != null ? (loss >= 0 ? '−' : '+') + fmtNum(Math.abs(loss) / 1000, 1) : '–',
     'kg abgenommen', goalProgressPct()));
-  row.appendChild(gauge('seite', weeksText, 'Wochen bis Ziel', null));
+  row.appendChild(gauge('seite', weeksText, 'Wochen bis Ziel'));
   ptWidget.appendChild(row);
 
-  /* Verlauf */
-  const weights = weightPoints();
+  /* Verlauf: je Monat ein Balken mit dem letzten Eintrag dieses Monats */
+  const byMonth = [];
+  weightPoints().forEach(w => {
+    const key = w.date.slice(0, 7);
+    if(byMonth.length && byMonth[byMonth.length - 1].key === key) byMonth[byMonth.length - 1] = { key, ...w };
+    else byMonth.push({ key, ...w });
+  });
+  const weights = byMonth;
   const chart = elem('span', 'ptw-chart');
   ptWidget.appendChild(chart);
   if(weights.length < 2){
-    chart.appendChild(elem('span', 'ptw-empty', 'Noch zu wenig Gewichtseinträge für den Verlauf.'));
+    chart.appendChild(elem('span', 'ptw-empty', 'Mindestens zwei Monate mit Gewicht nötig für den Verlauf.'));
     return;
   }
+  // Prognose: die nächsten 3 Monate, jeweils zum Monatsende, fortgeschrieben
+  // mit dem Wochenschnitt der letzten Einträge (wie im Tracker).
   const avg = avgLossPerWeekGrams(AVG_WINDOW);
-  const last = weights[weights.length - 1];
+  const lastW = sortedWeights();
+  const last = lastW.length ? lastW[lastW.length - 1] : weights[weights.length - 1];
   const forecast = [];
   if(avg != null && avg > 0){
-    let grams = last.grams, date = last.date;
-    for(let i = 1; i <= WIDGET_FORECAST_WEEKS; i++){
-      grams -= avg; date = addDaysStr(date, 7);
-      forecast.push({ date, grams });
+    const d0 = new Date(last.date + 'T00:00:00');
+    for(let i = 1; i <= WIDGET_FORECAST_MONTHS; i++){
+      const ende = new Date(d0.getFullYear(), d0.getMonth() + i + 1, 0);
+      const date = ende.getFullYear() + '-' + String(ende.getMonth() + 1).padStart(2, '0') + '-' + String(ende.getDate()).padStart(2, '0');
+      forecast.push({ date, grams: last.grams - avg * daysBetween(last.date, date) / 7 });
     }
   }
   // Achse wie im großen Diagramm: volle 5 kg oben/unten, Gitter alle 2,5 kg.
@@ -1203,20 +1233,16 @@ function renderWidget(){
   goalLine(goal2, 'ziel2', 'Ziel 2');
 
   const cols = elem('span', 'ptw-cols');
-  const seen = new Set();
   const addCol = (p, isForecast, forecastStart) => {
     const d = new Date(p.date + 'T00:00:00');
-    const key = d.getFullYear() + '-' + d.getMonth();
-    const newMonth = !seen.has(key); seen.add(key);
-    const col = elem('span', 'ptw-col' + (isForecast ? ' prognose' : '') + (forecastStart ? ' prognose-start' : (newMonth ? ' monat' : '')));
+    const col = elem('span', 'ptw-col' + (isForecast ? ' prognose' : '') + (forecastStart ? ' prognose-start' : ''));
+    col.title = (isForecast ? 'Prognose ' : '') + MONTHS_SHORT[d.getMonth()] + ' ' + d.getFullYear() + ': ' + fmtKg(p.grams);
     const bar = elem('span', 'ptw-bar');
     bar.style.height = Math.max(2, toPx(p.grams)).toFixed(0) + 'px';
     col.appendChild(bar);
-    // Ganz rechts fehlt der Platz für ein Monatskürzel — dort nur die Linie.
-    if(newMonth && cols.childElementCount < gesamt - 2) col.appendChild(elem('span', 'ptw-month', MONTHS_SHORT[d.getMonth()]));
+    col.appendChild(elem('span', 'ptw-month', MONTHS_SHORT[d.getMonth()]));
     cols.appendChild(col);
   };
-  const gesamt = weights.length + forecast.length;
   weights.forEach(w => addCol(w, false, false));
   forecast.forEach((p, i) => addCol(p, true, i === 0));
   area.appendChild(cols);

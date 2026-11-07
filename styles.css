@@ -3228,17 +3228,19 @@
   .ptw-gauge{ position: relative; display:block; }
   .ptw-gauge svg{ display:block; width: 100%; height: auto; overflow: visible; }
   .ptw-track{ fill: none; stroke: var(--line); stroke-width: 4; stroke-linecap: round; }
-  .ptw-gauge.mitte .ptw-track{ stroke-width: 5; }
-  .ptw-fill{ fill: none; stroke: var(--brass); stroke-width: 5; stroke-linecap: round; }
+  /* Abschnitte des mittleren Rings: gerade Enden, damit die Lücken sichtbar
+     bleiben. */
+  .ptw-track.seg{ stroke-width: 5; stroke-linecap: butt; }
+  .ptw-fill{ fill: none; stroke: var(--brass); stroke-width: 5; stroke-linecap: butt; }
   .ptw-text{
     position: absolute;
-    left: 0; right: 0; top: 30%;
+    left: 0; right: 0; top: 34%;
     display:flex; flex-direction:column; align-items:center;
     text-align:center;
   }
   .ptw-value{ font-size: 20px; font-weight: 700; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
   .ptw-gauge.mitte .ptw-value{ font-size: 26px; }
-  .ptw-gauge.mitte .ptw-text{ top: 31%; }
+  .ptw-gauge.mitte .ptw-text{ top: 33%; }
   .ptw-unit{ font-size: 10.5px; color: var(--ink-soft); line-height: 1.2; margin-top: 2px; max-width: 80%; }
 
   @media (max-width: 359px){
@@ -3274,17 +3276,16 @@
     padding: 0 1px;
   }
   .ptw-col{ position: relative; flex: 1 1 0; min-width: 0; }
-  .ptw-col.monat{ border-left: 1px solid var(--line); }
   .ptw-col.prognose-start{ border-left: 1px solid var(--ink-soft); }
   .ptw-bar{
-    position: absolute; bottom: 14px; left: 18%; right: 18%;
-    min-width: 1px;
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    width: 56%; max-width: 26px; min-width: 2px;
     border-radius: 2px 2px 0 0;
     background: var(--brass);
   }
   .ptw-col.prognose .ptw-bar{ background: var(--pt-forecast, #c7c7cc); }
   .ptw-month{
-    position: absolute; left: 2px; bottom: 0;
+    position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
     font-size: 8.5px; line-height: 14px; color: var(--ink-soft); white-space: nowrap;
   }
 
