@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=41';
-import { clamp, monthKey } from './utils.js?v=41';
+} from './constants.js?v=42';
+import { clamp, monthKey } from './utils.js?v=42';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=41';
+import { showBackupMsg } from './backup.js?v=42';
 
 export function emptyMonthData(){
   const categories = Object.create(null);
@@ -40,6 +40,10 @@ export function emptyMonthData(){
     saving,
     forecast,
     forecastNote: '',
+    // Posten aus der Tabelle "Forecast bearbeiten" je Kategorie (Bezeichnung
+    // + Cent). forecast[k] ist dann deren Summe; ohne Posten wurde der Betrag
+    // direkt ins Feld getippt.
+    forecastItems: (() => { const fi = Object.create(null); fcKeys.forEach(k => { fi[k] = []; }); return fi; })(),
     // Restsaldo der Kreditkarte, vom Nutzer eingetragen (Cent) — null = noch
     // nicht erfasst. Der Gesamtsaldo selbst ist eine feste Konstante
     // (CARD_TOTAL_CENTS), wird also nicht pro Monat gespeichert.
@@ -47,7 +51,9 @@ export function emptyMonthData(){
     // von ihnen zurückerstattet werden — dieselbe Form wie categories[key]
     // (Einträge mit Bezeichnung), damit sanitizeEntries direkt wiederverwendet
     // werden kann.
-    card: { restsaldoCents: null, eltern: [] },
+    // "raus": weitere Kartenbeträge, die aus der Differenz herausgerechnet
+    // werden sollen (gleiche Form wie "eltern").
+    card: { restsaldoCents: null, eltern: [], raus: [] },
     // Zeitpunkt (ms), an dem zuletzt ein Eintrag bei "Sonstige Ausgaben"
     // angelegt wurde — null = noch nie. Wird unter der Gesamtsumme gezeigt,
     // damit man weiß, ab wann wieder erfasst werden muss.
@@ -128,6 +134,10 @@ export function sanitizeMonthData(raw){
     month.card.restsaldoCents = clamp(cardCents, 0, CARD_TOTAL_CENTS);
   }
   month.card.eltern = sanitizeEntries(rawCard.eltern, true);
+  month.card.raus = sanitizeEntries(rawCard.raus, true);
+
+  const rawFi = (raw.forecastItems && typeof raw.forecastItems === 'object') ? raw.forecastItems : {};
+  fcKeys.forEach(k => { month.forecastItems[k] = sanitizeEntries(rawFi[k], true); });
 
   // Nur plausible Zeitstempel (2000 bis 2100) übernehmen.
   if(Number.isFinite(raw.lastEntryAt) && raw.lastEntryAt >= 946684800000 && raw.lastEntryAt <= 4102444800000){

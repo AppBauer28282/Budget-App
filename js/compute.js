@@ -3,8 +3,8 @@
    Alle Summen werden einmal pro Aktualisierung in einem Durchlauf berechnet
    und weitergereicht, statt dieselben Werte mehrfach zu ermitteln.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, fcKeys } from './constants.js?v=41';
-import { getMonthData, currentMonthKey } from './storage.js?v=41';
+import { items, categoryDefs, savingDefs, fcKeys } from './constants.js?v=42';
+import { getMonthData, currentMonthKey } from './storage.js?v=42';
 
 export function sumEntries(list){
   let total = 0;
@@ -44,6 +44,7 @@ export function computeTotals(){
   // in categoryTotal/spent/remaining, sondern nur separat für die
   // Kreditkarten-Differenz in render.js.
   const cardElternTotal = sumEntries(m.card.eltern);
+  const cardRausTotal = sumEntries(m.card.raus);
 
   const spent = fixedPaid + categoryTotal + savingOut;
   // Verbleibend ist null, solange kein Gehalt gespeichert wurde.
@@ -53,6 +54,7 @@ export function computeTotals(){
     checkedCount, fixedPaid, fixedRest,
     categoryTotal, savingOut, savingIn, spent, remaining,
     cardElternTotal,
+    cardRausTotal,
     forecastSliders,
     // Forecast: vom echten Rest gehen die sicher kommenden Fixkosten und
     // die simulierten Reglerbeträge ab.

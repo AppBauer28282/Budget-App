@@ -5,7 +5,7 @@
    ausgewertet werden, ist `el` faktisch ein Singleton, das von allen
    anderen Modulen importiert wird.
    ============================================================================= */
-import { fcKeys } from './constants.js?v=41';
+import { fcKeys } from './constants.js?v=42';
 
 export const el = {
   overviewScreen:  document.getElementById('overview-screen'),
@@ -77,6 +77,13 @@ export const el = {
   cardElternAddBtn:   document.getElementById('card-eltern-add-btn'),
   cardElternError:    document.getElementById('card-eltern-error'),
   cardElternRow:      document.getElementById('card-eltern-row'),
+  cardRausList:       document.getElementById('card-raus-list'),
+  cardRausSubtotal:   document.getElementById('card-raus-subtotal'),
+  cardRausText:       document.getElementById('card-raus-text'),
+  cardRausAmount:     document.getElementById('card-raus-amount'),
+  cardRausAddBtn:     document.getElementById('card-raus-add-btn'),
+  cardRausError:      document.getElementById('card-raus-error'),
+  cardRausRow:        document.getElementById('card-raus-row'),
 
   exportBtn:       document.getElementById('export-btn'),
   importFile:      document.getElementById('import-file'),

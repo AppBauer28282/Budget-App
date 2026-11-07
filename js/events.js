@@ -8,11 +8,11 @@ import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
   items, categoryDefs, savingDefs, fcKeys, FC_MAX
-} from './constants.js?v=41';
-import { el, fcSliders, fcVals } from './dom.js?v=41';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=41';
-import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=41';
-import { refreshTotals, renderCatList, renderSavList, renderCardElternList, showSalaryFixed, showSalarySlider } from './render.js?v=41';
+} from './constants.js?v=42';
+import { el, fcSliders, fcVals } from './dom.js?v=42';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=42';
+import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=42';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=42';
 
 // --- Gehalt (Textfeld statt Regler: exakte Eingabe) ---
 el.salarySlider.addEventListener('input', () => {
@@ -113,6 +113,30 @@ el.cardElternAddBtn.addEventListener('click', addCardElternEntry);
 [el.cardElternText, el.cardElternAmount].forEach(input => {
   input.addEventListener('keydown', (e) => {
     if(e.key === 'Enter'){ e.preventDefault(); addCardElternEntry(); }
+  });
+});
+
+// --- Kreditkarte: Rausrechnen hinzufügen (gleich wie "Ausgaben für Eltern") ---
+function addCardRausEntry(){
+  const name = el.cardRausText.value.trim().slice(0, MAX_TEXT_LENGTH);
+  const cents = parseAmountToCents(el.cardRausAmount.value);
+  if(!name){ el.cardRausError.textContent = 'Bitte einen Text eingeben.'; return; }
+  if(cents === null){ el.cardRausError.textContent = 'Bitte einen gültigen Betrag eingeben.'; return; }
+  const list = getMonthData(currentMonthKey).card.raus;
+  if(list.length >= MAX_ENTRIES_PER_KEY){ el.cardRausError.textContent = 'Maximale Anzahl Einträge erreicht.'; return; }
+  el.cardRausError.textContent = '';
+  list.push({ name, cents });
+  saveAll(true);
+  renderCardRausList();
+  refreshTotals();
+  el.cardRausText.value = '';
+  el.cardRausAmount.value = '';
+  el.cardRausText.focus();
+}
+el.cardRausAddBtn.addEventListener('click', addCardRausEntry);
+[el.cardRausText, el.cardRausAmount].forEach(input => {
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); addCardRausEntry(); }
   });
 });
 
@@ -221,6 +245,7 @@ function handleRemoveClick(e){
   const list = scope === 'cat' ? m.categories[key]
              : scope === 'sav' ? m.saving[key]
              : scope === 'cardEltern' ? m.card.eltern
+             : scope === 'cardRaus' ? m.card.raus
              : null;
   if(!list || idx >= list.length) return;
 
@@ -228,12 +253,14 @@ function handleRemoveClick(e){
   saveAll(true);
   if(scope === 'cat') renderCatList();
   else if(scope === 'sav') renderSavList();
+  else if(scope === 'cardRaus') renderCardRausList();
   else renderCardElternList();
   refreshTotals();
 }
 el.catList.addEventListener('click', handleRemoveClick);
 el.savList.addEventListener('click', handleRemoveClick);
 el.cardElternList.addEventListener('click', handleRemoveClick);
+el.cardRausList.addEventListener('click', handleRemoveClick);
 
 // --- Forecast-Regler --- (Liste enthält jetzt auch 'sonstiges', Schleife
 // bleibt unverändert generisch)
@@ -245,7 +272,12 @@ fcKeys.forEach(k => {
   fcSliders[k].addEventListener('input', () => {
     const cents = read();
     fcVals[k].textContent = formatCents(cents);
-    getMonthData(currentMonthKey).forecast[k] = cents;
+    const m = getMonthData(currentMonthKey);
+    m.forecast[k] = cents;
+    // Direkt getippt ersetzt die Posten aus der Tabelle — sonst würden Feld
+    // und Tabelle auseinanderlaufen. Beim nächsten "Bearbeiten" erscheint
+    // der Betrag als ein Posten.
+    if(m.forecastItems && m.forecastItems[k] && m.forecastItems[k].length) m.forecastItems[k] = [];
     saveAll();          // gebündelt, siehe writeStorage
     refreshTotals();
   });

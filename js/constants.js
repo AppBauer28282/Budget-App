@@ -22,7 +22,7 @@
 //   sed -i "s/?v=ALT\b/?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v41';
+export const APP_VERSION = 'v42';
 export const APP_VERSION_DATE = '2026-11-07';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
@@ -80,12 +80,15 @@ export const MAX_OPEN_MONTHS = 3;         // gleichzeitig bearbeitbare Monate
 // sondern eine Konstante, wie vorgegeben.
 export const CARD_TOTAL_CENTS = 200000; // 2.000 €
 
-// Obergrenzen der Forecast-Regler, passend zu den max-Attributen im HTML.
+// Obergrenzen der Forecast-Beträge. Früher an die Regler gebunden (800 €,
+// 2.000 €, 300 €, 1.000 €); seit Textfeldern und der Tabelle "Bearbeiten"
+// (Summe mehrerer Posten) einheitlich 100.000 € — eine reine Plausibilitäts-
+// grenze, damit eine Summe nie stillschweigend gekappt wird.
 export const FC_DEFS = [
-  { key: 'lebensmittel', maxCents: 80000 },
-  { key: 'konsum',       maxCents: 200000 },
-  { key: 'sprit',        maxCents: 30000 },
-  { key: 'sonstiges',    maxCents: 100000 }
+  { key: 'lebensmittel', maxCents: 10000000 },
+  { key: 'konsum',       maxCents: 10000000 },
+  { key: 'sprit',        maxCents: 10000000 },
+  { key: 'sonstiges',    maxCents: 10000000 }
 ];
 export const fcKeys = FC_DEFS.map(d => d.key);
 // Direktes Nachschlagen der Obergrenze, damit beim Ziehen eines Reglers nicht

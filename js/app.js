@@ -4,23 +4,24 @@
    die sich selbst um ihre Event-Listener kümmern (Navigation, Ereignisse,
    Beleg-/Diagrammansicht, Sichern/Wiederherstellen, Cloud-Sync/Login).
    ============================================================================= */
-import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=41';
-import { el } from './dom.js?v=41';
-import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=41';
+import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=42';
+import { el } from './dom.js?v=42';
+import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=42';
 
-import './navigation.js?v=41';
-import './home.js?v=41';
-import './events.js?v=41';
-import './receipt.js?v=41';
-import './charts.js?v=41';
-import './backup.js?v=41';
-import './analysis.js?v=41';
-import './salary-calc.js?v=41';
-import './konsumtopf.js?v=41';
-import './pentracker.js?v=41';
-import './auszahlung.js?v=41';
-import './vermoegen.js?v=41';
-import './cloud-sync.js?v=41';
+import './navigation.js?v=42';
+import './home.js?v=42';
+import './events.js?v=42';
+import './receipt.js?v=42';
+import './charts.js?v=42';
+import './backup.js?v=42';
+import './analysis.js?v=42';
+import './forecast-edit.js?v=42';
+import './salary-calc.js?v=42';
+import './konsumtopf.js?v=42';
+import './pentracker.js?v=42';
+import './auszahlung.js?v=42';
+import './vermoegen.js?v=42';
+import './cloud-sync.js?v=42';
 
 buildAddMonthSelects();
 fillSelect(el.catSelect, categoryDefs);

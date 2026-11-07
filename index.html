@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=41">
+<link rel="stylesheet" href="styles.css?v=42">
 </head>
 <body>
 
@@ -429,6 +429,10 @@
                placeholder="0" aria-labelledby="fc-sonstiges-label">
       </div>
 
+      <!-- Öffnet die Tabelle mit einzelnen Posten je Kategorie; beim Speichern
+           wird die Summe je Kategorie in die Felder oben übernommen. -->
+      <button type="button" class="receipt-btn fc-edit-btn" id="fc-edit-btn">Bearbeiten</button>
+
       <div class="forecast-note">
         <label for="forecast-note">Notizen</label>
         <textarea id="forecast-note" rows="5" maxlength="2000"
@@ -475,6 +479,25 @@
       </div>
       <div class="cat-error" id="card-eltern-error" role="alert"></div>
 
+      <!-- Weitere Beträge, die zwar über die Karte liefen, aber aus der
+           Differenz herausgerechnet werden sollen. -->
+      <p class="cat-group-name">Rausrechnen</p>
+      <div class="cat-list" id="card-raus-list"></div>
+      <div class="cat-grand-total">
+        <span>Zwischensumme</span>
+        <span class="cat-grand-total-amount" id="card-raus-subtotal">0,00 €</span>
+      </div>
+
+      <div class="cat-entry-row">
+        <label class="visually-hidden" for="card-raus-text">Bezeichnung</label>
+        <input type="text" id="card-raus-text" maxlength="80" autocomplete="off" enterkeyhint="done">
+        <label class="visually-hidden" for="card-raus-amount">Betrag in Euro</label>
+        <input type="number" id="card-raus-amount" placeholder="€" step="0.01" min="0" max="1000000"
+               inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="cat-add-btn" id="card-raus-add-btn">Hinzufügen</button>
+      </div>
+      <div class="cat-error" id="card-raus-error" role="alert"></div>
+
       <div class="forecast-row">
         <span class="forecast-row-label">Verbraucht (Gesamtsaldo − Restsaldo)</span>
         <span class="forecast-row-value" id="card-used">–</span>
@@ -486,6 +509,10 @@
       <div class="forecast-row">
         <span class="forecast-row-label">Ausgaben für Eltern</span>
         <span class="forecast-row-value" id="card-eltern-row">–</span>
+      </div>
+      <div class="forecast-row">
+        <span class="forecast-row-label">Rausrechnen</span>
+        <span class="forecast-row-value" id="card-raus-row">–</span>
       </div>
 
       <div class="forecast-result-box">
@@ -527,6 +554,26 @@
       <button type="button" class="salary-save-btn" id="pin-change-btn">PIN ändern</button>
       <p class="lock-error" id="pin-change-error" role="alert"></p>
       <p class="lock-status" id="pin-change-status"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Forecast bearbeiten: Tabelle mit Posten je Kategorie (js/forecast-edit.js). -->
+<div class="receipt-overlay" id="fc-edit-overlay" hidden>
+  <div class="receipt-card fc-edit-card" role="dialog" aria-modal="true" aria-labelledby="fc-edit-title">
+    <div class="receipt-head">
+      <h2 id="fc-edit-title">Forecast bearbeiten</h2>
+      <button type="button" class="receipt-close" id="fc-edit-close" aria-label="Fenster schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <p class="categories-hint">Posten mit Bezeichnung und Betrag eintragen. Beim Speichern wird je Kategorie die Summe übernommen.</p>
+      <div id="fc-edit-tabelle"></div>
+      <div class="fc-edit-gesamt"><span>Summe Forecast</span><span id="fc-edit-gesamt">0,00 €</span></div>
+      <p class="cat-error" id="fc-edit-error" role="alert"></p>
+      <div class="fc-edit-aktionen">
+        <button type="button" class="receipt-btn" id="fc-edit-cancel">Abbrechen</button>
+        <button type="button" class="salary-save-btn" id="fc-edit-save">Speichern</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1170,7 +1217,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=41"></script>
+<script type="module" src="js/app.js?v=42"></script>
 
 </body>
 </html>

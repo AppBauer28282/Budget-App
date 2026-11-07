@@ -3410,6 +3410,42 @@
   }
   .vt-widget-zeile + .vt-widget-zeile{ border-top: 1px solid var(--line); }
 
+  /* ---------- Forecast bearbeiten (Tabellenansicht) ---------- */
+  .fc-edit-btn{ margin-top: 4px; }
+  .fc-edit-card{ max-width: 460px; }
+  #fc-edit-overlay .receipt-body{ max-height: calc(100vh - 140px); overflow-y: auto; }
+  .fc-edit-gruppe{ margin: 0 0 16px; }
+  .fc-edit-kopf{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-weight: 600; font-size: 14px;
+    padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--line);
+  }
+  .fc-edit-summe{ font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+  .fc-edit-zeile{ display:grid; grid-template-columns: minmax(0,1fr) 96px 32px; gap: 6px; margin-bottom: 6px; }
+  .fc-edit-zeile input{
+    font-family: inherit; font-size: 16px;   /* >=16px: kein Auto-Zoom in iOS */
+    padding: 7px 9px; min-width: 0;
+    border: 1px solid var(--line); border-radius: var(--radius-klein);
+    background: var(--paper); color: var(--ink);
+  }
+  .fc-edit-zeile .fc-edit-betrag{ text-align: right; font-variant-numeric: tabular-nums; }
+  .fc-edit-zeile input:focus{ outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(10,132,255,0.25); }
+  .fc-edit-zeile input.ungueltig{ border-color: var(--error); }
+  .fc-edit-weg{
+    border: none; background: transparent; color: var(--error);
+    font-size: 15px; cursor: pointer; border-radius: var(--radius-klein);
+  }
+  .fc-edit-plus{
+    border: none; background: transparent; color: var(--brass);
+    font-family: inherit; font-size: 14px; font-weight: 600; padding: 4px 0; cursor: pointer;
+  }
+  .fc-edit-gesamt{
+    display:flex; justify-content:space-between; font-weight: 700; font-size: 15px;
+    padding-top: 10px; border-top: 2px solid var(--ink);
+  }
+  .fc-edit-aktionen{ display:flex; gap: 10px; margin-top: 12px; }
+  .fc-edit-aktionen > button{ flex: 1; margin: 0; }
+
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */
   .sc-prozent-zeile{ display:flex; gap: 8px; }
   .sc-prozent-zeile input{ flex: 1 1 auto; }
@@ -3477,4 +3513,7 @@
   [data-theme="dark"] #analysis-overlay .receipt-card,
   [data-theme="dark"] #analysis-overlay .receipt-head,
   [data-theme="dark"] #pin-overlay .receipt-card,
-  [data-theme="dark"] #pin-overlay .receipt-head{ background: #1c1c1e; }
+  [data-theme="dark"] #pin-overlay .receipt-head,
+  [data-theme="dark"] #fc-edit-overlay .receipt-card,
+  [data-theme="dark"] #fc-edit-overlay .receipt-head{ background: #1c1c1e; }
+  [data-theme="dark"] .fc-edit-zeile input{ background: #2c2c2e; border-color: #48484a; }
