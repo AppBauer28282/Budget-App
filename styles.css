@@ -3117,14 +3117,16 @@
   .home-widget-kopf{ display:none; }
   /* Kachel mit Widget: kompakter Kopf (kleines Symbol, ohne Untertitel).
      :is() fasst die drei Widget-Kacheln zusammen. */
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn){ gap: 10px 10px; padding: 12px; }
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn) .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn) .home-tile-icon svg{ width: 18px; height: 18px; }
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn) .home-tile-sub{ display:none; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn){ gap: 10px 10px; padding: 12px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn) .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn) .home-tile-icon svg{ width: 18px; height: 18px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn) .home-tile-sub{ display:none; }
   /* Reihenfolge der Widgets: Gehalt, Pen-Tracker, Auszahlungen, dann die übrigen. */
   :root:not([data-home="basis"]) #salary-calc-btn{ order: -3; }
   :root:not([data-home="basis"]) #pentracker-btn{ order: -2; }
   :root:not([data-home="basis"]) #auszahlung-btn{ order: -1; }
+  /* Vermögen folgt direkt danach (Konsumtopf, noch ohne Widget, ans Ende). */
+  :root:not([data-home="basis"]) #konsum-btn{ order: 1; }
   :root:not([data-home="basis"]) #salary-calc-btn .home-widget-kopf{
     display:block; margin-left:auto; font-size: 12px; color: var(--ink-soft); white-space: nowrap;
   }
@@ -3324,6 +3326,41 @@
     .azw-label{ font-size: 9.5px; }
     .azw-pfeil{ width: 18px; height: 18px; font-size: 12px; }
     :root:not([data-home="basis"]) .home-widget.azw{ column-gap: 6px; }
+  }
+
+  /* ---------- Vermögens-Widget ----------
+     Oben die Gleichung aus kleinen Kacheln mit Plus- und Gleichheitszeichen,
+     darunter der Ladebalken zum nächsten Meilenstein. */
+  :root:not([data-home="basis"]) .home-widget.vtw{ display:flex; flex-direction:column; gap: 10px; }
+  .vtw-leer{ font-size: 12px; color: var(--ink-soft); }
+  .vtw-gleichung{ display:flex; align-items:stretch; gap: 4px; }
+  .vtw-kachel{
+    flex: 1 1 0; min-width: 0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 8px 2px 7px;
+    border-radius: 10px;
+    background: var(--paper);
+  }
+  .vtw-kachel.summe{ flex-grow: 1.25; background: rgba(10,132,255,0.1); }
+  .vtw-wert{ font-size: 17px; font-weight: 700; letter-spacing: -0.3px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .vtw-kachel.summe .vtw-wert{ color: var(--brass); font-size: 18px; }
+  .vtw-label{ font-size: 10px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .vtw-op{ align-self: center; font-size: 16px; font-weight: 600; color: var(--ink-soft); }
+  [data-theme="dark"] .vtw-kachel{ background: #2c2c2e; }
+  [data-theme="dark"] .vtw-kachel.summe{ background: #1a2b40; }
+  .vtw-ziel{ display:flex; flex-direction:column; gap: 5px; }
+  .vtw-ziel-zeile{ display:flex; justify-content:space-between; gap: 8px; font-size: 12px; }
+  .vtw-ziel-name{ font-weight: 600; white-space: nowrap; }
+  .vtw-ziel-rest{ color: var(--ink-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .vtw-track{ display:block; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .vtw-fill{ display:block; height: 100%; border-radius: 4px; background: var(--ok); }
+  .vtw-wann{ font-size: 12px; color: var(--ink-soft); text-align: right; font-variant-numeric: tabular-nums; }
+  @media (max-width: 359px){
+    .vtw-wert{ font-size: 14px; }
+    .vtw-kachel.summe .vtw-wert{ font-size: 15px; }
+    .vtw-op{ font-size: 13px; }
+    .vtw-gleichung{ gap: 2px; }
+    .vtw-label{ font-size: 9px; }
   }
 
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */

@@ -23,7 +23,7 @@
    Alle IDs sind mit "vt-" vorangestellt. Die kleinen Dialoge hängen an
    document.body und liegen über dem Fenster (siehe styles.css).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=36';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=37';
 
 const STORE_KEY = 'vermoegen.v1';
 
@@ -48,6 +48,8 @@ const vtClose     = $('vermoegen-close');
 // Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
 // openAppScreen/closeAppScreen in js/overlays.js).
 const homeScreenEl = $('home-screen');
+// Widget auf der Startseite — nicht in alleElementeDa, darf fehlen.
+const vtWidget    = $('vt-widget');
 const vtWarn      = $('vt-warn');
 const vtMsg       = $('vt-msg');
 const vtBack      = $('vt-back');
@@ -264,7 +266,94 @@ function zeigeWarnung(){
 // dutzendfach, ohne Bündelung würde jedes Mal der ganze Stand serialisiert.
 let saveTimer = null;
 
+/* ---------- Widget auf der Startseite ----------
+   Aus dem letzten offenen Monat (ohne offenen: dem letzten Monat):
+   [ETF] + [Tagesgeld] + [Aktien/BTC] = [Gesamt] in Tausend ("17,5K").
+   Positionen anderer Klassen erscheinen als zusätzliche Kachel "Sonstige",
+   damit die Gleichung immer aufgeht. Darunter ein Ladebalken zum nächsten
+   Meilenstein (Regel wie im Tracker) und wann er voraussichtlich erreicht wird —
+   mit derselben Wachstumsrate wie im Tracker (ETF+Aktien+BTC + Tagesgeld,
+   automatisch oder aus den Einstellungen). */
+function kurzK(cents){
+  const k = (cents || 0) / 100000;
+  return (Math.abs(k) >= 100 ? Math.round(k).toLocaleString('de-DE')
+    : k.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).replace(/,0$/, '')) + 'K';
+}
+function widgetKachel(wert, label, cls){
+  const k = el('span', 'vtw-kachel' + (cls ? ' ' + cls : ''));
+  k.append(el('span', 'vtw-wert', wert), el('span', 'vtw-label', label));
+  return k;
+}
+function renderWidget(){
+  if(!vtWidget) return;
+  const list = sortiert();
+  if(!list.length){
+    vtWidget.replaceChildren(el('span', 'vtw-leer', 'Noch kein Monat angelegt.'));
+    return;
+  }
+  const offene = list.filter(m => m.offen);
+  const monat = offene.length ? offene[offene.length - 1] : list[list.length - 1];
+  const bis = list.slice(0, list.indexOf(monat) + 1);
+
+  const klasseSumme = (m, namen) => m.pos.filter(p => namen.indexOf(p.klasse) > -1).reduce((s, p) => s + (p.cents || 0), 0);
+  const etf = klasseSumme(monat, ['ETF']);
+  const tg = tagesgeldSumme(monat);
+  const akt = klasseSumme(monat, ['Aktien', 'Bitcoin']);
+  const gesamt = summe(monat);
+  const sonst = gesamt - etf - tg - akt;
+
+  const gleichung = el('span', 'vtw-gleichung');
+  const teile = [[etf, 'ETF'], [tg, 'Tagesgeld'], [akt, 'Aktien/BTC']];
+  if(sonst) teile.push([sonst, 'Sonstige']);
+  teile.forEach(([w, l], i) => {
+    if(i) gleichung.appendChild(el('span', 'vtw-op', '+'));
+    gleichung.appendChild(widgetKachel(kurzK(w), l));
+  });
+  gleichung.appendChild(el('span', 'vtw-op', '='));
+  gleichung.appendChild(widgetKachel(kurzK(gesamt), monatKurz(monat.id) + ' ' + monat.id.slice(0, 4), 'summe'));
+
+  // Nächster Meilenstein — dieselbe Regel wie im Tracker: erreicht erst,
+  // wenn Gesamt UND ETF+Aktien+BTC den Betrag erreicht haben. Balken und
+  // "noch …" zeigen deshalb den knapperen der beiden Werte; der Termin ist
+  // der spätere der beiden Prognosen (wie die Zeilen im Tracker).
+  const teil = teilSumme(monat);
+  const ms = MEILENSTEINE.find(x => !(gesamt >= x.betrag && teil >= x.betrag));
+  const ziel = el('span', 'vtw-ziel');
+  if(!ms){
+    ziel.appendChild(el('span', 'vtw-ziel-name', 'Alle Meilensteine erreicht'));
+  } else {
+    const knapp = Math.min(gesamt, teil);
+    const pct = Math.max(0, Math.min(100, knapp / ms.betrag * 100));
+    const zeile = el('span', 'vtw-ziel-zeile');
+    zeile.append(el('span', 'vtw-ziel-name', ms.name + ' · ' + kurzK(ms.betrag)),
+      el('span', 'vtw-ziel-rest', 'noch ' + kurzK(ms.betrag - knapp)));
+    const track = el('span', 'vtw-track');
+    const fill = el('span', 'vtw-fill');
+    fill.style.width = pct.toFixed(1) + '%';
+    track.appendChild(fill);
+    const teilW = angewandtesWachstum('teil', durchschnittWachstum(m => teilSumme(m), bis));
+    const tgW = angewandtesWachstum('tagesgeld', durchschnittWachstum(m => tagesgeldSumme(m), bis));
+    const gesamtW = (teilW === null || tgW === null) ? null : teilW + tgW;
+    // Monate bis zum Ziel für einen Wert; 0 = schon erreicht, null = keine Prognose.
+    const monateBis = (wert, w) => wert >= ms.betrag ? 0 : ((w !== null && w > 0) ? Math.ceil((ms.betrag - wert) / w) : null);
+    const mg = monateBis(gesamt, gesamtW), mt = monateBis(teil, teilW);
+    let wann = 'Prognose nicht möglich';
+    if(mg !== null && mt !== null){
+      const zielId = addMonate(monat.id, Math.max(mg, mt));
+      wann = 'erreicht ca. ' + zielId.slice(5, 7) + '/' + zielId.slice(0, 4);
+    }
+    ziel.append(zeile, track, el('span', 'vtw-wann', wann));
+    ziel.title = 'Gesamt ' + kurzK(gesamt) + ', ETF+Aktien+BTC ' + kurzK(teil) + ' von ' + kurzK(ms.betrag);
+  }
+  vtWidget.replaceChildren(gleichung, ziel);
+  if(vtBtn){
+    vtBtn.setAttribute('aria-label', 'Vermögens-Tracker öffnen. ' + teile.map(([w, l]) => l + ' ' + kurzK(w)).join(', ') +
+      ', gesamt ' + kurzK(gesamt) + '.');
+  }
+}
+
 function writeNow(){
+  renderWidget();
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     storageOk = true;
@@ -1232,6 +1321,7 @@ function importieren(datei){
 function init(){
   load();
   zeigeWarnung();
+  renderWidget();
 
   // Schnittstelle für den Cloud-Abgleich (siehe js/cloud-sync.js).
   window.__vermoegenCloud = {

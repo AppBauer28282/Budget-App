@@ -24,8 +24,8 @@
    die Vorlage baute Zeichenketten zusammen und hatte dabei eine Lücke bei den
    Spaltenköpfen der Gesamtübersicht.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=36';
-import { basisJahresNetto } from './salary-calc.js?v=36';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=37';
+import { basisJahresNetto } from './salary-calc.js?v=37';
 
 const STORE_KEY = 'auszahlungen.v1';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -273,7 +273,7 @@ function renderWidget(){
   const frag = document.createDocumentFragment();
   if(!hatWerte){
     frag.append(widgetDrittel('Ø ' + jahr, '–'), elem('span', 'azw-strich'),
-      widgetDrittel('Hochrechnung', '–'), elem('span', 'azw-strich'),
+      widgetDrittel('bis Dez', '–'), elem('span', 'azw-strich'),
       widgetDrittel('vom Jahresnetto', '–'));
     azWidget.replaceChildren(frag);
     return;
