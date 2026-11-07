@@ -17,14 +17,27 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=42';
-import { clamp, monthKey } from './utils.js?v=42';
+} from './constants.js?v=43';
+import { clamp, monthKey } from './utils.js?v=43';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=42';
+import { showBackupMsg } from './backup.js?v=43';
+
+// Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
+// damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
+// verfälscht. Ältere Monate ohne Kopie nutzen die frühere feste Liste.
+export const MAX_FIXKOSTEN = 50;
+export function fixkostenVon(m){
+  return (m && Array.isArray(m.fixkosten) && m.fixkosten.length) ? m.fixkosten : items;
+}
+// Vorlage für neue Monate (Einstellung in der Übersicht); leer = feste Liste.
+export function fixkostenVorlage(){
+  return (allData && Array.isArray(allData.fixkostenVorlage) && allData.fixkostenVorlage.length)
+    ? allData.fixkostenVorlage : items;
+}
 
 export function emptyMonthData(){
   const categories = Object.create(null);
@@ -35,6 +48,7 @@ export function emptyMonthData(){
   fcKeys.forEach(k => { forecast[k] = 0; });
   return {
     salary: null,
+    fixkosten: [],
     checked: new Array(items.length).fill(false),
     categories,
     saving,
@@ -98,9 +112,14 @@ export function sanitizeMonthData(raw){
     month.salary = clamp(salaryCents, SALARY_MIN_CENTS, SALARY_MAX_CENTS);
   }
 
+  // Eigene Fixkosten-Liste dieses Monats (sonst die feste Liste).
+  month.fixkosten = sanitizeEntries(raw.fixkosten, true).slice(0, MAX_FIXKOSTEN);
+  const anzahlFix = fixkostenVon(month).length;
+
   // Checkboxen: strikt auf echte true-Werte und die richtige Länge normiert.
+  month.checked = new Array(anzahlFix).fill(false);
   if(Array.isArray(raw.checked)){
-    for(let i = 0; i < items.length; i++){
+    for(let i = 0; i < anzahlFix; i++){
       month.checked[i] = raw.checked[i] === true;
     }
   }
@@ -175,8 +194,10 @@ export function sanitizeMonthEntry(raw){
 // Nur gültige Monats-Einträge werden übernommen — alles andere (inkl. des
 // alten Datenformats ohne Jahr) wird verworfen.
 export function sanitizeAll(raw){
-  const clean = { monthEntries: Object.create(null) };
-  if(!raw || typeof raw !== 'object' || !raw.monthEntries || typeof raw.monthEntries !== 'object'){
+  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [] };
+  if(!raw || typeof raw !== 'object') return clean;
+  clean.fixkostenVorlage = sanitizeEntries(raw.fixkostenVorlage, true).slice(0, MAX_FIXKOSTEN);
+  if(!raw.monthEntries || typeof raw.monthEntries !== 'object'){
     return clean;
   }
   let count = 0;

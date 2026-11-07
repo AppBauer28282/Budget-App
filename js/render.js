@@ -5,11 +5,12 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=42';
-import { el, fcSliders, fcVals } from './dom.js?v=42';
-import { formatCents } from './utils.js?v=42';
-import { computeTotals, sumEntries } from './compute.js?v=42';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=42';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=43';
+import { fixkostenVon } from './storage.js?v=43';
+import { el, fcSliders, fcVals } from './dom.js?v=43';
+import { formatCents } from './utils.js?v=43';
+import { computeTotals, sumEntries } from './compute.js?v=43';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=43';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung
@@ -128,7 +129,7 @@ export function refreshTotals(){
     el.balance.classList.toggle('negative', t.remaining < 0);
   }
 
-  el.checkedCount.textContent = t.checkedCount + ' von ' + items.length + ' angehakt';
+  el.checkedCount.textContent = t.checkedCount + ' von ' + fixkostenVon(getMonthData(currentMonthKey)).length + ' angehakt';
   // Nur die abgehakten Fixkosten — nicht t.spent (das würde zusätzlich
   // Sonstige Ausgaben und Sparen mit reinrechnen, was hier falsch wäre).
   el.spentTotal.textContent = formatCents(t.fixedPaid) + ' ausgegeben';
@@ -266,9 +267,11 @@ export function fillSelect(selectEl, defs){
 }
 
 // Fixkosten-Liste
-export function buildCostList(){
+// Wird je Monat neu aufgebaut, weil jeder Monat seine eigene Fixkosten-Liste
+// haben kann (siehe fixkostenVon in storage.js).
+export function buildCostList(liste){
   const fragment = document.createDocumentFragment();
-  items.forEach((item, i) => {
+  (liste || items).forEach((item, i) => {
     const li = document.createElement('li');
     const label = document.createElement('label');
     label.className = 'cost-row';
@@ -291,7 +294,7 @@ export function buildCostList(){
     li.appendChild(label);
     fragment.appendChild(li);
   });
-  el.costList.appendChild(fragment);
+  el.costList.replaceChildren(fragment);
 }
 
 // Blendet zwischen Schieberegler (Bearbeiten) und fixierter Zeile (gespeichert) um.
@@ -314,7 +317,9 @@ export function renderMonth(){
 
   el.currentMonthLabel.textContent = currentMonthLabelText();
 
-  // Checkboxen auf den gespeicherten Stand setzen.
+  // Fixkosten dieses Monats aufbauen und Checkboxen auf den gespeicherten
+  // Stand setzen.
+  buildCostList(fixkostenVon(m));
   const boxes = el.costList.querySelectorAll('input[type="checkbox"]');
   for(let i = 0; i < boxes.length; i++) boxes[i].checked = m.checked[i] === true;
 

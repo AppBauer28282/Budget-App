@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=42">
+<link rel="stylesheet" href="styles.css?v=43">
 </head>
 <body>
 
@@ -254,6 +254,21 @@
   </details>
 
   <button type="button" class="receipt-btn" id="analysis-btn">Analyse</button>
+
+  <!-- Fixkosten einstellen (js/fixkosten.js): gilt für neue und alle offenen
+       Monate, abgeschlossene Monate behalten ihre damaligen Fixkosten. -->
+  <details class="section" id="fix-einstellung">
+    <summary class="section-summary">Fixkosten</summary>
+    <div class="section-body">
+      <p class="backup-hint">Gilt für neue Monate und alle offenen Monate. Abgeschlossene Monate bleiben unverändert.</p>
+      <div id="fix-tabelle"></div>
+      <button type="button" class="fc-edit-plus" id="fix-plus">+ Fixkosten</button>
+      <div class="fc-edit-gesamt"><span>Summe</span><span id="fix-summe">0,00 €</span></div>
+      <p class="cat-error" id="fix-error" role="alert"></p>
+      <button type="button" class="salary-save-btn" id="fix-save">Speichern</button>
+      <p class="backup-msg" id="fix-msg" role="status"></p>
+    </div>
+  </details>
 
   <details class="section">
     <summary class="section-summary">Sichern &amp; Wiederherstellen</summary>
@@ -1217,7 +1232,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=42"></script>
+<script type="module" src="js/app.js?v=43"></script>
 
 </body>
 </html>

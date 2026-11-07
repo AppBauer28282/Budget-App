@@ -5,16 +5,16 @@
    abgeschlossenen Monat direkt die schreibgeschützte Belegansicht gezeigt —
    ein editierbares "sheet" existiert für abgeschlossene Monate gar nicht.
    ============================================================================= */
-import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=42';
-import { el } from './dom.js?v=42';
-import { monthKey } from './utils.js?v=42';
-import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey } from './storage.js?v=42';
-import { renderMonth } from './render.js?v=42';
+import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=43';
+import { el } from './dom.js?v=43';
+import { monthKey } from './utils.js?v=43';
+import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey, fixkostenVorlage } from './storage.js?v=43';
+import { renderMonth } from './render.js?v=43';
 // Zirkulärer Import: receipt.js importiert umgekehrt showOverview aus diesem
 // Modul (für den Rückweg von der Belegansicht eines abgeschlossenen Monats
 // zur Übersicht). Sicher, weil beide Seiten die importierte Funktion erst
 // in späteren Event-Handlern aufrufen, nie beim Modul-Start.
-import { openReceipt } from './receipt.js?v=42';
+import { openReceipt } from './receipt.js?v=43';
 
 export function showOverview(){
   el.sheet.hidden = true;
@@ -134,7 +134,13 @@ function handleAddMonth(){
   allData.monthEntries[key] = {
     year, monthIndex, monthName: MONTHS[monthIndex],
     status: 'open', createdAt: Date.now(), closedAt: null,
-    data: emptyMonthData()
+    data: (() => {
+      // Neuer Monat übernimmt die aktuelle Fixkosten-Vorlage als eigene Kopie.
+      const d = emptyMonthData();
+      d.fixkosten = fixkostenVorlage().map(f => ({ name: f.name, cents: f.cents }));
+      d.checked = new Array(d.fixkosten.length).fill(false);
+      return d;
+    })()
   };
   saveAll(true);
   renderOverview();

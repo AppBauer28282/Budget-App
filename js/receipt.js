@@ -7,15 +7,15 @@
    Wird auch für abgeschlossene Monate genutzt — dort ist es die einzige
    noch zugängliche Ansicht (siehe navigation.js openMonthDetail).
    ============================================================================= */
-import { items, categoryDefs, savingDefs, fcKeys, FC_LABELS } from './constants.js?v=42';
-import { el } from './dom.js?v=42';
-import { formatCents } from './utils.js?v=42';
-import { computeTotals } from './compute.js?v=42';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=42';
-import { openOverlay, closeOverlay } from './overlays.js?v=42';
+import { categoryDefs, savingDefs, fcKeys, FC_LABELS } from './constants.js?v=43';
+import { el } from './dom.js?v=43';
+import { formatCents } from './utils.js?v=43';
+import { computeTotals } from './compute.js?v=43';
+import { getMonthData, currentMonthKey, currentMonthLabelText, fixkostenVon } from './storage.js?v=43';
+import { openOverlay, closeOverlay } from './overlays.js?v=43';
 // Zirkulärer Import: navigation.js importiert umgekehrt openReceipt aus
 // diesem Modul. Sicher, siehe Kommentar in navigation.js.
-import { showOverview } from './navigation.js?v=42';
+import { showOverview } from './navigation.js?v=43';
 
 function addReceiptSectionTitle(container, text){
   const h = document.createElement('p');
@@ -80,7 +80,7 @@ function buildReceipt(){
   addReceiptSectionTitle(frag, 'Bereits passiert');
 
   addReceiptSubgroup(frag, 'Fixkosten (abgehakt)');
-  items.forEach((item, i) => {
+  fixkostenVon(m).forEach((item, i) => {
     if(m.checked[i]) addReceiptLine(frag, item.name, item.cents);
   });
 
@@ -118,7 +118,7 @@ function buildReceipt(){
   addReceiptSectionTitle(frag, 'Noch offen (Simulation)');
 
   addReceiptSubgroup(frag, 'Fixkosten (offen)');
-  items.forEach((item, i) => {
+  fixkostenVon(m).forEach((item, i) => {
     if(!m.checked[i]) addReceiptLine(frag, item.name, item.cents);
   });
 

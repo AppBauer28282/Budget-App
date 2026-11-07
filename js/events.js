@@ -8,11 +8,11 @@ import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
   items, categoryDefs, savingDefs, fcKeys, FC_MAX
-} from './constants.js?v=42';
-import { el, fcSliders, fcVals } from './dom.js?v=42';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=42';
-import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=42';
-import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=42';
+} from './constants.js?v=43';
+import { el, fcSliders, fcVals } from './dom.js?v=43';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=43';
+import { getMonthData, currentMonthKey, saveAll, fixkostenVon } from './storage.js?v=43';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=43';
 
 // --- Gehalt (Textfeld statt Regler: exakte Eingabe) ---
 el.salarySlider.addEventListener('input', () => {
@@ -145,7 +145,7 @@ el.costList.addEventListener('change', (e) => {
   const target = e.target;
   if(!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
   const idx = Number(target.dataset.index);
-  if(!Number.isInteger(idx) || idx < 0 || idx >= items.length) return;
+  if(!Number.isInteger(idx) || idx < 0 || idx >= fixkostenVon(getMonthData(currentMonthKey)).length) return;
   getMonthData(currentMonthKey).checked[idx] = target.checked;
   saveAll();
   refreshTotals();

@@ -3,8 +3,9 @@
    Alle Summen werden einmal pro Aktualisierung in einem Durchlauf berechnet
    und weitergereicht, statt dieselben Werte mehrfach zu ermitteln.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, fcKeys } from './constants.js?v=42';
-import { getMonthData, currentMonthKey } from './storage.js?v=42';
+import { categoryDefs, savingDefs, fcKeys } from './constants.js?v=43';
+import { fixkostenVon } from './storage.js?v=43';
+import { getMonthData, currentMonthKey } from './storage.js?v=43';
 
 export function sumEntries(list){
   let total = 0;
@@ -18,6 +19,7 @@ export function computeTotals(){
   let fixedPaid = 0;    // abgehakte Fixkosten
   let fixedRest = 0;    // noch offene Fixkosten
   let checkedCount = 0;
+  const items = fixkostenVon(m);
   for(let i = 0; i < items.length; i++){
     if(m.checked[i]){ fixedPaid += items[i].cents; checkedCount++; }
     else { fixedRest += items[i].cents; }
