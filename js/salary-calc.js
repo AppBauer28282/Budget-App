@@ -201,41 +201,40 @@ export function renderGehaltWidget(){
     { cap: 'Stufe +9', w: szenario('+9', 'KT5', 0, std, kvz) },
     { cap: '+' + nf(proz, proz % 1 ? 1 : 0) + ' %', w: szenario('+9', 'KT5', proz, std, kvz) }
   ];
-  // Zwei gleich gebaute Reihen: pro Monat (mit Spaltentiteln) und pro Jahr.
-  const reihe = (titel, zeitraum, mitCap) => {
-    const r = span('gw-reihe ' + zeitraum);
-    r.appendChild(span('gw-reihe-titel', titel));
-    const gitter = span('gw');
+  // Zwei Reihen in EINEM Raster (#gehalt-widget, siehe styles.css): so sind
+  // die Kacheln beider Reihen gleich hoch. Pro Monat steht das Netto groß,
+  // pro Jahr das Brutto; die kleinen Kästen zeigen jeweils den Zuwachs der
+  // groß dargestellten Größe.
+  const frag = document.createDocumentFragment();
+  const reihe = (titel, zeitraum, gross) => {
+    const klein = gross === 'netto' ? 'brutto' : 'netto';
+    frag.appendChild(span('gw-reihe-titel', titel));
     stufen.forEach((st, i) => {
       const w = st.w[zeitraum];
-      const brutto = span('gw-brutto', euroGanz(w.brutto));
-      brutto.appendChild(span('gw-brutto-wort', ' brutto'));
-      const sp = span('gw-spalte' + (i === 0 ? ' heute' : ''));
-      if(mitCap) sp.appendChild(span('gw-cap', st.cap));
-      sp.append(span('gw-netto', euroGanz(w.netto)), brutto);
+      const sp = span('gw-spalte ' + zeitraum + (i === 0 ? ' heute' : ''));
+      if(zeitraum === 'monat') sp.appendChild(span('gw-cap', st.cap));
+      const kl = span('gw-brutto', euroGanz(w[klein]));
+      kl.appendChild(span('gw-brutto-wort', ' ' + klein));
+      sp.append(span('gw-netto', euroGanz(w[gross])), kl);
       if(i > 0){
-        // Übergang als kleiner Kasten mit dem Netto-Zuwachs zur Vorstufe. Er
-        // hängt an der linken Kante dieser Spalte und ragt per CSS auf die
-        // Fuge zwischen beiden Spalten — die Spalten selbst behalten so ihre
-        // volle Breite.
-        const diff = w.netto - stufen[i - 1].w[zeitraum].netto;
+        // Übergang: hängt an der linken Kante dieser Spalte und ragt per
+        // CSS auf die Fuge zwischen beiden Spalten.
+        const diff = w[gross] - stufen[i - 1].w[zeitraum][gross];
         const t = span('gw-schritt');
         t.append(span('gw-plus', (diff >= 0 ? '+' : '−') + nf(Math.abs(Math.round(diff)), 0)));
         sp.appendChild(t);
       }
-      gitter.appendChild(sp);
+      frag.appendChild(sp);
     });
-    r.appendChild(gitter);
-    return r;
   };
-  const frag = document.createDocumentFragment();
-  frag.append(reihe('Pro Monat', 'monat', true), reihe('Pro Jahr', 'jahr', false));
+  reihe('Pro Monat · netto', 'monat', 'netto');
+  reihe('Pro Jahr · brutto', 'jahr', 'brutto');
   gehaltWidget.replaceChildren(frag);
   if(scOpenBtn){
     scOpenBtn.setAttribute('aria-label', 'Gehaltsrechner öffnen. Netto pro Monat: heute ' + euroGanz(stufen[0].w.monat.netto) +
       ', Stufe 9 ' + euroGanz(stufen[1].w.monat.netto) + ', mit ' + stufen[2].cap + ' ' + euroGanz(stufen[2].w.monat.netto) +
-      '. Netto pro Jahr: heute ' + euroGanz(stufen[0].w.jahr.netto) + ', Stufe 9 ' + euroGanz(stufen[1].w.jahr.netto) +
-      ', mit ' + stufen[2].cap + ' ' + euroGanz(stufen[2].w.jahr.netto) + '.');
+      '. Brutto pro Jahr: heute ' + euroGanz(stufen[0].w.jahr.brutto) + ', Stufe 9 ' + euroGanz(stufen[1].w.jahr.brutto) +
+      ', mit ' + stufen[2].cap + ' ' + euroGanz(stufen[2].w.jahr.brutto) + '.');
   }
 }
 
