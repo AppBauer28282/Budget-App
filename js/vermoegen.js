@@ -23,7 +23,7 @@
    Alle IDs sind mit "vt-" vorangestellt. Die kleinen Dialoge hängen an
    document.body und liegen über dem Fenster (siehe styles.css).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=40';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=41';
 
 const STORE_KEY = 'vermoegen.v1';
 
@@ -318,12 +318,20 @@ function renderWidget(){
   const etf = klasseSumme(monat, ['ETF']);
   const tg = tagesgeldSumme(monat);
   const akt = klasseSumme(monat, ['Aktien', 'Bitcoin']);
-  const gesamt = summe(monat);
-  const sonst = gesamt - etf - tg - akt;
+  const sonst = summe(monat) - etf - tg - akt;
 
   // Nur die in den Einstellungen gewählten Kacheln; "Sonstige" nur, wenn es
   // dort überhaupt etwas gibt.
   const sicht = state.widget || standardWidget();
+  // Die Gesamt-Kachel addiert nur die gewählten Werte — abgewählte Klassen
+  // fallen auch aus Summe, Meilenstein und Prognose heraus.
+  const auswahlSumme = m => {
+    const e = klasseSumme(m, ['ETF']), t = tagesgeldSumme(m), a = klasseSumme(m, ['Aktien', 'Bitcoin']);
+    return (sicht.etf ? e : 0) + (sicht.tagesgeld ? t : 0) + (sicht.aktien ? a : 0) +
+      (sicht.sonstige ? summe(m) - e - t - a : 0);
+  };
+  const gesamt = auswahlSumme(monat);
+  const alleGewaehlt = sicht.etf && sicht.tagesgeld && sicht.aktien && sicht.sonstige;
   const gleichung = el('span', 'vtw-gleichung');
   const teile = [];
   if(sicht.etf) teile.push([etf, 'ETF']);
@@ -358,7 +366,11 @@ function renderWidget(){
     track.appendChild(fill);
     const teilW = angewandtesWachstum('teil', durchschnittWachstum(m => teilSumme(m), bis));
     const tgW = angewandtesWachstum('tagesgeld', durchschnittWachstum(m => tagesgeldSumme(m), bis));
-    const gesamtW = (teilW === null || tgW === null) ? null : teilW + tgW;
+    // Alles gewählt: Gesamt-Rate des Trackers (inkl. eigener Raten aus den
+    // Einstellungen). Teilauswahl: Ø-Wachstum genau dieser Summe.
+    const gesamtW = alleGewaehlt
+      ? ((teilW === null || tgW === null) ? null : teilW + tgW)
+      : durchschnittWachstum(auswahlSumme, bis);
     let wann = 'Prognose nicht möglich';
     if(gesamtW !== null && gesamtW > 0){
       const zielId = addMonate(monat.id, Math.ceil((ms.betrag - gesamt) / gesamtW));
