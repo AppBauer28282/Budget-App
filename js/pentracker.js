@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=37';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=38';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -1096,45 +1096,70 @@ function renderChart(){
    vereinfachter Verlauf: ein Balken je Gewichtseintrag in einer Farbe (ohne
    Dosis), Prognose 3 Monate, dieselben Ziel-Linien wie im Tracker. Alles
    passt in die Kachelbreite, ohne Scrollen. */
-const WIDGET_FORECAST_MONTHS = 3;
+const WIDGET_FORECAST_MONTHS = 6;
 const WIDGET_CHART_PX = 110;
 const SVG_NS = 'http://www.w3.org/2000/svg';
+// Wochenziel für den Zeiger im linken Tacho: 0,5 kg/Woche steht auf 12 Uhr,
+// 0 ganz links, 1 kg und mehr ganz rechts.
+const WOCHENZIEL_G = 500;
 
 function svgElem(tag, attrs){
   const n = document.createElementNS(SVG_NS, tag);
   Object.keys(attrs).forEach(k => n.setAttribute(k, attrs[k]));
   return n;
 }
-// Flacher Bogen (210°, symmetrisch um 12 Uhr): von 165° über 12 Uhr bis 15°
-// (SVG-Winkel, im Uhrzeigersinn ab 3 Uhr). Weniger als ein Kreis, mehr als
-// ein Halbkreis — wie ein Tacho, ohne viel freie Fläche oben.
-// pathLength=100 erlaubt, Abschnitte direkt in Prozent über
-// stroke-dasharray zu setzen.
-const GAUGE_SWEEP = 210;
+// Fast ein Halbkreis (190°, symmetrisch um 12 Uhr) — wie ein Tacho. SVG-Winkel
+// im Uhrzeigersinn ab 3 Uhr: von 175° über 12 Uhr (270°) bis 5°.
+// pathLength=100 erlaubt, Abschnitte direkt in Prozent zu setzen.
+const GAUGE_SWEEP = 190;
+const GAUGE_R = 44, GAUGE_CX = 50, GAUGE_CY = 50;
+const GAUGE_START = 270 - GAUGE_SWEEP / 2;
+function gaugePunkt(winkelGrad, r){
+  const a = winkelGrad * Math.PI / 180;
+  return [GAUGE_CX + r * Math.cos(a), GAUGE_CY + r * Math.sin(a)];
+}
 const GAUGE_PATH = (() => {
-  const r = 44, cx = 50, cy = 50;
-  const a1 = (270 - GAUGE_SWEEP / 2) * Math.PI / 180, a2 = (270 + GAUGE_SWEEP / 2) * Math.PI / 180;
-  const p = a => (cx + r * Math.cos(a)).toFixed(2) + ' ' + (cy + r * Math.sin(a)).toFixed(2);
-  return 'M ' + p(a1) + ' A ' + r + ' ' + r + ' 0 1 1 ' + p(a2);
+  const p = a => gaugePunkt(a, GAUGE_R).map(v => v.toFixed(2)).join(' ');
+  return 'M ' + p(GAUGE_START) + ' A ' + GAUGE_R + ' ' + GAUGE_R + ' 0 1 1 ' + p(GAUGE_START + GAUGE_SWEEP);
 })();
-// Fünf Abschnitte à 20 % mit kleiner Lücke — wie Mini-Balken, damit man den
-// Fortschritt ungefähr ablesen kann.
-const GAUGE_SEGMENTS = 5, GAUGE_GAP = 2.4;
+// Fünf Abschnitte à 20 % mit runden Enden — wie Mini-Balken. Die Lücke ist
+// größer als bei geraden Enden, weil die Rundungen in die Lücke ragen.
+const GAUGE_SEGMENTS = 5, GAUGE_GAP = 6;
 
+// Abschnitt per dashoffset statt "0 von len": ein Strich der Länge 0 würde mit
+// runden Enden als Punkt am Bogenanfang erscheinen.
 function arcSegment(cls, from, len){
-  // "0 from len 100": unsichtbarer Strich der Länge 0, Lücke bis "from",
-  // dann der eigentliche Abschnitt.
   return svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: cls,
-    'stroke-dasharray': '0 ' + from.toFixed(2) + ' ' + len.toFixed(2) + ' 200' });
+    'stroke-dasharray': len.toFixed(2) + ' 200', 'stroke-dashoffset': (-from).toFixed(2) });
 }
 
-function gauge(cls, valueText, unitText, pct){
+// Dreieck am Bogen. aussen=true (rot): weiter außen, Spitze zum Ring;
+// sonst (blau): vom Ring nach außen — so überdeckt keiner die Zahl in der
+// Mitte, und beide bleiben auch beim selben Wert unterscheidbar.
+function zeiger(anteil, cls, aussen){
+  const t = Math.max(0, Math.min(1, anteil));
+  const winkel = GAUGE_START + t * GAUGE_SWEEP;
+  // rot: außen, Spitze zeigt auf den Ring; blau: sitzt auf dem Ring und
+  // zeigt nach außen — beide bleiben außerhalb der Zahl.
+  const rSpitze = aussen ? GAUGE_R + 8 : GAUGE_R + 7;
+  const rBasis = aussen ? GAUGE_R + 16 : GAUGE_R;
+  const halb = aussen ? 5.5 : 6;       // halbe Basisbreite in Grad
+  const pts = [gaugePunkt(winkel, rSpitze), gaugePunkt(winkel - halb, rBasis), gaugePunkt(winkel + halb, rBasis)];
+  return svgElem('polygon', { points: pts.map(p => p.map(v => v.toFixed(2)).join(',')).join(' '), class: 'ptw-zeiger ' + cls });
+}
+
+let gaugeId = 0;
+// opts: { pct } Fortschritt in 5 Abschnitten · { zeiger: [{anteil, cls, aussen}] }
+//       · { bogenText } kleiner Text rund über dem Bogen
+function gauge(cls, valueText, unitText, opts){
+  opts = opts || {};
   const g = elem('span', 'ptw-gauge ' + cls);
-  const svg = svgElem('svg', { viewBox: '0 0 100 66', 'aria-hidden': 'true', focusable: 'false' });
-  if(pct === undefined){
+  // Oben 14 Einheiten Platz für Text über dem Bogen und die roten Zeiger.
+  const svg = svgElem('svg', { viewBox: '0 -14 100 72', 'aria-hidden': 'true', focusable: 'false' });
+  if(opts.pct === undefined){
     svg.appendChild(svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: 'ptw-track' }));
   } else {
-    const p = pct == null ? 0 : Math.max(0, Math.min(100, pct));
+    const p = opts.pct == null ? 0 : Math.max(0, Math.min(100, opts.pct));
     const seg = 100 / GAUGE_SEGMENTS;
     for(let k = 0; k < GAUGE_SEGMENTS; k++){
       const from = k * seg + (k ? GAUGE_GAP / 2 : 0);
@@ -1143,6 +1168,23 @@ function gauge(cls, valueText, unitText, pct){
       const filled = Math.min(to, p) - from;
       if(filled > 0) svg.appendChild(arcSegment('ptw-fill', from, filled));
     }
+  }
+  if(opts.zeiger){
+    // Feiner Strich auf 12 Uhr als Marke für das Wochenziel.
+    const [x1, y1] = gaugePunkt(270, GAUGE_R + 3), [x2, y2] = gaugePunkt(270, GAUGE_R + 8);
+    svg.appendChild(svgElem('line', { x1: x1.toFixed(2), y1: y1.toFixed(2), x2: x2.toFixed(2), y2: y2.toFixed(2), class: 'ptw-marke' }));
+    opts.zeiger.forEach(z => svg.appendChild(zeiger(z.anteil, z.cls, z.aussen)));
+  }
+  if(opts.bogenText){
+    const id = 'ptw-bogen-' + (++gaugeId);
+    const r = GAUGE_R + 6;
+    const [ax, ay] = gaugePunkt(205, r), [bx, by] = gaugePunkt(335, r);
+    svg.appendChild(svgElem('path', { id, d: 'M ' + ax.toFixed(2) + ' ' + ay.toFixed(2) + ' A ' + r + ' ' + r + ' 0 0 1 ' + bx.toFixed(2) + ' ' + by.toFixed(2), fill: 'none' }));
+    const text = svgElem('text', { class: 'ptw-bogen-text' });
+    const tp = svgElem('textPath', { href: '#' + id, startOffset: '50%', 'text-anchor': 'middle' });
+    tp.textContent = opts.bogenText;
+    text.appendChild(tp);
+    svg.appendChild(text);
   }
   g.appendChild(svg);
   const text = elem('span', 'ptw-text');
@@ -1167,12 +1209,25 @@ function renderWidget(){
   const loss = (start != null && now != null) ? start - now : null;
   const fc = goal != null ? forecastGoal(avgLossPerWeekGrams(AVG_WINDOW)) : null;
   const weeksText = goal == null || !fc ? '–' : (fc.reached ? '0' : String(Math.ceil(fc.weeks)));
+  // Zeiger links: rot = Ø Abnahme der letzten 4 Wochen (5 Einträge),
+  // blau = Abnahme der letzten Woche. Zunahme zählt wie 0 (ganz links).
+  const zeigerListe = [];
+  const avg4 = avgLossPerWeekGrams(5);
+  const avg1 = avgLossPerWeekGrams(2);
+  if(avg4 != null) zeigerListe.push({ anteil: avg4 / (2 * WOCHENZIEL_G), cls: 'rot', aussen: true });
+  if(avg1 != null) zeigerListe.push({ anteil: avg1 / (2 * WOCHENZIEL_G), cls: 'blau', aussen: false });
   const row = elem('span', 'ptw-gauges');
-  row.appendChild(gauge('seite', now != null ? fmtNum(now / 1000, 1) : '–', 'kg'));
+  const links = gauge('seite links', now != null ? fmtNum(now / 1000, 1) : '–', 'kg', { zeiger: zeigerListe });
+  if(avg4 != null || avg1 != null){
+    links.title = 'Ziel 0,5 kg/Woche (12 Uhr) · rot: Ø letzte 4 Wochen ' + (avg4 != null ? fmtKg(avg4, 2) : '–') +
+      ' · blau: letzte Woche ' + (avg1 != null ? fmtKg(avg1, 2) : '–');
+  }
+  row.appendChild(links);
   row.appendChild(gauge('mitte',
     loss != null ? (loss >= 0 ? '−' : '+') + fmtNum(Math.abs(loss) / 1000, 1) : '–',
-    'kg', goalProgressPct()));
-  row.appendChild(gauge('seite', weeksText, weeksText === '–' ? '' : 'W'));
+    'kg', { pct: goalProgressPct() }));
+  const zielDatum = fc && !fc.reached ? fmtDate(fc.date) : (fc && fc.reached ? 'Ziel erreicht' : '');
+  row.appendChild(gauge('seite rechts', weeksText, weeksText === '–' ? '' : 'W', { bogenText: zielDatum }));
   ptWidget.appendChild(row);
 
   /* Verlauf: je Monat ein Balken mit dem letzten Eintrag dieses Monats */
@@ -1189,7 +1244,7 @@ function renderWidget(){
     chart.appendChild(elem('span', 'ptw-empty', 'Mindestens zwei Monate mit Gewicht nötig für den Verlauf.'));
     return;
   }
-  // Prognose: die nächsten 3 Monate, jeweils zum Monatsende, fortgeschrieben
+  // Prognose: die nächsten 6 Monate, jeweils zum Monatsende, fortgeschrieben
   // mit dem Wochenschnitt der letzten Einträge (wie im Tracker).
   const avg = avgLossPerWeekGrams(AVG_WINDOW);
   const lastW = sortedWeights();
@@ -1229,7 +1284,7 @@ function renderWidget(){
     if(grams == null || grams < bottomG || grams > topG) return;
     const line = elem('span', 'ptw-goal ' + cls);
     line.style.top = (WIDGET_CHART_PX - toPx(grams)).toFixed(0) + 'px';
-    line.appendChild(elem('span', 'ptw-goal-label', text + ' ' + fmtKg(grams)));
+    line.title = text + ' ' + fmtKg(grams);   // ohne sichtbare Beschriftung — schlichter
     area.appendChild(line);
   };
   goalLine(goal, 'ziel', 'Ziel');

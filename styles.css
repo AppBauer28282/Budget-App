@@ -3150,9 +3150,21 @@
   }
   .gw-reihe-titel{
     grid-column: 1 / -1;
+    display:flex; align-items:center; justify-content:space-between; gap: 8px;
     font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--ink-soft); padding-left: 2px;
   }
+  /* Mini-Kachel "gesamt": gleicher Stil wie die Übergangs-Kästen. */
+  .gw-gesamt{
+    display:inline-flex; align-items:center; gap: 4px;
+    padding: 1px 6px;
+    border: 1px solid rgba(26,127,55,0.45);
+    background: #eaf7ee;
+    border-radius: 7px;
+    letter-spacing: 0; text-transform: none;
+  }
+  .gw-gesamt-label{ font-size: 9.5px; color: var(--ok); font-weight: 600; }
+  [data-theme="dark"] .gw-gesamt{ border-color: rgba(48,209,88,0.55); background: #18301f; }
   .gw-reihe-titel + .gw-spalte ~ .gw-reihe-titel{ margin-top: 6px; }
   .gw-spalte{
     position: relative;
@@ -3231,24 +3243,33 @@
   .ptw-track{ fill: none; stroke: var(--line); stroke-width: 4; stroke-linecap: round; }
   /* Abschnitte des mittleren Rings: gerade Enden, damit die Lücken sichtbar
      bleiben. */
-  .ptw-track.seg{ stroke-width: 5; stroke-linecap: butt; }
-  .ptw-fill{ fill: none; stroke: var(--brass); stroke-width: 5; stroke-linecap: butt; }
+  .ptw-track.seg{ stroke-width: 5; stroke-linecap: round; }
+  .ptw-fill{ fill: none; stroke: var(--brass); stroke-width: 5; stroke-linecap: round; }
+  /* Zeiger im linken Tacho: rot = Ø 4 Wochen (außen), blau = letzte Woche
+     (innen); feiner Strich auf 12 Uhr = Wochenziel 0,5 kg. */
+  .ptw-zeiger.rot{ fill: var(--error); }
+  .ptw-zeiger.blau{ fill: var(--brass); }
+  .ptw-marke{ stroke: var(--ink-soft); stroke-width: 1.5; stroke-linecap: round; }
+  /* Zieldatum rund über dem rechten Bogen */
+  .ptw-bogen-text{ font-size: 10px; font-weight: 600; fill: var(--ink-soft); letter-spacing: 0.3px; }
   /* Zahl mittig zwischen Bogenoberkante und den Bogenenden: Mitte bei
      ~62 % der Höhe (Kreismittelpunkt liegt bei 76 %). */
   .ptw-text{
     position: absolute;
-    left: 0; right: 0; top: 62%;
+    left: 0; right: 0; top: 67%;
     transform: translateY(-50%);
     display:flex; flex-direction:column; align-items:center;
     text-align:center;
   }
   .ptw-value{ font-size: 20px; font-weight: 700; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
-  .ptw-gauge.mitte .ptw-value{ font-size: 26px; }
+  .ptw-gauge.mitte .ptw-value{ font-size: 23px; }
+  .ptw-gauge.seite .ptw-value{ font-size: 21px; }
   .ptw-gauge.mitte .ptw-text{ top: 62%; }
   .ptw-unit{ font-size: 0.55em; font-weight: 600; letter-spacing: 0; color: var(--ink-soft); }
 
   @media (max-width: 359px){
     .ptw-value{ font-size: 17px; }
+    .ptw-gauge.seite .ptw-value{ font-size: 19px; }
     .ptw-gauge.mitte .ptw-value{ font-size: 22px; }
   }
   .ptw-chart{ display:flex; gap: 4px; }
@@ -3312,6 +3333,10 @@
     font-size: 19px; font-weight: 700; letter-spacing: -0.3px;
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
+  .azw-wert.gut{ color: var(--ok); }
+  .azw-wert.mittel{ color: #b58100; }
+  .azw-wert.schlecht{ color: var(--error); }
+  [data-theme="dark"] .azw-wert.mittel{ color: #ffd60a; }
   .azw-pfeil{
     display:inline-flex; align-items:center; justify-content:center;
     width: 22px; height: 22px; border-radius: 50%;
@@ -3362,6 +3387,23 @@
     .vtw-gleichung{ gap: 2px; }
     .vtw-label{ font-size: 9px; }
   }
+
+  /* Auswahl der Widget-Kacheln in den Einstellungen des Vermögens-Trackers:
+     gruppierte Liste mit iOS-Schaltern, wie auf der Startseite. */
+  .vt-overlay .vt-widget-titel{ font-size: 15px; font-weight: 600; margin: 22px 0 4px; }
+  .vt-widget-auswahl{
+    display:flex; flex-direction:column;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-klein);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .vt-widget-zeile{
+    display:flex; align-items:center; justify-content:space-between; gap: 12px;
+    min-height: 48px; padding: 6px 14px;
+    font-size: 15px; cursor: pointer;
+  }
+  .vt-widget-zeile + .vt-widget-zeile{ border-top: 1px solid var(--line); }
 
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */
   .sc-prozent-zeile{ display:flex; gap: 8px; }

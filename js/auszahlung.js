@@ -24,8 +24,8 @@
    die Vorlage baute Zeichenketten zusammen und hatte dabei eine Lücke bei den
    Spaltenköpfen der Gesamtübersicht.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=37';
-import { basisJahresNetto } from './salary-calc.js?v=37';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=38';
+import { basisJahresNetto } from './salary-calc.js?v=38';
 
 const STORE_KEY = 'auszahlungen.v1';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -289,11 +289,17 @@ function renderWidget(){
     Math.abs(Math.round(abw * 100)) + ' % ggü. Ø ' + jahr + ')';
   const hoch = ist + avg * (11 - m);
   const netto = basisJahresNetto();
-  const anteil = netto ? Math.round(hoch / netto * 100) + ' %' : '–';
+  const anteilPct = netto ? Math.round(hoch / netto * 100) : null;
+  const anteil = anteilPct != null ? anteilPct + ' %' : '–';
+  const anteilDrittel = widgetDrittel('vom Jahresnetto', anteil);
+  // Ampel: über 35 % grün, 30–35 % gelb, unter 30 % rot.
+  if(anteilPct != null){
+    anteilDrittel.querySelector('.azw-wert').classList.add(anteilPct > 35 ? 'gut' : (anteilPct >= 30 ? 'mittel' : 'schlecht'));
+  }
   frag.append(
     widgetDrittel('Ø ' + jahr, euroGanz(avg), pfeil), elem('span', 'azw-strich'),
     widgetDrittel('bis Dez', kurzK(hoch)), elem('span', 'azw-strich'),
-    widgetDrittel('vom Jahresnetto', anteil));
+    anteilDrittel);
   azWidget.replaceChildren(frag);
   if(azBtn){
     azBtn.setAttribute('aria-label', 'Auszahlungs-Tracker öffnen. Ø ' + jahr + ': ' + euroGanz(avg) + ', Tendenz ' +

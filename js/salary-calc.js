@@ -14,8 +14,8 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=37';
-import { clamp } from './utils.js?v=37';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=38';
+import { clamp } from './utils.js?v=38';
 
 // Grenzen der beiden Textfelder (früher Regler-Grenzen). Werden beim
 // Berechnen angewandt, nicht beim Tippen — so kann man zwischendurch auch
@@ -218,7 +218,21 @@ export function renderGehaltWidget(){
   const frag = document.createDocumentFragment();
   const reihe = (titel, zeitraum, gross) => {
     const klein = gross === 'netto' ? 'brutto' : 'netto';
-    frag.appendChild(span('gw-reihe-titel', titel));
+    // Titelzeile mit Mini-Kachel ganz rechts: gesamter Zuwachs von "Heute"
+    // bis zur letzten Spalte (= Summe der beiden Übergangs-Kästen).
+    const kopf = span('gw-reihe-titel');
+    kopf.appendChild(span('gw-reihe-text', titel));
+    // Summe der gerundeten Einzelschritte — so passt die Zahl immer zu den
+    // beiden Kästen (sonst z. B. 99 + 82 = 181, aber gerundet 180).
+    let gesamt = 0;
+    for(let i = 1; i < stufen.length; i++){
+      gesamt += Math.round(stufen[i].w[zeitraum][gross] - stufen[i - 1].w[zeitraum][gross]);
+    }
+    const box = span('gw-gesamt');
+    box.append(span('gw-gesamt-label', 'gesamt'),
+      span('gw-plus', (gesamt >= 0 ? '+' : '−') + nf(Math.abs(Math.round(gesamt)), 0)));
+    kopf.appendChild(box);
+    frag.appendChild(kopf);
     stufen.forEach((st, i) => {
       const w = st.w[zeitraum];
       const sp = span('gw-spalte ' + zeitraum + (i === 0 ? ' heute' : ''));

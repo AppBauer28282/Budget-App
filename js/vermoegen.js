@@ -23,7 +23,7 @@
    Alle IDs sind mit "vt-" vorangestellt. Die kleinen Dialoge hängen an
    document.body und liegen über dem Fenster (siehe styles.css).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=37';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=38';
 
 const STORE_KEY = 'vermoegen.v1';
 
@@ -61,8 +61,21 @@ const vtFile      = $('vt-file');
 /* ---------- Zustand ----------
    WICHTIG: kein Feld "data" auf oberster Ebene — js/cloud-sync.js erkennt
    daran Dokumente im alten Umschlagformat. */
+// Welche Kacheln das Widget auf der Startseite zeigt (Einstellung im Tracker).
+const WIDGET_KACHELN = [
+  { key: 'etf', label: 'ETF' },
+  { key: 'tagesgeld', label: 'Tagesgeld' },
+  { key: 'aktien', label: 'Aktien/BTC' },
+  { key: 'sonstige', label: 'Sonstige' },
+  { key: 'gesamt', label: 'Gesamt' }
+];
+function standardWidget(){
+  const w = {};
+  WIDGET_KACHELN.forEach(k => { w[k.key] = true; });
+  return w;
+}
 function leererStand(){
-  return { klassen: [], monate: [], wachstumsraten: { gesamt: null, teil: null, tagesgeld: null } };
+  return { klassen: [], monate: [], wachstumsraten: { gesamt: null, teil: null, tagesgeld: null }, widget: standardWidget() };
 }
 let state = leererStand();
 let storageOk = true;
@@ -245,6 +258,12 @@ function applyData(d){
       tagesgeld: rateOderNull(w.tagesgeld)
     };
 
+    // Widget-Auswahl: nur bekannte Schlüssel, nur echte Booleans; fehlt etwas
+    // (ältere Stände), ist die Kachel sichtbar.
+    const wd = (d.widget && typeof d.widget === 'object') ? d.widget : {};
+    sauber.widget = standardWidget();
+    WIDGET_KACHELN.forEach(k => { if(wd[k.key] === false) sauber.widget[k.key] = false; });
+
     state = sauber;
     return true;
   }catch(e){
@@ -302,15 +321,23 @@ function renderWidget(){
   const gesamt = summe(monat);
   const sonst = gesamt - etf - tg - akt;
 
+  // Nur die in den Einstellungen gewählten Kacheln; "Sonstige" nur, wenn es
+  // dort überhaupt etwas gibt.
+  const sicht = state.widget || standardWidget();
   const gleichung = el('span', 'vtw-gleichung');
-  const teile = [[etf, 'ETF'], [tg, 'Tagesgeld'], [akt, 'Aktien/BTC']];
-  if(sonst) teile.push([sonst, 'Sonstige']);
+  const teile = [];
+  if(sicht.etf) teile.push([etf, 'ETF']);
+  if(sicht.tagesgeld) teile.push([tg, 'Tagesgeld']);
+  if(sicht.aktien) teile.push([akt, 'Aktien/BTC']);
+  if(sicht.sonstige && sonst) teile.push([sonst, 'Sonstige']);
   teile.forEach(([w, l], i) => {
     if(i) gleichung.appendChild(el('span', 'vtw-op', '+'));
     gleichung.appendChild(widgetKachel(kurzK(w), l));
   });
-  gleichung.appendChild(el('span', 'vtw-op', '='));
-  gleichung.appendChild(widgetKachel(kurzK(gesamt), monatKurz(monat.id) + ' ' + monat.id.slice(0, 4), 'summe'));
+  if(sicht.gesamt){
+    if(teile.length) gleichung.appendChild(el('span', 'vtw-op', '='));
+    gleichung.appendChild(widgetKachel(kurzK(gesamt), monatKurz(monat.id) + ' ' + monat.id.slice(0, 4), 'summe'));
+  }
 
   // Nächster Meilenstein nach der Gesamtsumme (= rechte Kachel). Balken wie
   // die "Gesamt"-Zeile im Tracker (Gesamt / Ziel), Termin mit der Gesamt-Rate
@@ -340,7 +367,7 @@ function renderWidget(){
     ziel.append(zeile, track, el('span', 'vtw-wann', wann));
     ziel.title = 'Gesamt ' + kurzK(gesamt) + ' von ' + kurzK(ms.betrag) + ' (' + Math.round(pct) + ' %)';
   }
-  vtWidget.replaceChildren(gleichung, ziel);
+  vtWidget.replaceChildren(...(gleichung.childElementCount ? [gleichung] : []), ziel);
   if(vtBtn){
     vtBtn.setAttribute('aria-label', 'Vermögens-Tracker öffnen. ' + teile.map(([w, l]) => l + ' ' + kurzK(w)).join(', ') +
       ', gesamt ' + kurzK(gesamt) + '.');
@@ -955,6 +982,25 @@ function einstellungenBereich(list){
   };
   aktionen.appendChild(speichern);
   box.appendChild(aktionen);
+
+  // Auswahl der Kacheln für das Widget auf der Startseite.
+  box.appendChild(el("h3", "vt-widget-titel", "Widget auf der Startseite"));
+  box.appendChild(el("p","hint", "Welche Werte das Vermögens-Widget zeigen soll."));
+  const auswahl = el("div","vt-widget-auswahl");
+  if(!state.widget) state.widget = standardWidget();
+  WIDGET_KACHELN.forEach(k =>{
+    const zeile = el("label","vt-widget-zeile");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.setAttribute("role", "switch");
+    cb.className = "ios-switch";
+    cb.id = "vt-widget-" + k.key;
+    cb.checked = state.widget[k.key] !== false;
+    cb.onchange = ()=>{ state.widget[k.key] = cb.checked; sichern(); };
+    zeile.append(el("span", null, k.label), cb);
+    auswahl.appendChild(zeile);
+  });
+  box.appendChild(auswahl);
 
   return box;
 }
