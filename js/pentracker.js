@@ -1146,8 +1146,10 @@ function gauge(cls, valueText, unitText, pct){
   }
   g.appendChild(svg);
   const text = elem('span', 'ptw-text');
-  text.appendChild(elem('span', 'ptw-value', valueText));
-  text.appendChild(elem('span', 'ptw-unit', unitText));
+  const value = elem('span', 'ptw-value', valueText);
+  // Einheit klein direkt hinter der Zahl, z. B. "99,1 kg" oder "21 W".
+  if(unitText) value.appendChild(elem('span', 'ptw-unit', ' ' + unitText));
+  text.appendChild(value);
   g.appendChild(text);
   return g;
 }
@@ -1166,11 +1168,11 @@ function renderWidget(){
   const fc = goal != null ? forecastGoal(avgLossPerWeekGrams(AVG_WINDOW)) : null;
   const weeksText = goal == null || !fc ? '–' : (fc.reached ? '0' : String(Math.ceil(fc.weeks)));
   const row = elem('span', 'ptw-gauges');
-  row.appendChild(gauge('seite', now != null ? fmtNum(now / 1000, 1) : '–', 'kg aktuell'));
+  row.appendChild(gauge('seite', now != null ? fmtNum(now / 1000, 1) : '–', 'kg'));
   row.appendChild(gauge('mitte',
     loss != null ? (loss >= 0 ? '−' : '+') + fmtNum(Math.abs(loss) / 1000, 1) : '–',
-    'kg abgenommen', goalProgressPct()));
-  row.appendChild(gauge('seite', weeksText, 'Wochen bis Ziel'));
+    'kg', goalProgressPct()));
+  row.appendChild(gauge('seite', weeksText, weeksText === '–' ? '' : 'W'));
   ptWidget.appendChild(row);
 
   /* Verlauf: je Monat ein Balken mit dem letzten Eintrag dieses Monats */
@@ -1204,23 +1206,24 @@ function renderWidget(){
   // Achse wie im großen Diagramm: volle 5 kg oben/unten, Gitter alle 2,5 kg.
   const values = [...weights.map(w => w.grams), ...forecast.map(p => p.grams),
     ...(goal != null ? [goal] : []), ...(goal2 != null ? [goal2] : [])];
-  const stepG = CHART_STEP_KG * 1000, labelG = CHART_LABEL_KG * 1000;
-  const topG = Math.ceil(Math.max(...values) / labelG) * labelG;
-  const bottomG = Math.max(0, Math.ceil(Math.min(...values) / labelG) * labelG - labelG);
+  // Bewusst schlichter als im Tracker: Linien und Beschriftung nur an vollen
+  // 10 kg. Oben/unten endet die Achse auf einer solchen Linie.
+  const stepG = 10000;
+  const topG = Math.ceil(Math.max(...values) / stepG) * stepG;
+  const bottomG = Math.max(0, Math.ceil(Math.min(...values) / stepG) * stepG - stepG);
   const rangeG = Math.max(stepG, topG - bottomG);
   const toPx = g => Math.max(0, ((g - bottomG) / rangeG) * WIDGET_CHART_PX);
   const steps = Math.round(rangeG / stepG);
-  let labelEvery = labelG / stepG;
+  let labelEvery = 1;
   while(WIDGET_CHART_PX / steps * labelEvery < CHART_LABEL_MIN_PX) labelEvery *= 2;
 
   const axis = elem('span', 'ptw-axis');
   const area = elem('span', 'ptw-area');
   for(let st = steps; st >= 0; st--){
+    if(st % labelEvery !== 0) continue;
     const top = (WIDGET_CHART_PX - toPx(bottomG + st * stepG)).toFixed(0) + 'px';
     const line = elem('span', 'ptw-grid'); line.style.top = top; area.appendChild(line);
-    if(st % labelEvery === 0){
-      const l = elem('span', null, fmtNum((bottomG + st * stepG) / 1000, 0)); l.style.top = top; axis.appendChild(l);
-    }
+    const l = elem('span', null, fmtNum((bottomG + st * stepG) / 1000, 0)); l.style.top = top; axis.appendChild(l);
   }
   const goalLine = (grams, cls, text) => {
     if(grams == null || grams < bottomG || grams > topG) return;
