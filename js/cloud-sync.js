@@ -15,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=43';
+import { el } from './dom.js?v=44';
 import {
-  allData, currentMonthKey, writeStorage,
+  allData, currentMonthKey, writeStorage, fixkostenUebernahmeAbholen,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=43';
-import { renderMonth } from './render.js?v=43';
-import { renderOverview } from './navigation.js?v=43';
+} from './storage.js?v=44';
+import { renderMonth } from './render.js?v=44';
+import { renderOverview } from './navigation.js?v=44';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).
@@ -58,6 +58,9 @@ window.__budgetCloud = {
     return JSON.parse(JSON.stringify(allData));
   },
   start(){
+    // Einmalige Fixkosten-Übernahme (siehe storage.js) speichern — lokal und
+    // über __onLocalSave auch in die Cloud, damit alle Geräte sie bekommen.
+    if(fixkostenUebernahmeAbholen()) writeStorage();
     renderOverview();
   }
 };
