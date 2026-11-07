@@ -200,18 +200,21 @@ export function renderGehaltWidget(){
   ];
   const frag = document.createDocumentFragment();
   stufen.forEach((st, i) => {
-    if(i > 0){
-      // Übergang als kleiner Kasten mit dem Netto-Zuwachs zur Vorstufe.
-      const diff = st.w.netto - stufen[i - 1].w.netto;
-      const t = span('gw-schritt');
-      t.append(span('gw-plus', (diff >= 0 ? '+' : '−') + nf(Math.abs(Math.round(diff)), 0)));
-      frag.appendChild(t);
-    }
     const brutto = span('gw-brutto', euroGanz(st.w.brutto));
     brutto.appendChild(span('gw-brutto-wort', ' brutto'));
     const sp = span('gw-spalte' + (i === 0 ? ' heute' : ''));
     sp.append(span('gw-cap', st.cap),
       span('gw-netto', euroGanz(st.w.netto)), brutto);
+    if(i > 0){
+      // Übergang als kleiner Kasten mit dem Netto-Zuwachs zur Vorstufe. Er
+      // hängt an der linken Kante dieser Spalte und ragt per CSS auf die
+      // Fuge zwischen beiden Spalten — die Spalten selbst behalten so ihre
+      // volle Breite.
+      const diff = st.w.netto - stufen[i - 1].w.netto;
+      const t = span('gw-schritt');
+      t.append(span('gw-plus', (diff >= 0 ? '+' : '−') + nf(Math.abs(Math.round(diff)), 0)));
+      sp.appendChild(t);
+    }
     frag.appendChild(sp);
   });
   gehaltWidget.replaceChildren(frag);

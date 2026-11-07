@@ -3123,19 +3123,24 @@
     display:block; margin-left:auto; font-size: 12px; color: var(--ink-soft); white-space: nowrap;
   }
 
-  /* Gehalts-Widget: drei Spalten (heute → Stufe 9 → mit Prozent), dazwischen
-     ein Winkel mit dem Netto-Zuwachs statt eines Pfeils. */
+  /* Gehalts-Widget: drei gleich breite Spalten (heute → Stufe 9 → mit
+     Prozent). Die Übergänge sind kleine Kästen, die mittig auf der Fuge
+     zwischen zwei Spalten sitzen und in beide hineinragen; der Spalteninhalt
+     ist zentriert, damit die Kästen nur freie Randfläche überdecken. */
   .gw{
-    grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);
-    align-items: stretch;
-    gap: 3px;
+    --gw-fuge: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--gw-fuge);
     margin-top: 2px;
   }
   .gw-spalte{
+    position: relative;
     display:flex;
     flex-direction:column;
+    align-items:center;
+    text-align:center;
     min-width: 0;
-    padding: 8px 7px 9px;
+    padding: 8px 4px 9px;
     border-radius: 10px;
     background: var(--paper);
   }
@@ -3143,36 +3148,35 @@
   .gw-cap{ font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; color: var(--ink-soft); margin-bottom: 3px; }
   .gw-spalte.heute .gw-cap{ color: var(--brass); }
   .gw-netto{
-    font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
+    font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
   .gw-brutto{
     font-size: 10.5px; color: var(--ink-soft);
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
-  /* Übergang zwischen zwei Kacheln: kleiner, umrandeter Kasten mit dem
-     Netto-Zuwachs, mittig zwischen den großen Spalten. */
   .gw-schritt{
-    align-self: center;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding: 2px 4px;
-    border: 1px solid rgba(26,127,55,0.35);
-    background: rgba(52,199,89,0.1);
+    position: absolute;
+    top: 50%;
+    left: calc(var(--gw-fuge) / -2);
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    padding: 2px 5px;
+    border: 1px solid rgba(26,127,55,0.45);
+    background: #eaf7ee;   /* deckend, damit die Spaltenkanten darunter verschwinden */
     border-radius: 7px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
   .gw-plus{ font-size: 10.5px; font-weight: 700; color: var(--ok); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  [data-theme="dark"] .gw-schritt{ border-color: rgba(48,209,88,0.45); background: rgba(48,209,88,0.14); }
   [data-theme="dark"] .gw-spalte{ background: #2c2c2e; }
-  [data-theme="dark"] .gw-spalte.heute{ background: rgba(10,132,255,0.2); }
+  [data-theme="dark"] .gw-spalte.heute{ background: #1a2b40; }
+  [data-theme="dark"] .gw-schritt{ border-color: rgba(48,209,88,0.55); background: #18301f; box-shadow: none; }
   @media (max-width: 359px){
-    .gw-netto{ font-size: 14px; }
+    .gw-netto{ font-size: 15px; }
     .gw-brutto{ font-size: 10px; }
     .gw-cap{ font-size: 11px; }
-    .gw-spalte{ padding: 7px 5px; }
-    .gw-schritt{ padding: 2px 3px; }
     .gw-plus{ font-size: 9.5px; }
+    .gw-schritt{ padding: 1px 3px; }
     /* Auf sehr schmalen Geräten passt "brutto" nicht mehr hinter die Zahl;
        die kleine graue Zahl unter dem fetten Netto bleibt eindeutig. */
     .gw-brutto-wort{ display:none; }
