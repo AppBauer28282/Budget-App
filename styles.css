@@ -3233,6 +3233,21 @@
     :root:not([data-home="basis"]) #salary-calc-btn .home-widget-kopf{ font-size: 11px; }
   }
 
+  /* Gesamtausgaben oben rechts im Pen-Widget: gleiche Mini-Kachel wie die
+     Σ-Kästen im Gehalts-Widget. */
+  :root:not([data-home="basis"]) #pentracker-btn .pt-kosten-kachel:not([hidden]){
+    display:inline-block;
+    margin-left:auto;
+    padding: 1px 7px;
+    border: 1px solid rgba(26,127,55,0.45);
+    background: #eaf7ee;
+    border-radius: 7px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    font-size: 12px; font-weight: 700; color: var(--ok);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  :root[data-theme="dark"]:not([data-home="basis"]) #pentracker-btn .pt-kosten-kachel:not([hidden]){ border-color: rgba(48,209,88,0.55); background: #18301f; box-shadow: none; }
+
   /* ---------- Pen-Tracker-Widget ----------
      Oben drei Tacho-Anzeigen (unten offen), die mittlere größer; darunter
      der Verlauf über die volle Breite, ohne Scrollen. */

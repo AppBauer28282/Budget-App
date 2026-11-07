@@ -5,12 +5,12 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=44';
-import { fixkostenVon } from './storage.js?v=44';
-import { el, fcSliders, fcVals } from './dom.js?v=44';
-import { formatCents } from './utils.js?v=44';
-import { computeTotals, sumEntries } from './compute.js?v=44';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=44';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=45';
+import { fixkostenVon } from './storage.js?v=45';
+import { el, fcSliders, fcVals } from './dom.js?v=45';
+import { formatCents } from './utils.js?v=45';
+import { computeTotals, sumEntries } from './compute.js?v=45';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=45';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung

@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=44">
+<link rel="stylesheet" href="styles.css?v=45">
 </head>
 <body>
 
@@ -155,6 +155,8 @@
           <span class="home-tile-name">Pen-Tracker</span>
           <span class="home-tile-sub">Einheiten, Gewicht</span>
         </span>
+        <!-- Gesamtausgaben oben rechts (Mini-Kachel), gefüllt von js/pentracker.js -->
+        <span class="home-widget-kopf pt-kosten-kachel" id="pt-widget-kosten" hidden></span>
         <!-- Widget: Tacho-Anzeigen + Verlauf, gefüllt von js/pentracker.js -->
         <span class="home-widget ptw" id="pt-widget"></span>
       </button>
@@ -1232,7 +1234,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=44"></script>
+<script type="module" src="js/app.js?v=45"></script>
 
 </body>
 </html>

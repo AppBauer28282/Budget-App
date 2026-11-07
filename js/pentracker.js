@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=44';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=45';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -68,6 +68,7 @@ const homeScreenEl = document.getElementById('home-screen');
 // Widget auf der Startseite (nur in der Widget-Ansicht sichtbar). Bewusst
 // nicht in alleElementeDa: fehlt es, läuft der Tracker trotzdem.
 const ptWidget     = document.getElementById('pt-widget');
+const ptWidgetKosten = document.getElementById('pt-widget-kosten');
 const ptWarning    = document.getElementById('pt-storage-warning');
 
 const kpiWeight     = document.getElementById('pt-kpi-weight');
@@ -1199,6 +1200,14 @@ function gauge(cls, valueText, unitText, opts){
 function renderWidget(){
   if(!ptWidget) return;
   clear(ptWidget);
+
+  // Gesamtausgaben (alle Pens) als Mini-Kachel oben rechts, volle Euro.
+  if(ptWidgetKosten){
+    const kosten = totalSpentCents();
+    ptWidgetKosten.hidden = !(kosten > 0);
+    ptWidgetKosten.textContent = 'Σ ' + Math.round(kosten / 100).toLocaleString('de-DE') + ' €';
+    ptWidgetKosten.title = 'Gesamtausgaben für alle Pens';
+  }
 
   const start = startGrams();
   const now = currentGrams();
