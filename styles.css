@@ -3127,11 +3127,17 @@
      Prozent). Die Übergänge sind kleine Kästen, die mittig auf der Fuge
      zwischen zwei Spalten sitzen und in beide hineinragen; der Spalteninhalt
      ist zentriert, damit die Kästen nur freie Randfläche überdecken. */
+  :root:not([data-home="basis"]) .home-widget.gw-box{ display:flex; flex-direction:column; gap: 8px; margin-top: 2px; }
+  .gw-reihe{ display:flex; flex-direction:column; gap: 4px; }
+  .gw-reihe-titel{
+    font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-soft); padding-left: 2px;
+  }
   .gw{
     --gw-fuge: 8px;
+    display:grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--gw-fuge);
-    margin-top: 2px;
   }
   .gw-spalte{
     position: relative;
@@ -3167,6 +3173,13 @@
     border-radius: 7px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
+  /* Jahreswerte sind zwei Stellen breiter: etwas kleiner setzen, damit die
+     Übergangs-Kästen weiterhin nur freie Randfläche überdecken. */
+  .gw-reihe.jahr .gw-netto{ font-size: 15px; letter-spacing: -0.2px; }
+  .gw-reihe.jahr .gw-brutto{ font-size: 9.5px; }
+  .gw-reihe.jahr .gw-spalte{ padding: 7px 2px 8px; }
+  .gw-reihe.jahr .gw-schritt{ padding: 1px 3px; }
+  .gw-reihe.jahr .gw-plus{ font-size: 9.5px; }
   .gw-plus{ font-size: 10.5px; font-weight: 700; color: var(--ok); white-space: nowrap; font-variant-numeric: tabular-nums; }
   [data-theme="dark"] .gw-spalte{ background: #2c2c2e; }
   [data-theme="dark"] .gw-spalte.heute{ background: #1a2b40; }
@@ -3177,6 +3190,9 @@
     .gw-cap{ font-size: 11px; }
     .gw-plus{ font-size: 9.5px; }
     .gw-schritt{ padding: 1px 3px; }
+    .gw-reihe.jahr .gw-netto{ font-size: 12.5px; }
+    .gw-reihe.jahr .gw-plus{ font-size: 8.5px; }
+    .gw-reihe.jahr .gw-schritt{ padding: 1px 2px; }
     /* Auf sehr schmalen Geräten passt "brutto" nicht mehr hinter die Zahl;
        die kleine graue Zahl unter dem fetten Netto bleibt eindeutig. */
     .gw-brutto-wort{ display:none; }
