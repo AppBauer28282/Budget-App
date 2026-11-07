@@ -20,7 +20,21 @@
   startet. preconnect öffnet die Verbindung schon vorab.
 -->
 
-<link rel="stylesheet" href="styles.css?v=32">
+<!-- Dunkelmodus: vor dem Stylesheet gesetzt, damit die Seite nicht erst
+     hell aufblitzt. Gespeichert nur auf diesem Gerät (localStorage
+     "kontor.theme"), keine Nutzerdaten, keine Cloud. Umschalten:
+     Schalter auf der Startseite (js/home.js). -->
+<script>
+  try{
+    if(localStorage.getItem('kontor.theme') === 'dark'){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.querySelector('meta[name="color-scheme"]').content = 'dark';
+      document.querySelector('meta[name="theme-color"]').content = '#000000';
+      document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content = 'black';
+    }
+  }catch(e){ /* ohne Speicher: heller Modus */ }
+</script>
+<link rel="stylesheet" href="styles.css?v=33">
 </head>
 <body>
 
@@ -164,6 +178,11 @@
         </span>
       </button>
   </div>
+
+  <label class="home-schalter" for="theme-toggle">
+    <span>Dunkelmodus</span>
+    <input type="checkbox" role="switch" class="ios-switch" id="theme-toggle">
+  </label>
 
   <div class="home-fuss">
     <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
@@ -1123,7 +1142,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=32"></script>
+<script type="module" src="js/app.js?v=33"></script>
 
 </body>
 </html>

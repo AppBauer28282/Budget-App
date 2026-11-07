@@ -2855,3 +2855,264 @@
     box-shadow: none;
   }
   .section-body .receipt-btn:hover{ background: #e8e8ed; }
+
+  /* =========================================================
+     DUNKELMODUS (iOS-Stil)
+     Aktiv nur per Schalter auf der Startseite: Ein kleines Skript im
+     <head> setzt <html data-theme="dark"> schon vor dem ersten Zeichnen
+     (kein helles Aufblitzen). Der helle Modus bleibt unberührt — alles
+     hier gilt ausschließlich unter [data-theme="dark"].
+     Farben = iOS-Systemfarben für dunkle Oberflächen: Seite #000,
+     Karten #1c1c1e, gestufte Flächen #2c2c2e/#3a3a3c, Trennlinien
+     #38383a, Akzente in den hellen Dark-Varianten (#0a84ff, #30d158,
+     #ff453a, #ff9f0a).
+     ========================================================= */
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --ink: #ffffff;
+    --ink-soft: #98989f;
+    --paper: #000000;
+    --paper-2: #1c1c1e;
+    --brass: #0a84ff;
+    --brass-deep: #409cff;
+    --line: #38383a;
+    --line-stark: #48484a;
+    --error: #ff453a;
+    --ok: #30d158;
+    --schatten: none;
+    /* Werkzeug-eigene Tokens */
+    --pt-forecast: #48484a;
+    --pt-nodose: #3a3a3c;
+    --chart-text: #ebebf5;
+    --chart-soft: #98989f;
+    --chart-line: #48484a;
+  }
+
+  /* Die Auszahlungs-Tokens hängen an .az-overlay/.az-dialog selbst,
+     deshalb hier an denselben Elementen überschreiben. */
+  [data-theme="dark"] .az-overlay,
+  [data-theme="dark"] .az-dialog{
+    --az-dark: #0a84ff;
+    --az-dark2: #2c4a7c;
+    --az-blue-light: #1f2d42;
+    --az-green-light: #1e3323;
+    --az-border: #48484a;
+    --az-bg: #000000;
+    --az-row-alt: #232325;
+  }
+
+  /* Text, der bisher auf Akzent-/Fehlerflächen var(--paper) nutzte: im
+     Dunkelmodus wäre das Schwarz auf Blau/Rot — deshalb weiß. */
+  [data-theme="dark"] .salary-delete-btn:hover,
+  [data-theme="dark"] .pt-btn-danger:hover,
+  [data-theme="dark"] .pt-dose.selected{ color: #fff; }
+
+  /* Dunkle Hervorhebungsblöcke (Kontostand, Summen, Topfstand) wären mit
+     --ink nun weiß: als gestufte iOS-Fläche darstellen. */
+  [data-theme="dark"] .balance,
+  [data-theme="dark"] .cat-grand-total,
+  [data-theme="dark"] .kt-topf{ background: #2c2c2e; color: #fff; }
+  [data-theme="dark"] .balance .amount.negative{ color: #ff6961; }
+  [data-theme="dark"] .vt-toast{ background: #3a3a3c; color: #fff; }
+
+  /* Gestufte Flächen, Hover und Felder */
+  [data-theme="dark"] .receipt-btn:hover,
+  [data-theme="dark"] .vt-overlay .vt-btn:hover,
+  [data-theme="dark"] .vt-modal-overlay .btn:hover,
+  [data-theme="dark"] .pt-btn:hover,
+  [data-theme="dark"] .section-body .receipt-btn:hover{ background: #3a3a3c; }
+  [data-theme="dark"] .section-body .receipt-btn,
+  [data-theme="dark"] .section-body .salary-save-btn.ghost{ background: #2c2c2e; }
+  [data-theme="dark"] .sc-seg{ background: #2c2c2e; }
+  [data-theme="dark"] .sc-seg button[aria-pressed="true"]{ background: #636366; color: #fff; }
+  [data-theme="dark"] .forecast-static{ background: rgba(255,255,255,0.06); }
+  [data-theme="dark"] .receipt-overlay,
+  [data-theme="dark"] .pt-dialog,
+  [data-theme="dark"] .vt-modal-overlay,
+  [data-theme="dark"] .az-dialog{ background: rgba(0,0,0,0.7); }
+
+  /* Startseite */
+  [data-theme="dark"] #home-screen .home-tile:hover{ background: #232325; }
+  [data-theme="dark"] #home-screen .home-tile:active{ background: #2c2c2e; }
+  [data-theme="dark"] .home-tile-icon{ background: rgba(10,132,255,0.18); }
+
+  /* Konsumtopf (hatte eigene feste Farben) */
+  [data-theme="dark"] .konsum-overlay .receipt-card,
+  [data-theme="dark"] .konsum-overlay .receipt-head{ background: #000; color: #fff; border-color: #38383a; }
+  [data-theme="dark"] .konsum-overlay .receipt-head h2{ color: #fff; }
+  [data-theme="dark"] .konsum-overlay .receipt-close,
+  [data-theme="dark"] .konsum-overlay .kt-chk{ background: #2c2c2e; border-color: #48484a; color: #98989f; }
+  [data-theme="dark"] .konsum-overlay .kt-chk.on{ background: #30d158; border-color: #30d158; color: #fff; }
+  [data-theme="dark"] .konsum-overlay .receipt-close:hover{ background: #3a3a3c; color: #fff; }
+  [data-theme="dark"] .konsum-overlay label,
+  [data-theme="dark"] .kt-sub,
+  [data-theme="dark"] .kt-mname small,
+  [data-theme="dark"] .konsum-overlay .kt-kz,
+  [data-theme="dark"] .konsum-overlay .kt-beleg-topf{ color: #98989f; }
+  /* :where() hält die Spezifität so niedrig wie die Grundregel, damit
+     speziellere Knöpfe (.kt-pri, .kt-del, …) ihre eigene Fläche behalten. */
+  :where([data-theme="dark"]) .konsum-overlay button{ background: #2c2c2e; color: #fff; }
+  :where([data-theme="dark"]) .konsum-overlay input,
+  :where([data-theme="dark"]) .konsum-overlay select{ background: #2c2c2e; border-color: #48484a; color: #fff; }
+  [data-theme="dark"] .konsum-overlay .kt-pri{ background: #0a84ff; color: #fff; }
+  [data-theme="dark"] .konsum-overlay .kt-gh{ background: transparent; color: #0a84ff; }
+  [data-theme="dark"] .konsum-overlay .kt-del{ background: transparent; color: #8e8e93; }
+  [data-theme="dark"] .konsum-overlay .kt-del.arm{ background: #ff453a; color: #fff; }
+  [data-theme="dark"] .kt-warn,
+  [data-theme="dark"] .vt-warn{ background: #3a2a10; color: #ffd60a; border-color: #5a4318; }
+  [data-theme="dark"] .kt-card,
+  [data-theme="dark"] .konsum-overlay .kt-bereich,
+  [data-theme="dark"] .konsum-overlay .kt-zu-kachel{ background: #1c1c1e; box-shadow: none; }
+  [data-theme="dark"] .kt-badge{ background: rgba(48,209,88,0.18); color: #30d158; }
+  [data-theme="dark"] .kt-badge.neg{ background: rgba(255,69,58,0.18); color: #ff6961; }
+  [data-theme="dark"] .kt-mbody,
+  [data-theme="dark"] .kt-sum.tot,
+  [data-theme="dark"] .kt-posten,
+  [data-theme="dark"] .kt-bl-row,
+  [data-theme="dark"] .kt-ist-row,
+  [data-theme="dark"] .kt-actions,
+  [data-theme="dark"] .konsum-overlay .kt-zu-row{ border-color: #38383a; }
+  [data-theme="dark"] .kt-sum{ color: #c7c7cc; }
+  [data-theme="dark"] .kt-sum.tot,
+  [data-theme="dark"] .konsum-overlay .kt-kz-f b{ color: #fff; }
+  [data-theme="dark"] .kt-ist,
+  [data-theme="dark"] .konsum-overlay .kt-kz-f.pos b{ color: #30d158; }
+  [data-theme="dark"] .konsum-overlay .kt-kz-f.neg b{ color: #ff6961; }
+  [data-theme="dark"] .konsum-overlay .kt-bbody{ background: #000; border-color: #38383a; }
+  /* Gelber Notizzettel: gedämpftes Gelb wie iOS-Notizen im Dunkeln */
+  [data-theme="dark"] .konsum-overlay .kt-zettel{ background: #3a3420; color: #fff3c4; box-shadow: none; }
+  [data-theme="dark"] .konsum-overlay .kt-zettel .kt-posten{ border-bottom-color: rgba(255,214,10,0.2); }
+  [data-theme="dark"] .konsum-overlay .kt-zettel-sum{ border-top-color: rgba(255,214,10,0.35); }
+  [data-theme="dark"] .konsum-overlay .kt-zettel .kt-del,
+  [data-theme="dark"] .konsum-overlay .kt-zettel-leer{ color: #c9b46a; }
+
+  /* Auszahlungs-Tracker */
+  :where([data-theme="dark"]) .az-overlay select,
+  :where([data-theme="dark"]) .az-overlay button,
+  :where([data-theme="dark"]) .az-dialog select,
+  :where([data-theme="dark"]) .az-dialog button{ background: #2c2c2e; border-color: #48484a; color: #fff; }
+  [data-theme="dark"] .az-overlay .az-primary{ background: #0a84ff; color: #fff; }
+  [data-theme="dark"] .az-overlay .az-subtle{ background: #2c2c2e; color: #fff; }
+  [data-theme="dark"] .az-overlay .receipt-card,
+  [data-theme="dark"] .az-toolbar label,
+  [data-theme="dark"] .az-dialog-card{ color: #fff; }
+  [data-theme="dark"] .az-overlay .receipt-head{ border-color: #38383a; }
+  [data-theme="dark"] .az-overlay .receipt-head h2,
+  [data-theme="dark"] .az-dialog-head h3{ color: #fff; }
+  [data-theme="dark"] .az-section-heading h3,
+  [data-theme="dark"] .az-divider{ color: #fff; border-color: #48484a; }
+  [data-theme="dark"] .az-overlay .receipt-close,
+  [data-theme="dark"] .az-dialog .az-subtle,
+  [data-theme="dark"] .az-overlay .az-sign-btn,
+  [data-theme="dark"] .az-overlay .az-import-label{ background: #2c2c2e; border-color: #48484a; color: #fff; }
+  [data-theme="dark"] .az-overlay .receipt-close:hover,
+  [data-theme="dark"] .az-overlay .az-sign-btn:active{ background: #3a3a3c; color: #fff; }
+  [data-theme="dark"] .az-dialog .az-primary,
+  [data-theme="dark"] .az-overlay .az-save-btn{ color: #fff; border: none; }
+  [data-theme="dark"] .az-dialog .az-primary{ background: #0a84ff; }
+  [data-theme="dark"] .az-overlay .az-save-btn{ background: #248a3d; }
+  [data-theme="dark"] .az-group-card,
+  [data-theme="dark"] .az-dialog-card,
+  [data-theme="dark"] .az-dialog table{ background: #1c1c1e; border-color: #38383a; }
+  [data-theme="dark"] .az-group-head{ background: #2c2c2e; }
+  [data-theme="dark"] .az-pos-row{ border-color: #38383a; }
+  [data-theme="dark"] .az-overlay input.az-val-cell{ background: #2c2c2e; border-color: #48484a; color: #fff; }
+  [data-theme="dark"] .az-overlay input.az-group-name:focus,
+  [data-theme="dark"] .az-overlay input.az-pos-name:focus{ background: #3a3420; }
+  [data-theme="dark"] .az-overlay .az-danger,
+  [data-theme="dark"] .az-warn{ background: rgba(255,69,58,0.15); color: #ff6961; border-color: rgba(255,69,58,0.35); }
+  [data-theme="dark"] .az-overlay .az-danger.armed,
+  [data-theme="dark"] .az-overlay .az-del-btn.armed{ background: #ff453a; color: #fff; border-color: #ff453a; }
+  [data-theme="dark"] .az-overlay .az-del-btn,
+  [data-theme="dark"] .az-save-status,
+  [data-theme="dark"] .az-msg.error{ color: #ff6961; }
+  [data-theme="dark"] .az-save-status.saved,
+  [data-theme="dark"] .az-msg{ color: #30d158; }
+  [data-theme="dark"] .az-footnote,
+  [data-theme="dark"] .az-export-hint{ color: #98989f; }
+  [data-theme="dark"] .az-dialog textarea.az-export-text{ background: #2c2c2e; border-color: #48484a; color: #fff; }
+  [data-theme="dark"] .az-dialog thead th,
+  [data-theme="dark"] .az-dialog tr.az-grand-total-row td{ color: #fff; }
+
+  /* Vermögens-Tracker */
+  [data-theme="dark"] .vt-overlay .monat-card:hover,
+  [data-theme="dark"] .vt-overlay .filter li label:hover,
+  [data-theme="dark"] .vt-overlay .analyse-kopf:hover{ background: #2c2c2e; }
+  [data-theme="dark"] .vt-overlay .ms-track{ background: #3a3a3c; }
+  [data-theme="dark"] .vt-overlay .pill.erreicht{ background: rgba(10,132,255,0.22); }
+
+  /* Pen-Tracker */
+  [data-theme="dark"] .pt-warning{ background: rgba(255,69,58,0.15); }
+  [data-theme="dark"] .pt-line-label.goal2{ color: #ff9f0a; }
+  [data-theme="dark"] .pt-goalline2{ border-top-color: #ff9f0a; }
+  [data-theme="dark"] .pt-bar.forecast-bar{
+    background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.25) 0 2px, transparent 2px 4px);
+  }
+
+  /* ---------- Schalter "Dunkelmodus" (Startseite) ---------- */
+  .home-schalter{
+    margin-top: 22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--paper-2);
+    border-radius: var(--radius);
+    box-shadow: var(--schatten);
+    font-size: 16px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .ios-switch{
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    flex: 0 0 51px;
+    width: 51px;
+    height: 31px;
+    margin: 0;
+    border-radius: 16px;
+    background: #e9e9eb;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .ios-switch::before{
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16);
+    transition: transform 0.2s ease;
+  }
+  .ios-switch:checked{ background: #34c759; }
+  .ios-switch:checked::before{ transform: translateX(20px); }
+  .ios-switch:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  [data-theme="dark"] .ios-switch{ background: #39393d; }
+  [data-theme="dark"] .ios-switch:checked{ background: #30d158; }
+
+  /* Auszahlungs-Diagramm (SVG mit festen Attributfarben aus
+     js/auszahlung.js): im Dunkelmodus über die Attribute umfärben. */
+  [data-theme="dark"] .az-overlay svg text[fill="#1a1a1a"]{ fill: #ebebf5; }
+  [data-theme="dark"] .az-overlay svg text[fill="#555"]{ fill: #98989f; }
+  [data-theme="dark"] .az-overlay svg rect[fill="#1f3057"]{ fill: #0a84ff; }
+  [data-theme="dark"] .az-overlay svg rect[fill="#a33333"]{ fill: #ff453a; }
+  [data-theme="dark"] .az-overlay svg line[stroke="#999"]{ stroke: #636366; }
+  [data-theme="dark"] .az-overlay svg line[stroke="#ccc"]{ stroke: #48484a; }
+  [data-theme="dark"] .az-overlay svg rect[stroke="#d9ead3"]{ stroke: #30d158; }
+
+  /* Echte Fenster über dem Haushaltsbuch (Beleg, Diagramm, Analyse, PIN):
+     als erhöhte iOS-Fläche statt reinem Schwarz, damit sie sich vom
+     abgedunkelten Hintergrund abheben. */
+  [data-theme="dark"] #receipt-overlay .receipt-card,
+  [data-theme="dark"] #receipt-overlay .receipt-head,
+  [data-theme="dark"] #chart-overlay .receipt-card,
+  [data-theme="dark"] #chart-overlay .receipt-head,
+  [data-theme="dark"] #analysis-overlay .receipt-card,
+  [data-theme="dark"] #analysis-overlay .receipt-head,
+  [data-theme="dark"] #pin-overlay .receipt-card,
+  [data-theme="dark"] #pin-overlay .receipt-head{ background: #1c1c1e; }

@@ -14,9 +14,9 @@
    (openAppScreen/closeAppScreen in js/overlays.js) und blenden sie beim
    Schließen selbst wieder ein; dafür ist hier nichts zu tun.
    ============================================================================= */
-import { el } from './dom.js?v=32';
-import { showOverview } from './navigation.js?v=32';
-import { scrollToTop } from './overlays.js?v=32';
+import { el } from './dom.js?v=33';
+import { showOverview } from './navigation.js?v=33';
+import { scrollToTop } from './overlays.js?v=33';
 
 const homeScreen   = document.getElementById('home-screen');
 const budgetTile   = document.getElementById('budget-tile');
@@ -42,3 +42,37 @@ function openBudget(){
 
 budgetTile.addEventListener('click', openBudget);
 backToHome.addEventListener('click', showHome);
+
+/* ---------------------------------------------------------------------------
+   DUNKELMODUS-SCHALTER
+   Nur per Schalter (folgt bewusst NICHT der iPhone-Einstellung). Die Wahl
+   liegt ausschließlich in localStorage dieses Geräts; das Skript im <head>
+   von index.html liest sie vor dem ersten Zeichnen.
+   --------------------------------------------------------------------------- */
+const THEME_KEY = 'kontor.theme';
+const themeToggle = document.getElementById('theme-toggle');
+
+function applyTheme(dark){
+  const root = document.documentElement;
+  if(dark) root.setAttribute('data-theme', 'dark');
+  else root.removeAttribute('data-theme');
+  const setMeta = (name, value) => {
+    const m = document.querySelector('meta[name="' + name + '"]');
+    if(m) m.content = value;
+  };
+  setMeta('color-scheme', dark ? 'dark' : 'light');
+  setMeta('theme-color', dark ? '#000000' : '#f2f2f7');
+  setMeta('apple-mobile-web-app-status-bar-style', dark ? 'black' : 'default');
+}
+
+if(themeToggle){
+  themeToggle.checked = document.documentElement.getAttribute('data-theme') === 'dark';
+  themeToggle.addEventListener('change', () => {
+    const dark = themeToggle.checked;
+    applyTheme(dark);
+    try{
+      if(dark) localStorage.setItem(THEME_KEY, 'dark');
+      else localStorage.removeItem(THEME_KEY);
+    }catch(e){ /* Speicher nicht verfügbar: gilt dann nur bis zum Neuladen */ }
+  });
+}
