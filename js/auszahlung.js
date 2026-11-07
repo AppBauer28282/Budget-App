@@ -24,7 +24,8 @@
    die Vorlage baute Zeichenketten zusammen und hatte dabei eine Lücke bei den
    Spaltenköpfen der Gesamtübersicht.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=35';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=36';
+import { basisJahresNetto } from './salary-calc.js?v=36';
 
 const STORE_KEY = 'auszahlungen.v1';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -52,6 +53,8 @@ const azClose      = $('auszahlung-close');
 // Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
 // openAppScreen/closeAppScreen in js/overlays.js).
 const homeScreenEl = $('home-screen');
+// Widget auf der Startseite — nicht in alleElementeDa, darf fehlen.
+const azWidget     = $('az-widget');
 const azWarn       = $('az-warn');
 const azMonth      = $('az-month');
 const azYear       = $('az-year');
@@ -233,7 +236,74 @@ function zeigeWarnung(){
 // dutzendfach, ohne Bündelung würde jedes Mal der ganze Stand serialisiert.
 let saveTimer = null;
 
+/* ---------- Widget auf der Startseite ----------
+   Drei Drittel, durch feine Striche getrennt:
+   1. Ø pro Monat im laufenden Jahr (derselbe Wert wie "Ø" im Diagramm des
+      Jahres) mit Tendenzpfeil: Ø der letzten 3 Monate gegen diesen Ø —
+      innerhalb ±5 % →, darunter ↓, darüber ↑.
+   2. Hochrechnung bis Jahresende: Ist bis einschließlich aktuellem Monat +
+      Ø × restliche Monate, in Tausend ("12K").
+   3. Anteil der Hochrechnung am Jahresnetto (Basiswert des Gehalts-Widgets,
+      KT5/+7 bei 0 %). */
+function euroGanz(n){ return Math.round(n).toLocaleString('de-DE') + ' €'; }
+function kurzK(n){
+  const k = n / 1000;
+  return (Math.abs(k) >= 10 ? Math.round(k).toLocaleString('de-DE')
+    : k.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })) + 'K';
+}
+function widgetDrittel(label, wert, extra){
+  const d = elem('span', 'azw-drittel');
+  d.appendChild(elem('span', 'azw-label', label));
+  const w = elem('span', 'azw-wert', wert);
+  if(extra) w.appendChild(extra);
+  d.appendChild(w);
+  return d;
+}
+function renderWidget(){
+  if(!azWidget) return;
+  const jetzt = new Date();
+  const jahr = jetzt.getFullYear();
+  const m = jetzt.getMonth();
+  const jd = state.years[String(jahr)];
+  const summen = Array(12).fill(0);
+  let hatWerte = false;
+  if(jd) jd.groups.forEach(g => g.positions.forEach(p => {
+    for(let i = 0; i < 12; i++){ summen[i] += p.values[i] || 0; if(p.values[i]) hatWerte = true; }
+  }));
+  const frag = document.createDocumentFragment();
+  if(!hatWerte){
+    frag.append(widgetDrittel('Ø ' + jahr, '–'), elem('span', 'azw-strich'),
+      widgetDrittel('Hochrechnung', '–'), elem('span', 'azw-strich'),
+      widgetDrittel('vom Jahresnetto', '–'));
+    azWidget.replaceChildren(frag);
+    return;
+  }
+  const ist = summen.slice(0, m + 1).reduce((a, b) => a + b, 0);
+  const avg = ist / (m + 1);
+  const letzte = summen.slice(Math.max(0, m - 2), m + 1);
+  const avg3 = letzte.reduce((a, b) => a + b, 0) / letzte.length;
+  const abw = avg > 0 ? avg3 / avg - 1 : 0;
+  const tendenz = abw > 0.05 ? 'hoch' : (abw < -0.05 ? 'runter' : 'gleich');
+  const pfeil = elem('span', 'azw-pfeil ' + tendenz, tendenz === 'hoch' ? '↑' : (tendenz === 'runter' ? '↓' : '→'));
+  pfeil.title = 'Ø letzte 3 Monate: ' + euroGanz(avg3) + ' (' + (abw >= 0 ? '+' : '−') +
+    Math.abs(Math.round(abw * 100)) + ' % ggü. Ø ' + jahr + ')';
+  const hoch = ist + avg * (11 - m);
+  const netto = basisJahresNetto();
+  const anteil = netto ? Math.round(hoch / netto * 100) + ' %' : '–';
+  frag.append(
+    widgetDrittel('Ø ' + jahr, euroGanz(avg), pfeil), elem('span', 'azw-strich'),
+    widgetDrittel('bis Dez', kurzK(hoch)), elem('span', 'azw-strich'),
+    widgetDrittel('vom Jahresnetto', anteil));
+  azWidget.replaceChildren(frag);
+  if(azBtn){
+    azBtn.setAttribute('aria-label', 'Auszahlungs-Tracker öffnen. Ø ' + jahr + ': ' + euroGanz(avg) + ', Tendenz ' +
+      ({ hoch: 'steigend', runter: 'fallend', gleich: 'gleichbleibend' })[tendenz] + '. Hochrechnung bis Dezember ' +
+      kurzK(hoch) + ', ' + anteil + ' vom Jahresnetto.');
+  }
+}
+
 function writeNow(){
+  renderWidget();
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     storageOk = true;
@@ -811,6 +881,7 @@ function dateiHerunterladen(text){
 function init(){
   load();
   zeigeWarnung();
+  renderWidget();
 
   // Schnittstelle für den Cloud-Abgleich (siehe js/cloud-sync.js): erlaubt,
   // den Stand nach dem Laden aus Firestore zu ersetzen, und liefert einen

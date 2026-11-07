@@ -3115,17 +3115,16 @@
   :root:not([data-home="basis"]) .home-widget{ display:grid; flex: 1 0 100%; }
   /* Kopf der Widget-Kachel kompakt: kleines Symbol, Name, rechts Hinweis. */
   .home-widget-kopf{ display:none; }
-  :root:not([data-home="basis"]) #salary-calc-btn,
-  :root:not([data-home="basis"]) #pentracker-btn{ gap: 10px 10px; padding: 12px; }
-  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-icon,
-  :root:not([data-home="basis"]) #pentracker-btn .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
-  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-icon svg,
-  :root:not([data-home="basis"]) #pentracker-btn .home-tile-icon svg{ width: 18px; height: 18px; }
-  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-sub,
-  :root:not([data-home="basis"]) #pentracker-btn .home-tile-sub{ display:none; }
-  /* Reihenfolge der Widgets: Gehalt, Pen-Tracker, dann die übrigen. */
-  :root:not([data-home="basis"]) #salary-calc-btn{ order: -2; }
-  :root:not([data-home="basis"]) #pentracker-btn{ order: -1; }
+  /* Kachel mit Widget: kompakter Kopf (kleines Symbol, ohne Untertitel).
+     :is() fasst die drei Widget-Kacheln zusammen. */
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn){ gap: 10px 10px; padding: 12px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn) .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn) .home-tile-icon svg{ width: 18px; height: 18px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn) .home-tile-sub{ display:none; }
+  /* Reihenfolge der Widgets: Gehalt, Pen-Tracker, Auszahlungen, dann die übrigen. */
+  :root:not([data-home="basis"]) #salary-calc-btn{ order: -3; }
+  :root:not([data-home="basis"]) #pentracker-btn{ order: -2; }
+  :root:not([data-home="basis"]) #auszahlung-btn{ order: -1; }
   :root:not([data-home="basis"]) #salary-calc-btn .home-widget-kopf{
     display:block; margin-left:auto; font-size: 12px; color: var(--ink-soft); white-space: nowrap;
   }
@@ -3289,6 +3288,42 @@
   .ptw-month{
     position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
     font-size: 8.5px; line-height: 14px; color: var(--ink-soft); white-space: nowrap;
+  }
+
+  /* ---------- Auszahlungs-Widget ----------
+     Drei gleich breite Drittel, getrennt durch feine senkrechte Striche. */
+  :root:not([data-home="basis"]) .home-widget.azw{
+    display:grid;
+    /* Erstes Drittel etwas breiter: Betrag plus Tendenzpfeil. */
+    grid-template-columns: minmax(0,1.5fr) 1px minmax(0,1fr) 1px minmax(0,1.15fr);
+    align-items: center;
+    column-gap: 8px;
+    padding: 2px 2px 0;
+  }
+  .azw-strich{ align-self: stretch; background: var(--line); }
+  .azw-drittel{ display:flex; flex-direction:column; align-items:center; text-align:center; min-width: 0; gap: 2px; }
+  .azw-label{ font-size: 11.5px; color: var(--ink-soft); white-space: nowrap; }
+  /* flex-wrap: Reicht der Platz nicht (sehr große Beträge, schmale
+     Geräte), rutscht der Pfeil unter die Zahl statt über den Rand. */
+  .azw-wert{
+    display:flex; flex-wrap: wrap; justify-content: center; align-items:center; gap: 3px 5px;
+    font-size: 19px; font-weight: 700; letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .azw-pfeil{
+    display:inline-flex; align-items:center; justify-content:center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 14px; font-weight: 700; line-height: 1;
+  }
+  .azw-pfeil.hoch{ color: var(--ok); background: rgba(52,199,89,0.14); }
+  .azw-pfeil.runter{ color: var(--error); background: rgba(255,59,48,0.12); }
+  .azw-pfeil.gleich{ color: var(--ink-soft); background: var(--paper); }
+  [data-theme="dark"] .azw-pfeil.gleich{ background: #2c2c2e; }
+  @media (max-width: 359px){
+    .azw-wert{ font-size: 16px; gap: 3px; }
+    .azw-label{ font-size: 9.5px; }
+    .azw-pfeil{ width: 18px; height: 18px; font-size: 12px; }
+    :root:not([data-home="basis"]) .home-widget.azw{ column-gap: 6px; }
   }
 
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */

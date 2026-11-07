@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=35">
+<link rel="stylesheet" href="styles.css?v=36">
 </head>
 <body>
 
@@ -173,6 +173,8 @@
           <span class="home-tile-name">Auszahlungen</span>
           <span class="home-tile-sub">Jahre und Verlauf</span>
         </span>
+        <!-- Widget: Ø, Hochrechnung, Anteil am Jahresnetto (js/auszahlung.js) -->
+        <span class="home-widget azw" id="az-widget"></span>
       </button>
       <button type="button" class="home-tile" id="vermoegen-btn" aria-label="Vermögens-Tracker öffnen">
         <span class="home-tile-icon" aria-hidden="true">
@@ -1165,7 +1167,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=35"></script>
+<script type="module" src="js/app.js?v=36"></script>
 
 </body>
 </html>

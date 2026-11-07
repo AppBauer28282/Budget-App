@@ -14,8 +14,8 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=35';
-import { clamp } from './utils.js?v=35';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=36';
+import { clamp } from './utils.js?v=36';
 
 // Grenzen der beiden Textfelder (früher Regler-Grenzen). Werden beim
 // Berechnen angewandt, nicht beim Tippen — so kann man zwischendurch auch
@@ -189,6 +189,16 @@ function span(cls, text){
   return e;
 }
 function euroGanz(n){ return nf(Math.round(n), 0) + ' €'; }
+
+// Basiswert für andere Widgets: Jahresnetto heute (KT5 / +7, 0 %), mit
+// denselben Vorgabewerten wie das Gehalts-Widget. null, wenn die Felder
+// fehlen (z. B. alte index.html im Zwischenspeicher).
+export function basisJahresNetto(){
+  if(!scStunden || !scKvz) return null;
+  const std = clamp(parseKomma(scStunden.defaultValue), STUNDEN_MIN, STUNDEN_MAX);
+  const kvz = parseKomma(scKvz.defaultValue);
+  return szenario('+7', 'KT5', 0, std, kvz).jahr.netto;
+}
 
 export function renderGehaltWidget(){
   if(!gehaltWidget) return;
