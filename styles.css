@@ -3115,10 +3115,17 @@
   :root:not([data-home="basis"]) .home-widget{ display:grid; flex: 1 0 100%; }
   /* Kopf der Widget-Kachel kompakt: kleines Symbol, Name, rechts Hinweis. */
   .home-widget-kopf{ display:none; }
-  :root:not([data-home="basis"]) #salary-calc-btn{ gap: 10px 10px; padding: 12px; }
-  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
-  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-icon svg{ width: 18px; height: 18px; }
-  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-sub{ display:none; }
+  :root:not([data-home="basis"]) #salary-calc-btn,
+  :root:not([data-home="basis"]) #pentracker-btn{ gap: 10px 10px; padding: 12px; }
+  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-icon,
+  :root:not([data-home="basis"]) #pentracker-btn .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
+  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-icon svg,
+  :root:not([data-home="basis"]) #pentracker-btn .home-tile-icon svg{ width: 18px; height: 18px; }
+  :root:not([data-home="basis"]) #salary-calc-btn .home-tile-sub,
+  :root:not([data-home="basis"]) #pentracker-btn .home-tile-sub{ display:none; }
+  /* Reihenfolge der Widgets: Gehalt, Pen-Tracker, dann die übrigen. */
+  :root:not([data-home="basis"]) #salary-calc-btn{ order: -2; }
+  :root:not([data-home="basis"]) #pentracker-btn{ order: -1; }
   :root:not([data-home="basis"]) #salary-calc-btn .home-widget-kopf{
     display:block; margin-left:auto; font-size: 12px; color: var(--ink-soft); white-space: nowrap;
   }
@@ -3205,6 +3212,80 @@
        die kleine graue Zahl unter dem fetten Netto bleibt eindeutig. */
     .gw-brutto-wort{ display:none; }
     :root:not([data-home="basis"]) #salary-calc-btn .home-widget-kopf{ font-size: 11px; }
+  }
+
+  /* ---------- Pen-Tracker-Widget ----------
+     Oben drei Tacho-Anzeigen (unten offen), die mittlere größer; darunter
+     der Verlauf über die volle Breite, ohne Scrollen. */
+  :root:not([data-home="basis"]) .home-widget.ptw{ display:flex; flex-direction:column; gap: 10px; }
+  .ptw-gauges{
+    display:grid;
+    grid-template-columns: 1fr 1.25fr 1fr;
+    align-items: end;
+    gap: 6px;
+    padding: 0 4px;
+  }
+  .ptw-gauge{ position: relative; display:block; }
+  .ptw-gauge svg{ display:block; width: 100%; height: auto; overflow: visible; }
+  .ptw-track{ fill: none; stroke: var(--line); stroke-width: 4; stroke-linecap: round; }
+  .ptw-gauge.mitte .ptw-track{ stroke-width: 5; }
+  .ptw-fill{ fill: none; stroke: var(--brass); stroke-width: 5; stroke-linecap: round; }
+  .ptw-text{
+    position: absolute;
+    left: 0; right: 0; top: 30%;
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center;
+  }
+  .ptw-value{ font-size: 20px; font-weight: 700; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
+  .ptw-gauge.mitte .ptw-value{ font-size: 26px; }
+  .ptw-gauge.mitte .ptw-text{ top: 31%; }
+  .ptw-unit{ font-size: 10.5px; color: var(--ink-soft); line-height: 1.2; margin-top: 2px; max-width: 80%; }
+
+  @media (max-width: 359px){
+    .ptw-unit{ font-size: 8.5px; white-space: nowrap; max-width: none; }
+    .ptw-value{ font-size: 17px; }
+    .ptw-gauge.mitte .ptw-value{ font-size: 22px; }
+  }
+  .ptw-chart{ display:flex; gap: 4px; }
+  .ptw-empty{ font-size: 12px; color: var(--ink-soft); padding: 8px 0; }
+  .ptw-axis{ position: relative; width: 20px; height: 124px; flex-shrink: 0; }
+  .ptw-axis span{
+    position: absolute; right: 0; transform: translateY(-50%);
+    font-size: 9px; line-height: 1; color: var(--ink-soft);
+  }
+  /* 110 px Diagramm + 14 px Monatszeile */
+  .ptw-area{ position: relative; flex: 1; min-width: 0; height: 124px; border-left: 1px solid var(--line); overflow: hidden; }
+  .ptw-grid{ position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+  .ptw-goal{ position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none; }
+  .ptw-goal.ziel{ border-top: 2px solid var(--error); }
+  .ptw-goal.ziel2{ border-top: 2px dashed #ff9500; }
+  [data-theme="dark"] .ptw-goal.ziel2{ border-top-color: #ff9f0a; }
+  .ptw-goal-label{
+    position: absolute; left: 2px; top: -12px; padding: 0 3px;
+    font-size: 8.5px; font-weight: 600; white-space: nowrap; line-height: 11px;
+    background: var(--paper-2);
+  }
+  .ptw-goal.ziel .ptw-goal-label{ color: var(--error); }
+  .ptw-goal.ziel2 .ptw-goal-label{ color: #c76a00; }
+  [data-theme="dark"] .ptw-goal.ziel2 .ptw-goal-label{ color: #ff9f0a; }
+  .ptw-cols{
+    position: absolute; inset: 0;
+    display:flex; align-items: stretch;
+    padding: 0 1px;
+  }
+  .ptw-col{ position: relative; flex: 1 1 0; min-width: 0; }
+  .ptw-col.monat{ border-left: 1px solid var(--line); }
+  .ptw-col.prognose-start{ border-left: 1px solid var(--ink-soft); }
+  .ptw-bar{
+    position: absolute; bottom: 14px; left: 18%; right: 18%;
+    min-width: 1px;
+    border-radius: 2px 2px 0 0;
+    background: var(--brass);
+  }
+  .ptw-col.prognose .ptw-bar{ background: var(--pt-forecast, #c7c7cc); }
+  .ptw-month{
+    position: absolute; left: 2px; bottom: 0;
+    font-size: 8.5px; line-height: 14px; color: var(--ink-soft); white-space: nowrap;
   }
 
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */

@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=34';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=35';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -65,6 +65,9 @@ const ptClose      = document.getElementById('pentracker-close');
 // Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
 // openAppScreen/closeAppScreen in js/overlays.js).
 const homeScreenEl = document.getElementById('home-screen');
+// Widget auf der Startseite (nur in der Widget-Ansicht sichtbar). Bewusst
+// nicht in alleElementeDa: fehlt es, läuft der Tracker trotzdem.
+const ptWidget     = document.getElementById('pt-widget');
 const ptWarning    = document.getElementById('pt-storage-warning');
 
 const kpiWeight     = document.getElementById('pt-kpi-weight');
@@ -1086,11 +1089,151 @@ function renderChart(){
   }
 }
 
+/* ---------- Widget auf der Startseite ----------
+   Drei Tacho-Anzeigen (unten offen, 270°): links aktuelles Gewicht, in der
+   Mitte (größer) die Abnahme mit einem dünnen Fortschrittsring zum Ziel —
+   12 Uhr entspricht 50 % —, rechts die Wochen bis zum Ziel. Darunter ein
+   vereinfachter Verlauf: ein Balken je Gewichtseintrag in einer Farbe (ohne
+   Dosis), Prognose 3 Monate, dieselben Ziel-Linien wie im Tracker. Alles
+   passt in die Kachelbreite, ohne Scrollen. */
+const WIDGET_FORECAST_WEEKS = 13;      // ca. 3 Monate
+const WIDGET_CHART_PX = 110;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgElem(tag, attrs){
+  const n = document.createElementNS(SVG_NS, tag);
+  Object.keys(attrs).forEach(k => n.setAttribute(k, attrs[k]));
+  return n;
+}
+// Bogen von 135° (unten links) im Uhrzeigersinn über 12 Uhr bis 45° (unten
+// rechts). pathLength=100 erlaubt, den Fortschritt direkt in Prozent über
+// stroke-dasharray zu setzen.
+const GAUGE_PATH = (() => {
+  const r = 44, c = 50, a = Math.PI / 4;
+  const x1 = (c - r * Math.cos(a)).toFixed(2), y = (c + r * Math.sin(a)).toFixed(2);
+  const x2 = (c + r * Math.cos(a)).toFixed(2);
+  return 'M ' + x1 + ' ' + y + ' A ' + r + ' ' + r + ' 0 1 1 ' + x2 + ' ' + y;
+})();
+
+function gauge(cls, valueText, unitText, pct){
+  const g = elem('span', 'ptw-gauge ' + cls);
+  const svg = svgElem('svg', { viewBox: '0 0 100 86', 'aria-hidden': 'true', focusable: 'false' });
+  svg.appendChild(svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: 'ptw-track' }));
+  if(pct != null){
+    const p = Math.max(0, Math.min(100, pct));
+    svg.appendChild(svgElem('path', { d: GAUGE_PATH, pathLength: '100', class: 'ptw-fill',
+      'stroke-dasharray': p.toFixed(2) + ' 100' }));
+  }
+  g.appendChild(svg);
+  const text = elem('span', 'ptw-text');
+  text.appendChild(elem('span', 'ptw-value', valueText));
+  text.appendChild(elem('span', 'ptw-unit', unitText));
+  g.appendChild(text);
+  return g;
+}
+
+function renderWidget(){
+  if(!ptWidget) return;
+  clear(ptWidget);
+
+  const start = startGrams();
+  const now = currentGrams();
+  const goal = state.settings.goalGrams;
+  const goal2 = state.settings.goal2Grams;
+
+  /* Tacho-Anzeigen */
+  const loss = (start != null && now != null) ? start - now : null;
+  const fc = goal != null ? forecastGoal(avgLossPerWeekGrams(AVG_WINDOW)) : null;
+  const weeksText = goal == null || !fc ? '–' : (fc.reached ? '0' : String(Math.ceil(fc.weeks)));
+  const row = elem('span', 'ptw-gauges');
+  row.appendChild(gauge('seite', now != null ? fmtNum(now / 1000, 1) : '–', 'kg aktuell', null));
+  row.appendChild(gauge('mitte',
+    loss != null ? (loss >= 0 ? '−' : '+') + fmtNum(Math.abs(loss) / 1000, 1) : '–',
+    'kg abgenommen', goalProgressPct()));
+  row.appendChild(gauge('seite', weeksText, 'Wochen bis Ziel', null));
+  ptWidget.appendChild(row);
+
+  /* Verlauf */
+  const weights = weightPoints();
+  const chart = elem('span', 'ptw-chart');
+  ptWidget.appendChild(chart);
+  if(weights.length < 2){
+    chart.appendChild(elem('span', 'ptw-empty', 'Noch zu wenig Gewichtseinträge für den Verlauf.'));
+    return;
+  }
+  const avg = avgLossPerWeekGrams(AVG_WINDOW);
+  const last = weights[weights.length - 1];
+  const forecast = [];
+  if(avg != null && avg > 0){
+    let grams = last.grams, date = last.date;
+    for(let i = 1; i <= WIDGET_FORECAST_WEEKS; i++){
+      grams -= avg; date = addDaysStr(date, 7);
+      forecast.push({ date, grams });
+    }
+  }
+  // Achse wie im großen Diagramm: volle 5 kg oben/unten, Gitter alle 2,5 kg.
+  const values = [...weights.map(w => w.grams), ...forecast.map(p => p.grams),
+    ...(goal != null ? [goal] : []), ...(goal2 != null ? [goal2] : [])];
+  const stepG = CHART_STEP_KG * 1000, labelG = CHART_LABEL_KG * 1000;
+  const topG = Math.ceil(Math.max(...values) / labelG) * labelG;
+  const bottomG = Math.max(0, Math.ceil(Math.min(...values) / labelG) * labelG - labelG);
+  const rangeG = Math.max(stepG, topG - bottomG);
+  const toPx = g => Math.max(0, ((g - bottomG) / rangeG) * WIDGET_CHART_PX);
+  const steps = Math.round(rangeG / stepG);
+  let labelEvery = labelG / stepG;
+  while(WIDGET_CHART_PX / steps * labelEvery < CHART_LABEL_MIN_PX) labelEvery *= 2;
+
+  const axis = elem('span', 'ptw-axis');
+  const area = elem('span', 'ptw-area');
+  for(let st = steps; st >= 0; st--){
+    const top = (WIDGET_CHART_PX - toPx(bottomG + st * stepG)).toFixed(0) + 'px';
+    const line = elem('span', 'ptw-grid'); line.style.top = top; area.appendChild(line);
+    if(st % labelEvery === 0){
+      const l = elem('span', null, fmtNum((bottomG + st * stepG) / 1000, 0)); l.style.top = top; axis.appendChild(l);
+    }
+  }
+  const goalLine = (grams, cls, text) => {
+    if(grams == null || grams < bottomG || grams > topG) return;
+    const line = elem('span', 'ptw-goal ' + cls);
+    line.style.top = (WIDGET_CHART_PX - toPx(grams)).toFixed(0) + 'px';
+    line.appendChild(elem('span', 'ptw-goal-label', text + ' ' + fmtKg(grams)));
+    area.appendChild(line);
+  };
+  goalLine(goal, 'ziel', 'Ziel');
+  goalLine(goal2, 'ziel2', 'Ziel 2');
+
+  const cols = elem('span', 'ptw-cols');
+  const seen = new Set();
+  const addCol = (p, isForecast, forecastStart) => {
+    const d = new Date(p.date + 'T00:00:00');
+    const key = d.getFullYear() + '-' + d.getMonth();
+    const newMonth = !seen.has(key); seen.add(key);
+    const col = elem('span', 'ptw-col' + (isForecast ? ' prognose' : '') + (forecastStart ? ' prognose-start' : (newMonth ? ' monat' : '')));
+    const bar = elem('span', 'ptw-bar');
+    bar.style.height = Math.max(2, toPx(p.grams)).toFixed(0) + 'px';
+    col.appendChild(bar);
+    // Ganz rechts fehlt der Platz für ein Monatskürzel — dort nur die Linie.
+    if(newMonth && cols.childElementCount < gesamt - 2) col.appendChild(elem('span', 'ptw-month', MONTHS_SHORT[d.getMonth()]));
+    cols.appendChild(col);
+  };
+  const gesamt = weights.length + forecast.length;
+  weights.forEach(w => addCol(w, false, false));
+  forecast.forEach((p, i) => addCol(p, true, i === 0));
+  area.appendChild(cols);
+  chart.append(axis, area);
+
+  if(ptBtn){
+    ptBtn.setAttribute('aria-label', 'Pen-Tracker öffnen. Aktuell ' + (now != null ? fmtKg(now) : 'unbekannt') +
+      (loss != null ? ', abgenommen ' + fmtKg(Math.abs(loss)) : '') + ', Wochen bis Ziel: ' + weeksText + '.');
+  }
+}
+
 function renderAll(){
   renderKpis();
   renderPens();
   renderWeights();
   renderChart();
+  renderWidget();
   save();
 }
 
@@ -1208,6 +1351,8 @@ function init(){
     openAppScreen(ptOverlay, homeScreenEl, ptClose);
     renderAll();
   });
+  // Widget gleich beim Start zeichnen (ohne Speichern — es ändert nichts).
+  renderWidget();
   function closePenTracker(){
     closeAllDialogs();
     settleConfirm(false);
