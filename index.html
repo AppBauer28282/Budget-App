@@ -32,9 +32,13 @@
       document.querySelector('meta[name="theme-color"]').content = '#000000';
       document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content = 'black';
     }
-  }catch(e){ /* ohne Speicher: heller Modus */ }
+    // Startseite: Widgets (Standard) oder einfache Kacheln
+    if(localStorage.getItem('kontor.homeLayout') === 'basis'){
+      document.documentElement.setAttribute('data-home', 'basis');
+    }
+  }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
 
@@ -115,6 +119,10 @@
           <span class="home-tile-name">Gehaltsrechner</span>
           <span class="home-tile-sub">Brutto und Netto</span>
         </span>
+        <!-- Widget-Inhalt: nur in der Widget-Ansicht sichtbar, gefüllt von
+             js/salary-calc.js (renderGehaltWidget). -->
+        <span class="home-widget-kopf">netto / Monat · KT5</span>
+        <span class="home-widget gw" id="gehalt-widget"></span>
       </button>
       <button type="button" class="home-tile" id="konsum-btn" aria-label="Konsumtopf öffnen">
         <span class="home-tile-icon" aria-hidden="true">
@@ -179,10 +187,19 @@
       </button>
   </div>
 
-  <label class="home-schalter" for="theme-toggle">
-    <span>Dunkelmodus</span>
-    <input type="checkbox" role="switch" class="ios-switch" id="theme-toggle">
-  </label>
+  <div class="home-einstellungen">
+    <label class="home-schalter" for="theme-toggle">
+      <span>Dunkelmodus</span>
+      <input type="checkbox" role="switch" class="ios-switch" id="theme-toggle">
+    </label>
+    <div class="home-schalter">
+      <span id="layout-label">Startseite</span>
+      <div class="home-seg" role="group" aria-labelledby="layout-label">
+        <button type="button" id="layout-widget-btn" aria-pressed="true">Widgets</button>
+        <button type="button" id="layout-basis-btn" aria-pressed="false">Kacheln</button>
+      </div>
+    </div>
+  </div>
 
   <div class="home-fuss">
     <button type="button" class="receipt-btn" id="change-pin-btn">PIN ändern</button>
@@ -604,9 +621,13 @@
 
         <div class="sc-field">
           <label for="sc-prozent">Erhöhung in %</label>
-          <input type="text" id="sc-prozent" value="0" inputmode="decimal"
-                 autocomplete="off" enterkeyhint="done">
+          <div class="sc-prozent-zeile">
+            <input type="text" id="sc-prozent" value="0" inputmode="decimal"
+                   autocomplete="off" enterkeyhint="done">
+            <button type="button" class="sc-speichern" id="sc-prozent-save">Speichern</button>
+          </div>
           <span class="sc-val sc-num" id="sc-prozent-val"></span>
+          <span class="sc-val" id="sc-prozent-status" aria-live="polite"></span>
         </div>
       </div>
 
@@ -1142,7 +1163,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=33"></script>
+<script type="module" src="js/app.js?v=34"></script>
 
 </body>
 </html>

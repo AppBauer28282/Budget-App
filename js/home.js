@@ -14,9 +14,9 @@
    (openAppScreen/closeAppScreen in js/overlays.js) und blenden sie beim
    Schließen selbst wieder ein; dafür ist hier nichts zu tun.
    ============================================================================= */
-import { el } from './dom.js?v=33';
-import { showOverview } from './navigation.js?v=33';
-import { scrollToTop } from './overlays.js?v=33';
+import { el } from './dom.js?v=34';
+import { showOverview } from './navigation.js?v=34';
+import { scrollToTop } from './overlays.js?v=34';
 
 const homeScreen   = document.getElementById('home-screen');
 const budgetTile   = document.getElementById('budget-tile');
@@ -75,4 +75,33 @@ if(themeToggle){
       else localStorage.removeItem(THEME_KEY);
     }catch(e){ /* Speicher nicht verfügbar: gilt dann nur bis zum Neuladen */ }
   });
+}
+
+/* ---------------------------------------------------------------------------
+   ANSICHT DER STARTSEITE: Widgets (Standard) oder einfache Kacheln
+   Gespeichert nur auf diesem Gerät ("kontor.homeLayout" = "basis" für
+   Kacheln, sonst Widgets). Das Skript im <head> setzt data-home schon vor
+   dem ersten Zeichnen.
+   --------------------------------------------------------------------------- */
+const LAYOUT_KEY = 'kontor.homeLayout';
+const layoutWidgetBtn = document.getElementById('layout-widget-btn');
+const layoutBasisBtn  = document.getElementById('layout-basis-btn');
+
+function applyLayout(basis){
+  if(basis) document.documentElement.setAttribute('data-home', 'basis');
+  else document.documentElement.removeAttribute('data-home');
+  if(layoutWidgetBtn) layoutWidgetBtn.setAttribute('aria-pressed', String(!basis));
+  if(layoutBasisBtn)  layoutBasisBtn.setAttribute('aria-pressed', String(basis));
+}
+function setLayout(basis){
+  applyLayout(basis);
+  try{
+    if(basis) localStorage.setItem(LAYOUT_KEY, 'basis');
+    else localStorage.removeItem(LAYOUT_KEY);
+  }catch(e){ /* gilt dann nur bis zum Neuladen */ }
+}
+if(layoutWidgetBtn && layoutBasisBtn){
+  applyLayout(document.documentElement.getAttribute('data-home') === 'basis');
+  layoutWidgetBtn.addEventListener('click', () => setLayout(false));
+  layoutBasisBtn.addEventListener('click', () => setLayout(true));
 }

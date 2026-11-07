@@ -14,14 +14,14 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=33';
-import { clamp } from './utils.js?v=33';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=34';
+import { clamp } from './utils.js?v=34';
 
 // Grenzen der beiden Textfelder (früher Regler-Grenzen). Werden beim
 // Berechnen angewandt, nicht beim Tippen — so kann man zwischendurch auch
 // unfertige Werte eingeben, ohne dass sie sofort zurechtgestutzt werden.
 const STUNDEN_MIN = 30, STUNDEN_MAX = 39.5;
-const PROZENT_MIN = 0, PROZENT_MAX = 10;
+const PROZENT_MIN = 0, PROZENT_MAX = 20;
 
 /* ---------- Entgelttabelle & Konstanten ---------- */
 const TABELLE = {
@@ -81,6 +81,12 @@ const scCloseBtn   = $('salary-calc-close');
 // Kachelseite, zu der dieses Werkzeug beim Öffnen/Schließen wechselt (siehe
 // openAppScreen/closeAppScreen in js/overlays.js).
 const homeScreenEl = $('home-screen');
+// Widget auf der Startseite und Speichern des Prozentsatzes. Bewusst NICHT
+// in alleElementeDa: Fehlen sie (alte index.html im Cache), läuft der
+// Rechner trotzdem; nur Widget bzw. Speichern entfallen.
+const gehaltWidget   = $('gehalt-widget');
+const scProzentSave  = $('sc-prozent-save');
+const scProzentStatus = $('sc-prozent-status');
 
 let jahrModus = false;
 
@@ -148,6 +154,84 @@ function nettoRechnung(bruttoGesamt, jahr, kvz){
 
   const netto = bruttoGesamt - sv - lohnsteuer - soli - vlAN;
   return { rv, alv, kvGrund, kvZusatz, pv, sv, lohnsteuer, soli, vlAN, netto };
+}
+
+/* ---------- Gespeicherter Prozentsatz (für Widget und Rechner) ----------
+   Nur auf diesem Gerät (localStorage), keine Cloud. Gespeichert wird allein
+   der Prozentsatz; Wochenstunden und Zusatzbeitrag nimmt das Widget aus den
+   Vorgabewerten der Felder (index.html), damit es nicht vom gerade
+   Herumprobieren im Rechner abhängt. */
+const PROZENT_KEY = 'kontor.gehalt.prozent';
+function gespeicherterProzent(){
+  try{
+    const v = parseFloat(localStorage.getItem(PROZENT_KEY));
+    return Number.isFinite(v) ? clamp(v, PROZENT_MIN, PROZENT_MAX) : 0;
+  }catch(e){ return 0; }
+}
+
+// Monatswerte für eine Stufe/Gruppe mit Prozentaufschlag — dieselbe Rechnung
+// wie update() im Monatsmodus (Brutto ohne VL, Netto inkl. VL-Abzügen).
+function szenarioMonat(stufe, gruppe, proz, std, kvz){
+  const basis  = Math.round(TABELLE[stufe][gruppe] * (std / BASIS_STD));
+  const brutto = Math.round(basis * (1 + proz / 100));
+  const netto  = nettoRechnung(brutto + VL_AG, false, kvz).netto;
+  return { brutto, netto };
+}
+
+// Kleine Bausteine für das Widget (DOM-API, kein innerHTML).
+function span(cls, text){
+  const e = document.createElement('span');
+  e.className = cls;
+  if(text != null) e.textContent = text;
+  return e;
+}
+function euroGanz(n){ return nf(Math.round(n), 0) + ' €'; }
+
+export function renderGehaltWidget(){
+  if(!gehaltWidget) return;
+  const std = clamp(parseKomma(scStunden.defaultValue), STUNDEN_MIN, STUNDEN_MAX);
+  const kvz = parseKomma(scKvz.defaultValue);
+  const proz = gespeicherterProzent();
+  // Vergleichsbasis des Rechners: KT5 / +7 bei 0 %.
+  const stufen = [
+    { cap: 'Heute · +7', w: szenarioMonat('+7', 'KT5', 0, std, kvz) },
+    { cap: 'Stufe +9', w: szenarioMonat('+9', 'KT5', 0, std, kvz) },
+    { cap: '+' + nf(proz, proz % 1 ? 1 : 0) + ' %', w: szenarioMonat('+9', 'KT5', proz, std, kvz) }
+  ];
+  const frag = document.createDocumentFragment();
+  stufen.forEach((st, i) => {
+    if(i > 0){
+      // Statt eines Pfeils: Winkel mit dem Netto-Zuwachs zur Vorstufe.
+      const diff = st.w.netto - stufen[i - 1].w.netto;
+      const t = span('gw-schritt');
+      t.append(span('gw-winkel', '›'), span('gw-plus', (diff >= 0 ? '+' : '−') + nf(Math.abs(Math.round(diff)), 0)));
+      frag.appendChild(t);
+    }
+    const brutto = span('gw-brutto', euroGanz(st.w.brutto));
+    brutto.appendChild(span('gw-brutto-wort', ' brutto'));
+    const sp = span('gw-spalte' + (i === 0 ? ' heute' : ''));
+    sp.append(span('gw-cap', st.cap),
+      span('gw-netto', euroGanz(st.w.netto)), brutto);
+    frag.appendChild(sp);
+  });
+  gehaltWidget.replaceChildren(frag);
+  if(scOpenBtn){
+    scOpenBtn.setAttribute('aria-label', 'Gehaltsrechner öffnen. Netto pro Monat: heute ' + euroGanz(stufen[0].w.netto) +
+      ', Stufe 9 ' + euroGanz(stufen[1].w.netto) + ', mit ' + stufen[2].cap + ' ' + euroGanz(stufen[2].w.netto) + '.');
+  }
+}
+
+function speichereProzent(){
+  const proz = clamp(parseKomma(scProzent.value), PROZENT_MIN, PROZENT_MAX);
+  scProzent.value = nf(proz, proz % 1 ? 2 : 0);
+  update();
+  let ok = true;
+  try{ localStorage.setItem(PROZENT_KEY, String(proz)); }catch(e){ ok = false; }
+  if(scProzentStatus){
+    scProzentStatus.textContent = ok ? 'Gespeichert ✓ – erscheint im Widget auf der Startseite.'
+                                     : 'Speichern nicht möglich (privater Modus?).';
+  }
+  renderGehaltWidget();
 }
 
 /* ---------- Oberfläche ---------- */
@@ -292,7 +376,16 @@ function init(){
   scStufe.value = '+7';
   fuelleGruppen();
   scGruppe.value = 'KT5';
+  // Gespeicherten Prozentsatz vorbelegen, damit Rechner und Widget dasselbe
+  // zeigen.
+  const proz = gespeicherterProzent();
+  if(proz) scProzent.value = nf(proz, proz % 1 ? 2 : 0);
   update();
+
+  if(scProzentSave) scProzentSave.addEventListener('click', speichereProzent);
+  // Hinweis "Gespeichert" verschwindet, sobald der Wert wieder geändert wird.
+  scProzent.addEventListener('input', () => { if(scProzentStatus) scProzentStatus.textContent = ''; });
+  renderGehaltWidget();
 }
 
 // Der Rechner ist ein Zusatzwerkzeug — er darf den Start der App unter
