@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=39';
-import { clamp, monthKey } from './utils.js?v=39';
+} from './constants.js?v=40';
+import { clamp, monthKey } from './utils.js?v=40';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=39';
+import { showBackupMsg } from './backup.js?v=40';
 
 export function emptyMonthData(){
   const categories = Object.create(null);
@@ -47,7 +47,11 @@ export function emptyMonthData(){
     // von ihnen zurückerstattet werden — dieselbe Form wie categories[key]
     // (Einträge mit Bezeichnung), damit sanitizeEntries direkt wiederverwendet
     // werden kann.
-    card: { restsaldoCents: null, eltern: [] }
+    card: { restsaldoCents: null, eltern: [] },
+    // Zeitpunkt (ms), an dem zuletzt ein Eintrag bei "Sonstige Ausgaben"
+    // angelegt wurde — null = noch nie. Wird unter der Gesamtsumme gezeigt,
+    // damit man weiß, ab wann wieder erfasst werden muss.
+    lastEntryAt: null
   };
 }
 
@@ -124,6 +128,11 @@ export function sanitizeMonthData(raw){
     month.card.restsaldoCents = clamp(cardCents, 0, CARD_TOTAL_CENTS);
   }
   month.card.eltern = sanitizeEntries(rawCard.eltern, true);
+
+  // Nur plausible Zeitstempel (2000 bis 2100) übernehmen.
+  if(Number.isFinite(raw.lastEntryAt) && raw.lastEntryAt >= 946684800000 && raw.lastEntryAt <= 4102444800000){
+    month.lastEntryAt = Math.round(raw.lastEntryAt);
+  }
 
   return month;
 }

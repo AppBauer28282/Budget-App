@@ -8,11 +8,11 @@ import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
   items, categoryDefs, savingDefs, fcKeys, FC_MAX
-} from './constants.js?v=39';
-import { el, fcSliders, fcVals } from './dom.js?v=39';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=39';
-import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=39';
-import { refreshTotals, renderCatList, renderSavList, renderCardElternList, showSalaryFixed, showSalarySlider } from './render.js?v=39';
+} from './constants.js?v=40';
+import { el, fcSliders, fcVals } from './dom.js?v=40';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=40';
+import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=40';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, showSalaryFixed, showSalarySlider } from './render.js?v=40';
 
 // --- Gehalt (Textfeld statt Regler: exakte Eingabe) ---
 el.salarySlider.addEventListener('input', () => {
@@ -156,6 +156,7 @@ function addCatEntry(){
   // Jeder Eintrag bleibt eine eigene Zeile — kein Zusammenführen gleicher
   // Bezeichnungen mehr, damit die Liste jede einzelne Buchung zeigt.
   list.push({ name, cents });
+  getMonthData(currentMonthKey).lastEntryAt = Date.now();
 
   saveAll(true);
   renderCatList();

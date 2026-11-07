@@ -5,11 +5,11 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=39';
-import { el, fcSliders, fcVals } from './dom.js?v=39';
-import { formatCents } from './utils.js?v=39';
-import { computeTotals, sumEntries } from './compute.js?v=39';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=39';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=40';
+import { el, fcSliders, fcVals } from './dom.js?v=40';
+import { formatCents } from './utils.js?v=40';
+import { computeTotals, sumEntries } from './compute.js?v=40';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=40';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung
@@ -100,6 +100,16 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summ
 export function renderCatList(){
   const m = getMonthData(currentMonthKey);
   renderGroupedList(categoryDefs, m.categories, el.catList, el.catGrandTotal, true, 'cat', el.catSummaryTotal);
+  // Datum des zuletzt angelegten Eintrags direkt unter der Gesamtsumme.
+  if(el.catLastEntry){
+    if(m.lastEntryAt){
+      const d = new Date(m.lastEntryAt);
+      el.catLastEntry.textContent = 'Zuletzt erfasst: ' + String(d.getDate()).padStart(2, '0') + '.' +
+        String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+    } else {
+      el.catLastEntry.textContent = '';
+    }
+  }
 }
 export function renderSavList(){
   const m = getMonthData(currentMonthKey);
