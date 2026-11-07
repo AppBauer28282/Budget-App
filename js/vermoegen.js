@@ -271,7 +271,7 @@ let saveTimer = null;
    [ETF] + [Tagesgeld] + [Aktien/BTC] = [Gesamt] in Tausend ("17,5K").
    Positionen anderer Klassen erscheinen als zusätzliche Kachel "Sonstige",
    damit die Gleichung immer aufgeht. Darunter ein Ladebalken zum nächsten
-   Meilenstein (Regel wie im Tracker) und wann er voraussichtlich erreicht wird —
+   Meilenstein nach Gesamtsumme und wann er voraussichtlich erreicht wird —
    mit derselben Wachstumsrate wie im Tracker (ETF+Aktien+BTC + Tagesgeld,
    automatisch oder aus den Einstellungen). */
 function kurzK(cents){
@@ -312,21 +312,19 @@ function renderWidget(){
   gleichung.appendChild(el('span', 'vtw-op', '='));
   gleichung.appendChild(widgetKachel(kurzK(gesamt), monatKurz(monat.id) + ' ' + monat.id.slice(0, 4), 'summe'));
 
-  // Nächster Meilenstein — dieselbe Regel wie im Tracker: erreicht erst,
-  // wenn Gesamt UND ETF+Aktien+BTC den Betrag erreicht haben. Balken und
-  // "noch …" zeigen deshalb den knapperen der beiden Werte; der Termin ist
-  // der spätere der beiden Prognosen (wie die Zeilen im Tracker).
-  const teil = teilSumme(monat);
-  const ms = MEILENSTEINE.find(x => !(gesamt >= x.betrag && teil >= x.betrag));
+  // Nächster Meilenstein nach der Gesamtsumme (= rechte Kachel). Balken wie
+  // die "Gesamt"-Zeile im Tracker (Gesamt / Ziel), Termin mit der Gesamt-Rate
+  // des Trackers: ETF+Aktien+BTC + Tagesgeld, automatisch oder aus den
+  // Einstellungen.
+  const ms = MEILENSTEINE.find(x => gesamt < x.betrag);
   const ziel = el('span', 'vtw-ziel');
   if(!ms){
     ziel.appendChild(el('span', 'vtw-ziel-name', 'Alle Meilensteine erreicht'));
   } else {
-    const knapp = Math.min(gesamt, teil);
-    const pct = Math.max(0, Math.min(100, knapp / ms.betrag * 100));
+    const pct = Math.max(0, Math.min(100, gesamt / ms.betrag * 100));
     const zeile = el('span', 'vtw-ziel-zeile');
     zeile.append(el('span', 'vtw-ziel-name', ms.name + ' · ' + kurzK(ms.betrag)),
-      el('span', 'vtw-ziel-rest', 'noch ' + kurzK(ms.betrag - knapp)));
+      el('span', 'vtw-ziel-rest', 'noch ' + kurzK(ms.betrag - gesamt)));
     const track = el('span', 'vtw-track');
     const fill = el('span', 'vtw-fill');
     fill.style.width = pct.toFixed(1) + '%';
@@ -334,16 +332,13 @@ function renderWidget(){
     const teilW = angewandtesWachstum('teil', durchschnittWachstum(m => teilSumme(m), bis));
     const tgW = angewandtesWachstum('tagesgeld', durchschnittWachstum(m => tagesgeldSumme(m), bis));
     const gesamtW = (teilW === null || tgW === null) ? null : teilW + tgW;
-    // Monate bis zum Ziel für einen Wert; 0 = schon erreicht, null = keine Prognose.
-    const monateBis = (wert, w) => wert >= ms.betrag ? 0 : ((w !== null && w > 0) ? Math.ceil((ms.betrag - wert) / w) : null);
-    const mg = monateBis(gesamt, gesamtW), mt = monateBis(teil, teilW);
     let wann = 'Prognose nicht möglich';
-    if(mg !== null && mt !== null){
-      const zielId = addMonate(monat.id, Math.max(mg, mt));
+    if(gesamtW !== null && gesamtW > 0){
+      const zielId = addMonate(monat.id, Math.ceil((ms.betrag - gesamt) / gesamtW));
       wann = 'erreicht ca. ' + zielId.slice(5, 7) + '/' + zielId.slice(0, 4);
     }
     ziel.append(zeile, track, el('span', 'vtw-wann', wann));
-    ziel.title = 'Gesamt ' + kurzK(gesamt) + ', ETF+Aktien+BTC ' + kurzK(teil) + ' von ' + kurzK(ms.betrag);
+    ziel.title = 'Gesamt ' + kurzK(gesamt) + ' von ' + kurzK(ms.betrag) + ' (' + Math.round(pct) + ' %)';
   }
   vtWidget.replaceChildren(gleichung, ziel);
   if(vtBtn){
