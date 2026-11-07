@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=45';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=46';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -1205,7 +1205,7 @@ function renderWidget(){
   if(ptWidgetKosten){
     const kosten = totalSpentCents();
     ptWidgetKosten.hidden = !(kosten > 0);
-    ptWidgetKosten.textContent = 'Σ ' + Math.round(kosten / 100).toLocaleString('de-DE') + ' €';
+    ptWidgetKosten.textContent = Math.round(kosten / 100).toLocaleString('de-DE') + ' €';
     ptWidgetKosten.title = 'Gesamtausgaben für alle Pens';
   }
 
