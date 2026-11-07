@@ -3232,15 +3232,18 @@
      bleiben. */
   .ptw-track.seg{ stroke-width: 5; stroke-linecap: butt; }
   .ptw-fill{ fill: none; stroke: var(--brass); stroke-width: 5; stroke-linecap: butt; }
+  /* Zahl mittig zwischen Bogenoberkante und den Bogenenden: Mitte bei
+     ~62 % der Höhe (Kreismittelpunkt liegt bei 76 %). */
   .ptw-text{
     position: absolute;
-    left: 0; right: 0; top: 42%;
+    left: 0; right: 0; top: 62%;
+    transform: translateY(-50%);
     display:flex; flex-direction:column; align-items:center;
     text-align:center;
   }
   .ptw-value{ font-size: 20px; font-weight: 700; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
   .ptw-gauge.mitte .ptw-value{ font-size: 26px; }
-  .ptw-gauge.mitte .ptw-text{ top: 40%; }
+  .ptw-gauge.mitte .ptw-text{ top: 62%; }
   .ptw-unit{ font-size: 0.55em; font-weight: 600; letter-spacing: 0; color: var(--ink-soft); }
 
   @media (max-width: 359px){
