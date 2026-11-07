@@ -2447,14 +2447,23 @@
      eng, kürzt die Einheiten-Zeile mit "…" statt umzubrechen. */
   .pt-pen-title{ white-space: nowrap; }
   .pt-pen-meta{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* Geschlossene Pens tragen zusätzlich das Abnahme-Kürzel in der Mitte —
+  /* Pens mit Abnahme-Kürzel (geschlossen und offen) tragen es in der Mitte —
      dafür die Abstände im Kopf etwas knapper, damit Titel und Einheiten
      auch auf 375–390 px vollständig bleiben. */
-  .pt-pen-card.closed .pt-pen-head{ gap: 6px; padding-left: 10px; padding-right: 8px; }
-  .pt-pen-card.closed .pt-pen-id{ gap: 7px; }
-  .pt-pen-card.closed .pt-pen-status-wrap{ gap: 4px; }
-  .pt-pen-card.closed .pt-pen-status{ letter-spacing: 0.04em; padding-left: 5px; padding-right: 5px; }
-  .pt-pen-card.closed .pt-pen-loss{ padding: 1px 5px; }
+  .pt-pen-card.has-loss .pt-pen-head{ gap: 6px; padding-left: 10px; padding-right: 8px; }
+  .pt-pen-card.has-loss .pt-pen-id{ gap: 7px; }
+  .pt-pen-card.has-loss .pt-pen-status-wrap{ gap: 4px; }
+  .pt-pen-card.has-loss .pt-pen-status{ letter-spacing: 0.04em; padding-left: 5px; padding-right: 5px; }
+  .pt-pen-card.has-loss .pt-pen-loss{ padding: 1px 5px; }
+  /* Offener Pen: Abnahme bisher — grau und kursiv, ohne Rahmen. */
+  .pt-pen-loss.open{
+    border: none;
+    padding: 0;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-weight: 600;
+  }
+  .pt-pen-card.has-loss .pt-pen-loss.open{ padding: 0; }
   /* Abnahme während eines geschlossenen Pens: kleines umrandetes Kürzel
      mittig zwischen Titel und Status. */
   .pt-pen-loss{

@@ -19,7 +19,7 @@
    Geldbeträge liegen wie im Budget als ganze Cent im Speicher, Gewichte als
    ganze Gramm — so entstehen beim Rechnen keine Rundungsfehler.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=31';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=32';
 
 /* ---------- Konstanten ---------- */
 const STORE_KEY = 'pentracker.v1';
@@ -420,16 +420,17 @@ function penForecast(pen){
   return { date: addDaysStr(last.date, Math.round(weeksLeft * 7)), weeksLeft };
 }
 
-// Abnahme während eines Pens: Gewicht zu Beginn (letzter Eintrag am oder vor
-// der ersten Spritze bzw. dem Startdatum) minus Gewicht am Ende (letzter
-// Eintrag bis eine Woche nach der letzten Spritze — so lange wirkt sie).
+// Abnahme während eines Pens: Gewicht zu Beginn (letzter Punkt am oder vor
+// der ersten Spritze bzw. dem Startdatum; das Startgewicht zählt mit) minus
+// Gewicht am Ende. Geschlossener Pen: letzter Punkt bis eine Woche nach der
+// letzten Spritze (so lange wirkt sie). Offener Pen: letzte Wiegung bis heute.
 function penWeightLossGrams(pen){
   if(!pen.entries.length) return null;
   const entries = sortedEntries(pen);
   let von = entries[0].date;
   if(pen.startDate && pen.startDate < von) von = pen.startDate;
-  const bis = addDaysStr(entries[entries.length - 1].date, 7);
-  const w = sortedWeights();
+  const bis = pen.closed ? addDaysStr(entries[entries.length - 1].date, 7) : todayStr();
+  const w = weightPoints();
   if(!w.length) return null;
   let start = null, ende = null;
   w.forEach(x => {
@@ -454,6 +455,19 @@ function costPerDoseCents(){
 
 function sortedWeights(){
   return [...state.weights].sort((a, b) => a.date.localeCompare(b.date));
+}
+// Gewichtseinträge plus das Startgewicht aus den Einstellungen als eigener
+// Punkt (isStart) — sonst fehlt im Diagramm und bei der Abnahme je Pen die
+// erste Woche, wenn zu Beginn nur das Startgewicht eingetragen wurde. Ein
+// echter Gewichtseintrag in derselben Kalenderwoche hat Vorrang.
+function weightPoints(){
+  const w = sortedWeights();
+  const s = state.settings;
+  if(s.startGrams == null || !s.startDate) return w;
+  const key = weekKey(s.startDate);
+  if(w.some(x => weekKey(x.date) === key)) return w;
+  return [{ id: 'start', date: s.startDate, grams: s.startGrams, isStart: true }, ...w]
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 function startGrams(){
   if(state.settings.startGrams != null) return state.settings.startGrams;
@@ -644,12 +658,16 @@ function buildPenCard(pen, showForecast){
 
   // Geschlossener Pen: Abnahme während des Pens als umrandetes Kürzel mittig
   // zwischen Titel und Status.
-  if(pen.closed){
+  // Abnahme während des Pens mittig zwischen Titel und Status: geschlossen
+  // grün umrandet, offen (läuft noch) grau und kursiv.
+  {
     const loss = penWeightLossGrams(pen);
     if(loss != null){
-      const badge = elem('span', 'pt-pen-loss', (loss >= 0 ? '−' : '+') + fmtKg(Math.abs(loss)));
-      badge.title = 'Abnahme mit diesem Pen';
+      const badge = elem('span', 'pt-pen-loss' + (pen.closed ? '' : ' open'),
+        (loss >= 0 ? '−' : '+') + fmtKg(Math.abs(loss)));
+      badge.title = pen.closed ? 'Abnahme mit diesem Pen' : 'Abnahme bisher mit diesem Pen';
       head.appendChild(badge);
+      card.classList.add('has-loss');
     }
   }
 
@@ -888,7 +906,7 @@ function renderChart(){
   clear(chartBox);
   clear(chartLegend);
 
-  const weights = sortedWeights();
+  const weights = weightPoints();
   if(weights.length < 2){
     chartBox.appendChild(elem('p', 'pt-chart-empty', 'Mindestens zwei Gewichtseinträge nötig, um den Verlauf zu zeichnen.'));
     return;
@@ -1032,7 +1050,7 @@ function renderChart(){
   weights.forEach((entry, i) => {
     const dose = pointDoses[i];
     addColumn(entry.date, entry.grams, dose != null ? colorFor[dose] : NO_DOSE_COLOR, false, false,
-      dose != null ? ' · ' + fmtNum(dose, 2) + ' mg/Woche' : '');
+      (dose != null ? ' · ' + fmtNum(dose, 2) + ' mg/Woche' : '') + (entry.isStart ? ' · Startgewicht' : ''));
   });
   forecast.forEach((point, i) => addColumn(point.date, point.grams, FORECAST_COLOR, true, i === 0, ''));
 
