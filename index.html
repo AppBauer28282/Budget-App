@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=55">
+<link rel="stylesheet" href="styles.css?v=56">
 </head>
 <body>
 
@@ -590,21 +590,33 @@
       <button type="button" class="receipt-close" id="rt-close" aria-label="Rücklagen Topf schließen">✕</button>
     </div>
     <div class="receipt-body">
-      <div class="rt-konto">
+      <section class="rt-block rt-block-konto">
         <label for="rt-konto-input" class="rt-konto-label">Rücklagen-Konto</label>
         <input type="text" id="rt-konto-input" class="rt-konto-input" inputmode="decimal" autocomplete="off" placeholder="0 €">
-      </div>
-      <div class="rt-abschnitt-kopf">
-        <span class="rt-abschnitt-titel">Aufteilung</span>
-        <span class="rt-diff" id="rt-diff"></span>
-      </div>
-      <div id="rt-toepfe"></div>
-      <div class="rt-plus-zeile" id="rt-plus-zeile"></div>
-      <div class="rt-abschnitt-kopf rt-wunsch-titel">
-        <span class="rt-abschnitt-titel">Wunschliste</span>
-        <span class="rt-diff" id="rt-wunsch-gesamt"></span>
-      </div>
-      <div id="rt-wuensche"></div>
+        <div class="rt-kpis" id="rt-kpis"></div>
+      </section>
+
+      <hr class="rt-trenner">
+
+      <section class="rt-block">
+        <div class="rt-abschnitt-kopf">
+          <span class="rt-abschnitt-titel">Aufteilung</span>
+          <span class="rt-diff" id="rt-diff"></span>
+        </div>
+        <div class="rt-balken" id="rt-balken" role="img"></div>
+        <div id="rt-toepfe"></div>
+        <div class="rt-plus-zeile" id="rt-plus-zeile"></div>
+      </section>
+
+      <hr class="rt-trenner">
+
+      <section class="rt-block">
+        <div class="rt-abschnitt-kopf">
+          <span class="rt-abschnitt-titel">Wunschliste</span>
+          <span class="rt-diff" id="rt-wunsch-gesamt"></span>
+        </div>
+        <div id="rt-wuensche"></div>
+      </section>
     </div>
   </div>
 </div>
@@ -1200,7 +1212,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=55"></script>
+<script type="module" src="js/app.js?v=56"></script>
 
 </body>
 </html>

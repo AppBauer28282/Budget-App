@@ -9,10 +9,10 @@
    Cloud-Abgleich und Sichern/Wiederherstellen), wirkt sich auf keine andere
    Berechnung aus. Alle Texte per textContent, kein innerHTML.
    ============================================================================= */
-import { categoryDefs, MAX_TEXT_LENGTH, AMOUNT_MAX_CENTS } from './constants.js?v=55';
-import { formatCents, parseEuroInputToCents } from './utils.js?v=55';
-import { allData, saveAll, RT_KEYS, sanitizeRuecklagenTopf } from './storage.js?v=55';
-import { openOverlay, closeOverlay } from './overlays.js?v=55';
+import { categoryDefs, MAX_TEXT_LENGTH, AMOUNT_MAX_CENTS, SLICE_COLORS } from './constants.js?v=56';
+import { formatCents, parseEuroInputToCents } from './utils.js?v=56';
+import { allData, saveAll, RT_KEYS, sanitizeRuecklagenTopf } from './storage.js?v=56';
+import { openOverlay, closeOverlay } from './overlays.js?v=56';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('rt-btn');
@@ -24,6 +24,16 @@ const toepfeEl   = $('rt-toepfe');
 const plusZeile  = $('rt-plus-zeile');
 const wunschGes  = $('rt-wunsch-gesamt');
 const wuenscheEl = $('rt-wuensche');
+const kpisEl     = $('rt-kpis');
+const balkenEl   = $('rt-balken');
+// Farbe je Topf = Kategoriefarbe aus Diagramm/Analyse (Wiedererkennung).
+const farbe = (key) => SLICE_COLORS[key] || '#8e8e93';
+function punkt(key){
+  const p = document.createElement('span');
+  p.className = 'rt-punkt';
+  p.style.background = farbe(key);
+  return p;
+}
 
 const NAME = Object.fromEntries(categoryDefs.map(d => [d.key, d.name]));
 
@@ -92,9 +102,20 @@ function renderToepfe(d){
   d.toepfe.forEach((t, idx) => {
     const z = document.createElement('div');
     z.className = 'rt-topf-zeile';
-    const name = document.createElement('span');
-    name.className = 'bt-name';
-    name.textContent = NAME[t.key];
+    const name = document.createElement('div');
+    name.className = 'rt-topf-name';
+    const titel = document.createElement('span');
+    titel.className = 'bt-name';
+    titel.textContent = NAME[t.key];
+    const anteil = document.createElement('span');
+    anteil.className = 'rt-anteil';
+    const text = document.createElement('div');
+    text.className = 'rt-topf-text';
+    text.append(titel, anteil);
+    name.append(punkt(t.key), text);
+    aktualisierer.push(() => {
+      anteil.textContent = d.kontoCents > 0 && t.cents > 0 ? Math.round(t.cents / d.kontoCents * 100) + ' %' : '';
+    });
     z.append(name,
       betragFeld(t.cents, 'Topf ' + NAME[t.key], c => { t.cents = c; }),
       wegKnopf('Topf ' + NAME[t.key] + ' entfernen', () => { d.toepfe.splice(idx, 1); }));
@@ -115,6 +136,27 @@ function renderToepfe(d){
     diffEl.textContent = rest < 0 ? formatCents(-rest) + ' zu viel verteilt'
                        : rest === 0 ? 'alles verteilt'
                        : 'nicht verteilt: ' + formatCents(rest);
+  });
+
+  // Aufteilungsbalken: je Topf ein farbiges Stück, Rest grau.
+  aktualisierer.push(() => {
+    const verteilt = summe(d.toepfe);
+    const basis = Math.max(d.kontoCents, verteilt);
+    const stuecke = document.createDocumentFragment();
+    if(basis > 0){
+      d.toepfe.forEach(t => {
+        if(t.cents <= 0) return;
+        const st = document.createElement('span');
+        st.className = 'rt-stueck';
+        st.style.width = (t.cents / basis * 100).toFixed(2) + '%';
+        st.style.background = farbe(t.key);
+        stuecke.appendChild(st);
+      });
+    }
+    balkenEl.replaceChildren(stuecke);
+    balkenEl.classList.toggle('drueber', verteilt > d.kontoCents);
+    balkenEl.setAttribute('aria-label', 'Verteilt ' + formatCents(verteilt) + ' von ' + formatCents(d.kontoCents));
+    balkenEl.hidden = d.toepfe.length === 0;
   });
 
   // "+ Topf": Auswahl der noch freien Kategorien.
@@ -152,13 +194,26 @@ function renderWuensche(d){
 
     const kopf = document.createElement('div');
     kopf.className = 'rt-gruppe-kopf';
+    g.style.setProperty('--rt-farbe', farbe(t.key));
     const n = document.createElement('span');
     n.className = 'rt-gruppe-name';
-    n.textContent = NAME[t.key];
+    n.append(punkt(t.key), document.createTextNode(NAME[t.key]));
     const s = document.createElement('span');
     s.className = 'rt-gruppe-summe';
     kopf.append(n, s);
     g.appendChild(kopf);
+
+    // Fortschritt: geplant im Verhältnis zum Topf.
+    const track = document.createElement('div');
+    track.className = 'bt-track rt-track';
+    const fill = document.createElement('div');
+    fill.className = 'bt-fill';
+    track.appendChild(fill);
+    g.appendChild(track);
+
+    const liste = document.createElement('div');
+    liste.className = 'rt-wunsch-liste';
+    g.appendChild(liste);
 
     t.wuensche.forEach((w, i) => {
       const z = document.createElement('div');
@@ -175,7 +230,7 @@ function renderWuensche(d){
       const betrag = betragFeld(w.cents, NAME[t.key] + ': Betrag ' + (i + 1), c => { w.cents = c; });
       betrag.className = 'fc-edit-betrag';
       z.append(name, betrag, wegKnopf('Wunsch entfernen', () => { t.wuensche.splice(i, 1); }));
-      g.appendChild(z);
+      liste.appendChild(z);
       if(fokusWunsch && fokusWunsch.key === t.key && fokusWunsch.i === i) setTimeout(() => name.focus(), 0);
     });
 
@@ -203,6 +258,10 @@ function renderWuensche(d){
       s.textContent = formatCents(geplant);
       topf.textContent = 'Topf ' + formatCents(t.cents) + ' · ';
       abweichung(abw, t.cents - geplant);
+      const pct = t.cents > 0 ? geplant / t.cents * 100 : (geplant > 0 ? 101 : 0);
+      fill.style.width = Math.min(100, pct).toFixed(1) + '%';
+      fill.classList.toggle('drueber', pct > 100);
+      fill.classList.toggle('knapp', pct >= 85 && pct <= 100);
     });
     fuss.append(plus, info);
     g.appendChild(fuss);
@@ -230,10 +289,41 @@ function renderWuensche(d){
   }
 }
 
+// Drei Kennzahlen unter dem Kontostand: verteilt, frei, in Wünschen geplant.
+function renderKpis(d){
+  const werte = [['Verteilt', 'verteilt'], ['Frei', 'frei'], ['Geplant', 'geplant']].map(([label, k]) => {
+    const kachel = document.createElement('div');
+    kachel.className = 'rt-kpi';
+    kachel.dataset.kpi = k;
+    const l = document.createElement('span');
+    l.className = 'rt-kpi-label';
+    l.textContent = label;
+    const v = document.createElement('span');
+    v.className = 'rt-kpi-wert';
+    kachel.append(l, v);
+    return [kachel, v, k];
+  });
+  kpisEl.replaceChildren(...werte.map(w => w[0]));
+  aktualisierer.push(() => {
+    const verteilt = summe(d.toepfe);
+    const geplant = d.toepfe.reduce((x, t) => x + summe(t.wuensche), 0);
+    // Ganze Euro, damit die Kacheln auch auf schmalen Handys nicht
+    // abschneiden. "Frei" = gerundetes Konto − gerundet verteilt, damit
+    // Verteilt + Frei immer genau den angezeigten Kontostand ergeben.
+    const r = (c) => Math.round(c / 100);
+    const euro = { verteilt: r(verteilt), frei: r(d.kontoCents) - r(verteilt), geplant: r(geplant) };
+    werte.forEach(([kachel, v, k]) => {
+      v.textContent = euro[k].toLocaleString('de-DE') + ' €';
+      kachel.classList.toggle('drueber', euro[k] < 0 || (k === 'frei' && d.kontoCents - verteilt < 0));
+    });
+  });
+}
+
 function render(){
   const d = daten();
   if(document.activeElement !== kontoIn) kontoIn.value = centsZuText(d.kontoCents);
   aktualisierer = [];
+  renderKpis(d);
   renderToepfe(d);
   renderWuensche(d);
   zahlen();
@@ -247,7 +337,7 @@ function oeffnen(){
 }
 function zu(){ closeOverlay(overlay, oeffnenBtn); }
 
-if([oeffnenBtn, overlay, schliessen, kontoIn, diffEl, toepfeEl, plusZeile, wunschGes, wuenscheEl].every(n => n !== null)){
+if([oeffnenBtn, overlay, schliessen, kontoIn, diffEl, toepfeEl, plusZeile, wunschGes, wuenscheEl, kpisEl, balkenEl].every(n => n !== null)){
   oeffnenBtn.addEventListener('click', oeffnen);
   schliessen.addEventListener('click', zu);
   overlay.addEventListener('click', (e) => { if(e.target === overlay) zu(); });
