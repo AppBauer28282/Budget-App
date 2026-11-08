@@ -26,7 +26,7 @@
    Oberfläche kollidieren. Aufbau der Listen über die DOM-API statt über
    innerHTML, wie überall sonst in dieser App.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=46';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=47';
 
 const STORE_KEY = 'konsumtopf.v3';
 const STORE_VERSION = 3;
@@ -43,6 +43,7 @@ const MON = ['Januar','Februar','März','April','Mai','Juni','Juli',
 // Obergrenzen: fangen unsinnige Eingaben und aufgeblähte Importdateien ab,
 // bevor sie den Speicher oder die Darstellung sprengen.
 const MAX_TEXT = 80;
+const MAX_REGELN = 2000;          // Freitext "Regeln"
 const MAX_POSTEN = 200;          // je Monat
 const MAX_BUCKET = 200;
 const MAX_JAHRE = 20;
@@ -129,7 +130,7 @@ function leererStand(){
   const jetzt = new Date().getFullYear();
   const jahre = {};
   jahre[String(jetzt)] = leeresJahr();
-  return { version: STORE_VERSION, aktiv: jetzt, jahre, bucket: [] };
+  return { version: STORE_VERSION, aktiv: jetzt, jahre, bucket: [], regeln: '' };
 }
 
 let state = leererStand();
@@ -154,7 +155,7 @@ function applyData(d){
   if(!d || typeof d !== 'object' || !d.jahre || typeof d.jahre !== 'object'){
     return false;
   }
-  const sauber = { version: STORE_VERSION, aktiv: new Date().getFullYear(), jahre: {}, bucket: [] };
+  const sauber = { version: STORE_VERSION, aktiv: new Date().getFullYear(), jahre: {}, bucket: [], regeln: '' };
   try{
     const schluessel = Object.keys(d.jahre)
       .filter(k => /^\d{4}$/.test(k) && Number(k) >= MIN_JAHR && Number(k) <= MAX_JAHR)
@@ -189,6 +190,10 @@ function applyData(d){
         };
       });
     }
+
+    // Freitext "Regeln": nur Text, auf Länge begrenzt (Anzeige per
+    // textContent, nie als HTML).
+    sauber.regeln = typeof d.regeln === 'string' ? d.regeln.slice(0, MAX_REGELN) : '';
 
     const gewuenscht = parseInt(d.aktiv, 10);
     sauber.aktiv = (isFinite(gewuenscht) && gewuenscht >= MIN_JAHR && gewuenscht <= MAX_JAHR)
@@ -806,10 +811,35 @@ function renderAbgeleitet(){
   renderBereiche();
   renderBeleg();
 }
+/* ---------- Regeln (Freitext) ----------
+   Unten ein Textfeld mit "Speichern", oben steht der gespeicherte Text unter
+   der Überschrift "Regeln". Leerer Text blendet den Kasten oben aus. */
+const ktRegelnBox   = $('kt-regeln-box');
+const ktRegelnText  = $('kt-regeln-text');
+const ktRegelnInput = $('kt-regeln-input');
+const ktRegelnSave  = $('kt-regeln-save');
+const ktRegelnMsg   = $('kt-regeln-msg');
+function renderRegeln(){
+  if(!ktRegelnBox) return;
+  const text = state.regeln || '';
+  ktRegelnText.textContent = text;
+  ktRegelnBox.hidden = !text.trim();
+  // Das Eingabefeld nur befüllen, wenn gerade niemand darin tippt.
+  if(ktRegelnInput && document.activeElement !== ktRegelnInput) ktRegelnInput.value = text;
+}
+function regelnSpeichern(){
+  state.regeln = ktRegelnInput.value.replace(/\s+$/, '').slice(0, MAX_REGELN);
+  save();
+  ktRegelnInput.blur();
+  renderRegeln();
+  if(ktRegelnMsg) ktRegelnMsg.textContent = state.regeln ? 'Gespeichert – steht oben unter „Regeln“.' : 'Regeln gelöscht.';
+}
+
 function render(){
   renderKopf();
   renderAbgeleitet();
   renderBucket();
+  renderRegeln();
 }
 
 /* ---------- Sichern / Laden als Datei ---------- */
@@ -973,3 +1003,9 @@ const alleElementeDa = [
 ].every(node => node !== null && node !== undefined);
 
 if(alleElementeDa) init();
+// Regeln: eigenständig verdrahtet — fehlen die Felder, läuft der Rest weiter.
+if(alleElementeDa && ktRegelnInput && ktRegelnSave){
+  ktRegelnSave.addEventListener('click', regelnSpeichern);
+  ktRegelnInput.addEventListener('input', () => { if(ktRegelnMsg) ktRegelnMsg.textContent = ''; });
+  renderRegeln();
+}

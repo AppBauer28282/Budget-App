@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=46">
+<link rel="stylesheet" href="styles.css?v=47">
 </head>
 <body>
 
@@ -761,6 +761,12 @@
 
       <p class="kt-sub">Zwei Töpfe mit Übertrag &amp; Bucket List</p>
 
+      <!-- Gespeicherte Regeln (Text aus dem Feld ganz unten). -->
+      <div class="kt-card kt-regeln" id="kt-regeln-box" hidden>
+        <p class="kt-regeln-titel">Regeln</p>
+        <p class="kt-regeln-text" id="kt-regeln-text"></p>
+      </div>
+
       <div class="kt-card">
         <div class="kt-row">
           <div style="flex:0 0 110px">
@@ -805,6 +811,15 @@
                   aria-label="Eintrag hinzufügen">+</button>
         </div>
         <div class="kt-sum tot"><span>Summe offen</span><b id="kt-bl-sum">0 €</b></div>
+      </div>
+
+      <p class="kt-h2">Regeln</p>
+      <div class="kt-card">
+        <label for="kt-regeln-input" class="visually-hidden">Regeln</label>
+        <textarea id="kt-regeln-input" class="kt-regeln-input" rows="5" maxlength="2000"
+                  placeholder="Eigene Regeln für den Konsumtopf …"></textarea>
+        <button type="button" class="kt-pri kt-regeln-save" id="kt-regeln-save">Speichern</button>
+        <p class="kt-regeln-msg" id="kt-regeln-msg" role="status"></p>
       </div>
 
       <div class="kt-actions">
@@ -1234,7 +1249,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=46"></script>
+<script type="module" src="js/app.js?v=47"></script>
 
 </body>
 </html>

@@ -3461,6 +3461,21 @@
   .fc-edit-aktionen{ display:flex; gap: 10px; margin-top: 12px; }
   .fc-edit-aktionen > button{ flex: 1; margin: 0; }
 
+  /* ---------- Konsumtopf: Regeln ---------- */
+  .konsum-overlay .kt-regeln{ border-left: 5px solid #ffcc00; }
+  .kt-regeln-titel{ margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b6b70; }
+  .kt-regeln-text{ margin: 0; font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .konsum-overlay textarea.kt-regeln-input{
+    width: 100%; box-sizing: border-box; resize: vertical;
+    font-family: inherit; font-size: 16px; line-height: 1.4;
+    padding: 9px 10px; border: 1px solid #d8d8dd; border-radius: 10px; background: #fff; color: #1c1c1e;
+  }
+  .konsum-overlay .kt-regeln-save{ width: 100%; margin-top: 8px; padding: 10px; border-radius: 10px; font-weight: 600; }
+  .kt-regeln-msg{ margin: 6px 0 0; font-size: 12px; color: #6b6b70; min-height: 14px; }
+  [data-theme="dark"] .konsum-overlay textarea.kt-regeln-input{ background: #2c2c2e; border-color: #48484a; color: #fff; }
+  [data-theme="dark"] .kt-regeln-titel,
+  [data-theme="dark"] .kt-regeln-msg{ color: #98989f; }
+
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */
   .sc-prozent-zeile{ display:flex; gap: 8px; }
   .sc-prozent-zeile input{ flex: 1 1 auto; }
