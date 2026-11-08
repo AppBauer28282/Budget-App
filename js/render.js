@@ -171,7 +171,7 @@ export function refreshTotals(){
   el.cardCatTotal.textContent = formatCents(t.categoryTotal);
 
   el.cardElternRow.textContent = formatCents(t.cardElternTotal);
-  el.cardRausRow.textContent = formatCents(t.cardRausTotal);
+  el.cardRausRow.textContent = (t.cardRausTotal ? '+ ' : '') + formatCents(t.cardRausTotal);
 
   if(m.card.restsaldoCents === null){
     el.cardUsed.textContent = '–';
@@ -185,8 +185,10 @@ export function refreshTotals(){
     // "used"), zählen aber nicht als eigene Ausgabe — deshalb werden sie
     // hier wieder herausgerechnet, sonst würde die Differenz fälschlich
     // eine Lücke zeigen, obwohl das Geld zurückerstattet wird.
-    // "Rausrechnen" genauso: lief über die Karte, gehört aber nicht dazu.
-    const diff = used - t.categoryTotal - t.cardElternTotal - t.cardRausTotal;
+    // "Rausrechnen" dagegen sind Sonstige Ausgaben, die NICHT über die Karte
+    // liefen (bar, anderes Konto): sie werden aus den Ausgaben herausgerechnet
+    // und verkleinern damit die Lücke zwischen Karte und Ausgaben (v54).
+    const diff = used - t.categoryTotal - t.cardElternTotal + t.cardRausTotal;
     el.cardUsed.textContent = formatCents(used);
     el.cardDiff.textContent = formatCents(diff);
     el.cardDiff.classList.toggle('negative', diff < 0);
