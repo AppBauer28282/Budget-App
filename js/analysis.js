@@ -7,24 +7,23 @@
    samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
    nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { categoryDefs, MONTHS, SLICE_COLORS } from './constants.js?v=51';
-import { el } from './dom.js?v=51';
-import { formatCents } from './utils.js?v=51';
-import { allData, fixkostenVon } from './storage.js?v=51';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=51';
-import { openOverlay, closeOverlay } from './overlays.js?v=51';
+import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=52';
+import { el } from './dom.js?v=52';
+import { formatCents } from './utils.js?v=52';
+import { allData, fixkostenVon } from './storage.js?v=52';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=52';
+import { openOverlay, closeOverlay } from './overlays.js?v=52';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.
-// Sparen und Auflösung Rücklagen stehen hier auf Nutzerwunsch als ganz
-// normale, einzeln abwählbare Positionen (Rücklagen gehören seit v50 zu den
-// Sonstige-Ausgaben-Kategorien) — sie erscheinen damit im
-// selben Diagramm und in derselben Liste wie die übrigen Kategorien.
+// Sparen steht hier als ganz normale, einzeln abwählbare Position.
+// "Auflösung Rücklagen" (v52) ist keine eigene Position: sie läuft als
+// Minus-Posten in den Rücklagen (400 € − 300 € = 100 €; mehr aufgelöst als
+// zurückgelegt ergibt eine negative Zwischensumme, angezeigt mit "+").
 export const ANALYSIS_CATEGORIES = [
   { key: 'fixed', name: 'Fixkosten' },
-  ...categoryDefs.map(d => ({ key: d.key, name: d.name })),
-  { key: 'sparen', name: 'Sparen' },
-  { key: 'aufloesung', name: 'Auflösung Rücklagen' }
+  ...categoryDefs.filter(d => !VERRECHNET_IN[d.key]).map(d => ({ key: d.key, name: d.name })),
+  { key: 'sparen', name: 'Sparen' }
 ];
 
 function getAvailableYears(){
@@ -132,7 +131,7 @@ export function computeAnalysisData(year, monthSet, categorySet){
 
   function addToGroup(key, label, cents){
     const g = groupByKey.get(key);
-    if(!g || cents <= 0) return;
+    if(!g || cents === 0) return;
     g.map.set(label, (g.map.get(label) || 0) + cents);
   }
 
@@ -146,10 +145,16 @@ export function computeAnalysisData(year, monthSet, categorySet){
       });
     }
     categoryDefs.forEach(def => {
+      const ziel = VERRECHNET_IN[def.key];
+      if(ziel){
+        // Auflösung: negativ in der Zielgruppe (Rücklagen).
+        if(groupByKey.has(ziel)) m.categories[def.key].forEach(e => addToGroup(ziel, aufloesungLabel(e.name), -e.cents));
+        return;
+      }
       if(!groupByKey.has(def.key)) return;
       m.categories[def.key].forEach(e => addToGroup(def.key, e.name, e.cents));
     });
-    ['sparen', 'aufloesung'].forEach(key => {
+    ['sparen'].forEach(key => {
       if(!groupByKey.has(key)) return;
       const sum = m.saving[key].reduce((s, e) => s + e.cents, 0);
       addToGroup(key, groupByKey.get(key).name, sum);
@@ -160,11 +165,12 @@ export function computeAnalysisData(year, monthSet, categorySet){
     .map(g => {
       const entries = Array.from(g.map.entries())
         .map(([label, cents]) => ({ label, cents }))
-        .sort((a, b) => b.cents - a.cents); // größte Position zuerst
+        .filter(e => e.cents !== 0)
+        .sort((a, b) => b.cents - a.cents); // größte Position zuerst, Minus-Posten zuletzt
       const subtotal = entries.reduce((s, e) => s + e.cents, 0);
       return { key: g.key, name: g.name, color: g.color, entries, subtotal };
     })
-    .filter(g => g.subtotal > 0); // Kategorien ohne Einträge im Zeitraum überspringen
+    .filter(g => g.entries.length > 0); // Kategorien ohne Einträge im Zeitraum überspringen
 }
 
 // Grobe Dreiteilung für das Übersichtsdiagramm ganz unten. Bewusst feste
@@ -172,7 +178,7 @@ export function computeAnalysisData(year, monthSet, categorySet){
 // Fixem, laufenden Ausgaben und Zurückgelegtem:
 //   Fix      = abgehakte Fixkosten + Jahresfix
 //   Ausgaben = alle übrigen Sonstige-Ausgaben-Kategorien (inkl. Rücklagen)
-//              + Auflösung Rücklagen
+//              − Auflösung Rücklagen
 //   Sparen   = Sparen
 // Jahresfix zählt ausschließlich zu "Fix" und ist deshalb aus "Ausgaben"
 // herausgenommen, sonst stünde derselbe Betrag doppelt im Diagramm.
@@ -192,13 +198,12 @@ function computeSummaryData(year, monthSet){
     });
 
     categoryDefs.forEach(def => {
-      const sum = m.categories[def.key].reduce((s, e) => s + e.cents, 0);
+      const sum = (VERRECHNET_IN[def.key] ? -1 : 1) * m.categories[def.key].reduce((s, e) => s + e.cents, 0);
       if(SUMMARY_FIX_CATEGORIES.includes(def.key)) fixCents += sum;
       else ausgabenCents += sum;
     });
 
     sparenCents   += m.saving.sparen.reduce((s, e) => s + e.cents, 0);
-    ausgabenCents += m.saving.aufloesung.reduce((s, e) => s + e.cents, 0);
   });
 
   return [
@@ -246,7 +251,7 @@ function renderChartSection(container, title, slices, emptyText){
 }
 
 function renderAnalysisChart(container, groups){
-  const slices = groups.map(g => ({ label: g.name, cents: g.subtotal, color: g.color }));
+  const slices = groups.filter(g => g.subtotal > 0).map(g => ({ label: g.name, cents: g.subtotal, color: g.color }));
   renderChartSection(container, durchschnitt ? 'Ausgaben (Ø pro Monat)' : 'Ausgaben', slices, 'Keine Daten für diese Auswahl.');
 }
 
@@ -285,8 +290,8 @@ function renderAnalysisList(container, groups){
       text.className = 'cat-entry-text';
       text.textContent = entry.label;
       const amount = document.createElement('span');
-      amount.className = 'cat-entry-amount';
-      amount.textContent = formatCents(entry.cents);
+      amount.className = 'cat-entry-amount' + (entry.cents < 0 ? ' income' : '');
+      amount.textContent = entry.cents < 0 ? '− ' + formatCents(-entry.cents) : formatCents(entry.cents);
       line.append(text, amount);
       group.appendChild(line);
     });
@@ -296,7 +301,8 @@ function renderAnalysisList(container, groups){
     const subLabel = document.createElement('span');
     subLabel.textContent = 'Zwischensumme ' + g.name;
     const subValue = document.createElement('span');
-    subValue.textContent = formatCents(g.subtotal);
+    subValue.textContent = g.subtotal < 0 ? '+ ' + formatCents(-g.subtotal) : formatCents(g.subtotal);
+    if(g.subtotal < 0) subValue.className = 'income';
     subtotalRow.append(subLabel, subValue);
     group.appendChild(subtotalRow);
 

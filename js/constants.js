@@ -22,8 +22,8 @@
 //   sed -i "s/?v=ALT\b/?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v51';
-export const APP_VERSION_DATE = '2026-11-07';
+export const APP_VERSION = 'v52';
+export const APP_VERSION_DATE = '2026-11-08';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
 // (0.1 + 0.2 !== 0.3 in JavaScript). Gerechnet wird durchgängig in Cent.
@@ -52,12 +52,25 @@ export const categoryDefs = [
   // Rücklagen zählen seit v50 als Ausgabe, nicht mehr als Sparen. Ältere
   // Stände (saving.ruecklagen) werden beim Laden hierher umgezogen
   // (storage.js sanitizeMonthData).
-  { key: 'ruecklagen',   name: 'Rücklagen' }
+  { key: 'ruecklagen',   name: 'Rücklagen' },
+  // Auflösung Rücklagen (v52): eigene, auswählbare Kategorie, die rechnerisch
+  // GEGEN die Rücklagen läuft (400 € Rücklage − 300 € Auflösung = 100 €;
+  // mehr aufgelöst = "+"). Überall, wo summiert wird, zählt sie negativ —
+  // siehe kategorieSumme() unten.
+  { key: 'aufloesung',   name: 'Auflösung Rücklagen' }
 ];
+// Kategorien, die beim Summieren abgezogen statt addiert werden.
+export const MINUS_KATEGORIEN = ['aufloesung'];
+export function vorzeichen(key){ return MINUS_KATEGORIEN.includes(key) ? -1 : 1; }
+// In welcher Kategorie eine Minus-Kategorie angezeigt/verrechnet wird.
+export const VERRECHNET_IN = { aufloesung: 'ruecklagen' };
+// Anzeigename eines Auflösungs-Eintrags innerhalb der Rücklagen.
+export function aufloesungLabel(name){
+  return /^Auflösung/.test(name) ? name : 'Auflösung: ' + name;
+}
 
 export const savingDefs = [
-  { key: 'sparen',     name: 'Sparen' },
-  { key: 'aufloesung', name: 'Auflösung Rücklagen' }
+  { key: 'sparen',     name: 'Sparen' }
 ];
 
 // Echte Kalenderreihenfolge (kein fiktives Geschäftsjahr mehr), da Monat

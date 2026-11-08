@@ -3,9 +3,9 @@
    Alle Summen werden einmal pro Aktualisierung in einem Durchlauf berechnet
    und weitergereicht, statt dieselben Werte mehrfach zu ermitteln.
    ============================================================================= */
-import { categoryDefs, savingDefs, fcKeys } from './constants.js?v=51';
-import { fixkostenVon } from './storage.js?v=51';
-import { getMonthData, currentMonthKey } from './storage.js?v=51';
+import { categoryDefs, savingDefs, fcKeys, vorzeichen } from './constants.js?v=52';
+import { fixkostenVon } from './storage.js?v=52';
+import { getMonthData, currentMonthKey } from './storage.js?v=52';
 
 export function sumEntries(list){
   let total = 0;
@@ -25,18 +25,15 @@ export function computeTotals(){
     else { fixedRest += items[i].cents; }
   }
 
+  // "Auflösung Rücklagen" zählt negativ (läuft gegen die Rücklagen).
   let categoryTotal = 0;
-  for(const def of categoryDefs) categoryTotal += sumEntries(m.categories[def.key]);
+  for(const def of categoryDefs) categoryTotal += vorzeichen(def.key) * sumEntries(m.categories[def.key]);
 
-  // Sparen/Rücklagen mindern das Verbleibend, "Auflösung Rücklagen" erhöht es
-  // wieder — das ist Geld, das aus den Rücklagen zurück ins Budget fließt.
+  // Sparen mindert das Verbleibend. (Auflösung Rücklagen läuft seit v52 als
+  // Minus-Kategorie in categoryTotal, siehe oben.)
   let savingOut = 0;
-  let savingIn = 0;
-  for(const def of savingDefs){
-    const sum = sumEntries(m.saving[def.key]);
-    if(def.key === 'aufloesung') savingIn += sum;
-    else savingOut += sum;
-  }
+  const savingIn = 0;
+  for(const def of savingDefs) savingOut += sumEntries(m.saving[def.key]);
 
   let forecastSliders = 0;
   for(const k of fcKeys) forecastSliders += m.forecast[k];

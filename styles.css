@@ -450,6 +450,7 @@
   }
   /* Beträge, die das Budget erhöhen (Auflösung Rücklagen), grün mit "+". */
   .cat-entry-amount.income{ color: var(--ok); font-weight: 600; }
+  .cat-subtotal .income{ color: var(--ok); }
   /* Gilt für BEIDE Listen (vorher fehlte die Regel für die Sparen-Liste). */
   .cat-entry-remove{
     background:none;

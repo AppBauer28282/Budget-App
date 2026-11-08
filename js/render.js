@@ -5,16 +5,16 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS } from './constants.js?v=51';
-import { fixkostenVon } from './storage.js?v=51';
-import { el, fcSliders, fcVals } from './dom.js?v=51';
-import { formatCents } from './utils.js?v=51';
-import { computeTotals, sumEntries } from './compute.js?v=51';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=51';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS, vorzeichen, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=52';
+import { fixkostenVon } from './storage.js?v=52';
+import { el, fcSliders, fcVals } from './dom.js?v=52';
+import { formatCents } from './utils.js?v=52';
+import { computeTotals, sumEntries } from './compute.js?v=52';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=52';
 
 // Baut eine Eintragszeile per DOM-API auf.
-// isIncome=true kennzeichnet Beträge, die das Budget erhöhen (z. B. Auflösung
-// Rücklagen), statt es zu verringern — mit "+" und grüner Farbe sichtbar gemacht.
+// isIncome=true kennzeichnet Beträge, die gegen ihre Gruppe laufen (Auflösung
+// Rücklagen innerhalb der Rücklagen) — mit "−" und grüner Farbe sichtbar gemacht.
 function buildEntryLine(scope, key, idx, entry, withName, isIncome){
   const line = document.createElement('div');
   line.className = 'cat-entry-line';
@@ -28,7 +28,7 @@ function buildEntryLine(scope, key, idx, entry, withName, isIncome){
 
   const amount = document.createElement('span');
   amount.className = 'cat-entry-amount' + (isIncome ? ' income' : '');
-  amount.textContent = (isIncome ? '+ ' : '') + formatCents(entry.cents);
+  amount.textContent = (isIncome ? '− ' : '') + formatCents(entry.cents);
   line.appendChild(amount);
 
   const btn = document.createElement('button');
@@ -56,10 +56,18 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summ
   let hasEntries = false;
 
   defs.forEach(def => {
-    const entries = dataObj[def.key];
-    const subtotal = sumEntries(entries);
+    // Minus-Kategorien (Auflösung Rücklagen) stehen nicht als eigene Gruppe,
+    // sondern innerhalb der Gruppe, gegen die sie verrechnet werden.
+    if(VERRECHNET_IN[def.key]) return;
+    const zeilen = dataObj[def.key].map((entry, idx) => ({ key: def.key, idx, entry, minus: false }));
+    Object.keys(VERRECHNET_IN).forEach(mk => {
+      if(VERRECHNET_IN[mk] === def.key && dataObj[mk]){
+        dataObj[mk].forEach((entry, idx) => zeilen.push({ key: mk, idx, entry, minus: true }));
+      }
+    });
+    const subtotal = zeilen.reduce((s, z) => s + vorzeichen(z.key) * z.entry.cents, 0);
     grandTotal += subtotal;
-    if(entries.length === 0) return;  // leere Gruppen ausblenden
+    if(zeilen.length === 0) return;  // leere Gruppen ausblenden
     hasEntries = true;
 
     const group = document.createElement('div');
@@ -70,8 +78,9 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summ
     heading.textContent = def.name;
     group.appendChild(heading);
 
-    entries.forEach((entry, idx) => {
-      group.appendChild(buildEntryLine(scope, def.key, idx, entry, withName, def.key === 'aufloesung'));
+    zeilen.forEach(z => {
+      const entry = z.minus && withName ? { ...z.entry, name: aufloesungLabel(z.entry.name) } : z.entry;
+      group.appendChild(buildEntryLine(scope, z.key, z.idx, entry, withName, z.minus));
     });
 
     const subtotalRow = document.createElement('div');
@@ -79,7 +88,9 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summ
     const subLabel = document.createElement('span');
     subLabel.textContent = 'Zwischensumme ' + def.name;
     const subValue = document.createElement('span');
-    subValue.textContent = formatCents(subtotal);
+    // Mehr aufgelöst als zurückgelegt: Überschuss mit "+" kennzeichnen.
+    subValue.textContent = subtotal < 0 ? '+ ' + formatCents(-subtotal) : formatCents(subtotal);
+    if(subtotal < 0) subValue.className = 'income';
     subtotalRow.append(subLabel, subValue);
     group.appendChild(subtotalRow);
 
@@ -94,8 +105,9 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summ
   }
 
   listEl.replaceChildren(fragment);
-  totalEl.textContent = formatCents(grandTotal);
-  if(summaryTotalEl) summaryTotalEl.textContent = formatCents(grandTotal);
+  const gesamtText = grandTotal < 0 ? '+ ' + formatCents(-grandTotal) : formatCents(grandTotal);
+  totalEl.textContent = gesamtText;
+  if(summaryTotalEl) summaryTotalEl.textContent = gesamtText;
 }
 
 export function renderCatList(){

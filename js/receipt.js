@@ -7,15 +7,15 @@
    Wird auch für abgeschlossene Monate genutzt — dort ist es die einzige
    noch zugängliche Ansicht (siehe navigation.js openMonthDetail).
    ============================================================================= */
-import { categoryDefs, savingDefs, fcKeys, FC_LABELS } from './constants.js?v=51';
-import { el } from './dom.js?v=51';
-import { formatCents } from './utils.js?v=51';
-import { computeTotals } from './compute.js?v=51';
-import { getMonthData, currentMonthKey, currentMonthLabelText, fixkostenVon } from './storage.js?v=51';
-import { openOverlay, closeOverlay } from './overlays.js?v=51';
+import { categoryDefs, savingDefs, fcKeys, FC_LABELS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=52';
+import { el } from './dom.js?v=52';
+import { formatCents } from './utils.js?v=52';
+import { computeTotals } from './compute.js?v=52';
+import { getMonthData, currentMonthKey, currentMonthLabelText, fixkostenVon } from './storage.js?v=52';
+import { openOverlay, closeOverlay } from './overlays.js?v=52';
 // Zirkulärer Import: navigation.js importiert umgekehrt openReceipt aus
 // diesem Modul. Sicher, siehe Kommentar in navigation.js.
-import { showOverview } from './navigation.js?v=51';
+import { showOverview } from './navigation.js?v=52';
 
 function addReceiptSectionTitle(container, text){
   const h = document.createElement('p');
@@ -29,6 +29,7 @@ function addReceiptSubgroup(container, text){
   p.textContent = text;
   container.appendChild(p);
 }
+// isIncome: Betrag läuft gegen die Ausgaben (Auflösung Rücklagen) — "−" in Grün.
 function addReceiptLine(container, label, cents, isIncome){
   const line = document.createElement('div');
   line.className = 'receipt-line';
@@ -37,7 +38,7 @@ function addReceiptLine(container, label, cents, isIncome){
   l.textContent = label;
   const a = document.createElement('span');
   a.className = 'receipt-line-amount' + (isIncome ? ' income' : '');
-  a.textContent = (isIncome ? '+ ' : '') + formatCents(cents);
+  a.textContent = (isIncome ? '− ' : '') + formatCents(cents);
   line.append(l, a);
   container.appendChild(line);
 }
@@ -87,6 +88,7 @@ function buildReceipt(){
   addReceiptSubgroup(frag, 'Sonstige Ausgaben');
   let anyCat = false;
   categoryDefs.forEach(def => {
+    if(VERRECHNET_IN[def.key]) return; // steht bei ihrer Zielkategorie
     // Einträge mit derselben Bezeichnung innerhalb der Kategorie werden zu
     // einer Zeile zusammengefasst (Summe), statt jede einzelne Buchung
     // aufzulisten — z. B. mehrere "Einkauf: Rewe"-Buchungen als eine Zeile.
@@ -99,6 +101,16 @@ function buildReceipt(){
       addReceiptLine(frag, def.name + ': ' + name, cents);
       anyCat = true;
     });
+    // Auflösungen direkt unter den Rücklagen, als Minus-Posten.
+    Object.keys(VERRECHNET_IN).forEach(mk => {
+      if(VERRECHNET_IN[mk] !== def.key) return;
+      const minus = new Map();
+      m.categories[mk].forEach(entry => minus.set(entry.name, (minus.get(entry.name) || 0) + entry.cents));
+      minus.forEach((cents, name) => {
+        addReceiptLine(frag, aufloesungLabel(name), cents, true);
+        anyCat = true;
+      });
+    });
   });
   if(!anyCat) addReceiptEmptyNote(frag, 'Noch keine Einträge.');
 
@@ -106,7 +118,7 @@ function buildReceipt(){
   let anySav = false;
   savingDefs.forEach(def => {
     m.saving[def.key].forEach(entry => {
-      addReceiptLine(frag, def.name, entry.cents, def.key === 'aufloesung');
+      addReceiptLine(frag, def.name, entry.cents);
       anySav = true;
     });
   });

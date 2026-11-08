@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=51';
-import { clamp, monthKey } from './utils.js?v=51';
+} from './constants.js?v=52';
+import { clamp, monthKey } from './utils.js?v=52';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=51';
+import { showBackupMsg } from './backup.js?v=52';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -151,6 +151,13 @@ export function sanitizeMonthData(raw){
   // Umzug (v50): Rücklagen standen früher unter "Sparen" (ohne Bezeichnung)
   // und gehören jetzt zu "Sonstige Ausgaben".
   const altRuecklagen = (raw.saving && typeof raw.saving === 'object') ? raw.saving.ruecklagen : null;
+  // Umzug (v52): "Auflösung Rücklagen" stand unter "Sparen" und ist jetzt
+  // eine eigene Kategorie bei "Sonstige Ausgaben".
+  const altAufl = (raw.saving && typeof raw.saving === 'object') ? raw.saving.aufloesung : null;
+  if(Array.isArray(altAufl) && altAufl.length){
+    const umzug = sanitizeEntries(altAufl, false).map(e => ({ name: 'Auflösung', cents: e.cents }));
+    month.categories.aufloesung = month.categories.aufloesung.concat(umzug).slice(0, MAX_ENTRIES_PER_KEY);
+  }
   if(Array.isArray(altRuecklagen) && altRuecklagen.length){
     const umzug = sanitizeEntries(altRuecklagen, false).map(e => ({ name: 'Rücklagen', cents: e.cents }));
     month.categories.ruecklagen = month.categories.ruecklagen.concat(umzug).slice(0, MAX_ENTRIES_PER_KEY);

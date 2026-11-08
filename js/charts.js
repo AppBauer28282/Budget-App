@@ -6,12 +6,12 @@
    <path> per Trigonometrie berechnet. Gleiche Anzeigelogik wie der Beleg
    (Overlay, nur per Button sichtbar).
    ============================================================================= */
-import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS } from './constants.js?v=51';
-import { el } from './dom.js?v=51';
-import { formatCents } from './utils.js?v=51';
-import { computeTotals, sumEntries } from './compute.js?v=51';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=51';
-import { openOverlay, closeOverlay } from './overlays.js?v=51';
+import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS, VERRECHNET_IN } from './constants.js?v=52';
+import { el } from './dom.js?v=52';
+import { formatCents } from './utils.js?v=52';
+import { computeTotals, sumEntries } from './compute.js?v=52';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=52';
+import { openOverlay, closeOverlay } from './overlays.js?v=52';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -100,8 +100,8 @@ export function buildChartLegend(container, slices, total){
 // Forecast-Regler als eigene "(Forecast)"-Segmente — keiner der neuen
 // Kategorienamen entspricht mehr eindeutig einem Regler, daher werden sie
 // bewusst nicht mehr in eine Kategorie eingerechnet, sondern konsequent
-// separat ausgewiesen. "Auflösung Rücklagen" ist eine Einnahme, keine
-// Ausgabe, und taucht daher bewusst in keinem der beiden Diagramme auf.
+// separat ausgewiesen. "Auflösung Rücklagen" ist kein eigenes Stück, sondern
+// mindert das Rücklagen-Stück (netto).
 function computeChartSlices(){
   const m = getMonthData(currentMonthKey);
   const t = computeTotals();
@@ -110,17 +110,26 @@ function computeChartSlices(){
     if(cents > 0) list.push({ label, cents, color });
   }
 
+  // Netto je Kategorie: Rücklagen abzüglich Auflösungen (nie unter 0 im
+  // Diagramm); die Auflösung selbst ist kein eigenes Tortenstück.
+  function netto(key){
+    let c = sumEntries(m.categories[key]);
+    Object.keys(VERRECHNET_IN).forEach(mk => { if(VERRECHNET_IN[mk] === key) c -= sumEntries(m.categories[mk]); });
+    return c;
+  }
+  const katDefs = categoryDefs.filter(def => !VERRECHNET_IN[def.key]);
+
   const real = [];
   push(real, 'Fixkosten (abgehakt)', t.fixedPaid, SLICE_COLORS.fixed);
-  categoryDefs.forEach(def => {
-    push(real, def.name, sumEntries(m.categories[def.key]), SLICE_COLORS[def.key]);
+  katDefs.forEach(def => {
+    push(real, def.name, netto(def.key), SLICE_COLORS[def.key]);
   });
   push(real, 'Sparen', sumEntries(m.saving.sparen), SLICE_COLORS.sparen);
 
   const withForecast = [];
   push(withForecast, 'Fixkosten', t.fixedPaid + t.fixedRest, SLICE_COLORS.fixed);
-  categoryDefs.forEach(def => {
-    push(withForecast, def.name, sumEntries(m.categories[def.key]), SLICE_COLORS[def.key]);
+  katDefs.forEach(def => {
+    push(withForecast, def.name, netto(def.key), SLICE_COLORS[def.key]);
   });
   push(withForecast, 'Sparen', sumEntries(m.saving.sparen), SLICE_COLORS.sparen);
   FC_DEFS.forEach(def => {
