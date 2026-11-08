@@ -26,15 +26,18 @@
    Oberfläche kollidieren. Aufbau der Listen über die DOM-API statt über
    innerHTML, wie überall sonst in dieser App.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=48';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=49';
 
 const STORE_KEY = 'konsumtopf.v3';
 const STORE_VERSION = 3;
 
-// Die beiden Töpfe. "kurz" steht dort, wo wenig Platz ist (Zufluss-Kacheln).
+// Die Töpfe. "kurz" steht dort, wo wenig Platz ist (Zufluss-Kacheln).
 const TOEPFE = [
   { key: 'konsum',    name: 'Konsum',               kurz: 'Konsum' },
-  { key: 'lifestyle', name: 'Gesundheit/Lifestyle', kurz: 'Lifestyle' }
+  { key: 'lifestyle', name: 'Gesundheit/Lifestyle', kurz: 'Lifestyle' },
+  // Dritter Topf (v49). Ältere Stände ohne ihn bekommen ihn leer dazu
+  // (applyData → pruefeTopf(undefined)).
+  { key: 'kfz',       name: 'KFZ',                  kurz: 'KFZ' }
 ];
 
 const MON = ['Januar','Februar','März','April','Mai','Juni','Juli',
@@ -372,7 +375,7 @@ function renderKopf(){
   ktJahr.replaceChildren(frag);
 }
 
-// Topfstand-Karte: Summe beider Töpfe.
+// Topfstand-Karte: Summe aller Töpfe.
 function renderTopf(){
   let ende = 0, zu = 0, aus = 0;
   TOEPFE.forEach(t => {

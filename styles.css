@@ -1737,6 +1737,7 @@
   }
   .konsum-overlay .kt-bereich-konsum{ border-left-color: #0a84ff; }
   .konsum-overlay .kt-bereich-lifestyle{ border-left-color: #34c759; }
+  .konsum-overlay .kt-bereich-kfz{ border-left-color: #af52de; }
   .konsum-overlay .kt-bereich-zufluss{ border-left-color: #ff9500; }
   .konsum-overlay .kt-bhead{ padding: 14px 14px 12px; cursor: pointer; }
   .konsum-overlay .kt-bhead:focus-visible{ outline: 2px solid #0a84ff; outline-offset: -2px; }
@@ -1789,11 +1790,13 @@
   }
   .konsum-overlay .kt-zettel-sum b{ font-variant-numeric: tabular-nums; }
 
-  /* --- Zufluss: Monat links, zwei Kacheln (Konsum / Lifestyle) daneben --- */
+  /* --- Zufluss: je Monat drei Kacheln (Konsum / Lifestyle / KFZ) --- */
   .konsum-overlay .kt-zu-hint{ margin: 0 2px 10px; }
+  /* Seit drei Töpfen: Monat in eigener Zeile, darunter drei Kacheln über
+     die volle Breite — sonst würden die Eingabefelder zu schmal. */
   .konsum-overlay .kt-zu-row{
     display: grid;
-    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: center;
     gap: 8px;
     padding: 6px 0;
@@ -1801,7 +1804,7 @@
   }
   .konsum-overlay .kt-zu-row:last-child{ border-bottom: none; }
   .konsum-overlay .kt-zu-mon{ font-weight: 700; font-size: 15px; }
-  .konsum-overlay .kt-zu-kacheln{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .konsum-overlay .kt-zu-kacheln{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .konsum-overlay .kt-zu-kachel{
     background: #fff;
     border-radius: 10px;
@@ -1810,6 +1813,7 @@
   }
   .konsum-overlay .kt-zu-konsum{ border-top-color: #0a84ff; }
   .konsum-overlay .kt-zu-lifestyle{ border-top-color: #34c759; }
+  .konsum-overlay .kt-zu-kfz{ border-top-color: #af52de; }
   .konsum-overlay .kt-zu-kachel label{ margin-bottom: 4px; }
   .konsum-overlay .kt-zu-kachel input{ text-align: right; }
 

@@ -1,7 +1,7 @@
 /* =============================================================================
    HILFSFUNKTIONEN
    ============================================================================= */
-import { AMOUNT_MAX_CENTS } from './constants.js?v=48';
+import { AMOUNT_MAX_CENTS } from './constants.js?v=49';
 
 // Formatiert Cent-Beträge als deutsche Euro-Angabe.
 // Intl.NumberFormat wird einmal erzeugt statt bei jedem Aufruf neu (deutlich
