@@ -1244,17 +1244,17 @@ function renderBmiSkala(start, now, goal){
     if(breite >= 17) st.appendChild(elem('span', 'ptw-bmi-name', k.name));
     balken.appendChild(st);
   });
-  box.appendChild(balken);
-
-  // Darunter: feiner Strich an Start und Ziel, darunter die Beschriftung
-  // (der Strich sitzt bewusst unter dem Balken, damit er keine
-  // Kategorienamen durchschneidet).
-  const unten = elem('span', 'ptw-bmi-unten');
+  // Start- und Zielmarke als Linie durch den Balken (darf den
+  // Kategorienamen schneiden).
   [['start', bStart], ['ziel', bZiel]].forEach(([cls, b]) => {
     const strich = elem('span', 'ptw-bmi-strich ' + cls);
     strich.style.left = pos(b).toFixed(2) + '%';
-    unten.appendChild(strich);
+    balken.appendChild(strich);
   });
+  box.appendChild(balken);
+
+  // Beschriftung darunter: Start links, Ziel rechts (an ihren Positionen).
+  const unten = elem('span', 'ptw-bmi-unten');
   const lStart = elem('span', 'ptw-bmi-label start', 'Start ' + fmtNum(bStart, 1));
   lStart.style.left = pos(bStart).toFixed(2) + '%';
   const lZiel = elem('span', 'ptw-bmi-label ziel', 'Ziel ' + fmtNum(bZiel, 1));
@@ -1310,8 +1310,8 @@ function renderWidget(){
      Überstand: links ganze Zahl über dem Start (34,x → 35), rechts zwei
      unter dem Ziel (23 → 21). Abschnitte in den Farben der WHO-Kategorien, aktueller BMI
      als rotes Dreieck. */
+  // Sie steht unter dem Verlaufsdiagramm (wird am Ende angehängt).
   const bmiSkala = renderBmiSkala(start, now, goal);
-  if(bmiSkala) ptWidget.appendChild(bmiSkala);
 
   /* Verlauf: je Monat ein Balken mit dem letzten Eintrag dieses Monats */
   const byMonth = [];
@@ -1325,6 +1325,7 @@ function renderWidget(){
   ptWidget.appendChild(chart);
   if(weights.length < 2){
     chart.appendChild(elem('span', 'ptw-empty', 'Mindestens zwei Monate mit Gewicht nötig für den Verlauf.'));
+    if(bmiSkala) ptWidget.appendChild(bmiSkala);
     return;
   }
   // Prognose: die nächsten 6 Monate, jeweils zum Monatsende, fortgeschrieben
@@ -1388,6 +1389,7 @@ function renderWidget(){
   forecast.forEach((p, i) => addCol(p, true, i === 0));
   area.appendChild(cols);
   chart.append(axis, area);
+  if(bmiSkala) ptWidget.appendChild(bmiSkala);
 
   if(ptBtn){
     ptBtn.setAttribute('aria-label', 'Pen-Tracker öffnen. Aktuell ' + (now != null ? fmtKg(now) : 'unbekannt') +
