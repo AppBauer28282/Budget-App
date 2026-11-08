@@ -3633,14 +3633,15 @@
   [data-theme="dark"] .ios-switch:checked{ background: #30d158; }
 
   /* Auszahlungs-Diagramm (SVG mit festen Attributfarben aus
-     js/auszahlung.js): im Dunkelmodus über die Attribute umfärben. */
-  [data-theme="dark"] .az-overlay svg text[fill="#1a1a1a"]{ fill: #ebebf5; }
-  [data-theme="dark"] .az-overlay svg text[fill="#555"]{ fill: #98989f; }
-  [data-theme="dark"] .az-overlay svg rect[fill="#1f3057"]{ fill: #0a84ff; }
-  [data-theme="dark"] .az-overlay svg rect[fill="#a33333"]{ fill: #ff453a; }
-  [data-theme="dark"] .az-overlay svg line[stroke="#999"]{ stroke: #636366; }
-  [data-theme="dark"] .az-overlay svg line[stroke="#ccc"]{ stroke: #48484a; }
-  [data-theme="dark"] .az-overlay svg rect[stroke="#d9ead3"]{ stroke: #30d158; }
+     js/auszahlung.js): im Dunkelmodus über die Attribute umfärben. Das
+     Diagramm liegt im Unterfenster (.az-dialog), nicht im Hauptfenster. */
+  [data-theme="dark"] :is(.az-overlay, .az-dialog) svg text[fill="#1a1a1a"]{ fill: #ebebf5; }
+  [data-theme="dark"] :is(.az-overlay, .az-dialog) svg text[fill="#555"]{ fill: #98989f; }
+  [data-theme="dark"] :is(.az-overlay, .az-dialog) svg rect[fill="#1f3057"]{ fill: #0a84ff; }
+  [data-theme="dark"] :is(.az-overlay, .az-dialog) svg rect[fill="#a33333"]{ fill: #ff453a; }
+  [data-theme="dark"] :is(.az-overlay, .az-dialog) svg line[stroke="#999"]{ stroke: #636366; }
+  [data-theme="dark"] :is(.az-overlay, .az-dialog) svg line[stroke="#ccc"]{ stroke: #48484a; }
+  [data-theme="dark"] :is(.az-overlay, .az-dialog) svg rect[stroke="#d9ead3"]{ stroke: #30d158; }
 
   /* Echte Fenster über dem Haushaltsbuch (Beleg, Diagramm, Analyse, PIN):
      als erhöhte iOS-Fläche statt reinem Schwarz, damit sie sich vom

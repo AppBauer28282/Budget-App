@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=53">
+<link rel="stylesheet" href="styles.css?v=54">
 </head>
 <body>
 
@@ -144,7 +144,7 @@
         <!-- Widget: Tacho-Anzeigen + Verlauf, gefüllt von js/pentracker.js -->
         <span class="home-widget ptw" id="pt-widget"></span>
       </button>
-      <button type="button" class="home-tile" id="auszahlung-btn" aria-label="Auszahlungs-Tracker öffnen">
+      <button type="button" class="home-tile" id="auszahlung-btn" aria-label="Sparausgaben öffnen">
         <span class="home-tile-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -156,7 +156,7 @@
           </svg>
         </span>
         <span class="home-tile-text">
-          <span class="home-tile-name">Auszahlungen</span>
+          <span class="home-tile-name">Sparausgaben</span>
           <span class="home-tile-sub">Jahre und Verlauf</span>
         </span>
         <!-- Widget: Ø, Hochrechnung, Anteil am Jahresnetto (js/auszahlung.js) -->
@@ -871,8 +871,8 @@
 <div class="receipt-overlay az-overlay" id="auszahlung-overlay" hidden>
   <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="auszahlung-title">
     <div class="receipt-head">
-      <h2 id="auszahlung-title">Auszahlungs-Tracker</h2>
-      <button type="button" class="receipt-close" id="auszahlung-close" aria-label="Auszahlungs-Tracker schließen">✕</button>
+      <h2 id="auszahlung-title">Sparausgaben</h2>
+      <button type="button" class="receipt-close" id="auszahlung-close" aria-label="Sparausgaben schließen">✕</button>
     </div>
     <div class="receipt-body">
 
@@ -968,7 +968,7 @@
       <button type="button" class="az-subtle" data-az-close aria-label="Schließen">Schließen ✕</button>
     </div>
     <div id="az-chart" class="az-chart-container"></div>
-    <p class="az-footnote">Balken zeigen die Auszahlungssumme je Monat. Der orange Balken (Ø) zeigt den Durchschnitt der bisherigen Monate.</p>
+    <p class="az-footnote">Balken zeigen die Summe der Sparausgaben je Monat. Der orange Balken (Ø) zeigt den Durchschnitt der bisherigen Monate.</p>
   </div>
 </div>
 
@@ -979,7 +979,7 @@
       <button type="button" class="az-subtle" data-az-close aria-label="Schließen">Schließen ✕</button>
     </div>
     <div id="az-total-chart" class="az-chart-container"></div>
-    <p class="az-footnote">Balken zeigen die Auszahlungssumme je Zeitraum. Der orange Balken (Ø) zeigt den Durchschnitt über alle Zeiträume.</p>
+    <p class="az-footnote">Balken zeigen die Summe der Sparausgaben je Zeitraum. Der orange Balken (Ø) zeigt den Durchschnitt über alle Zeiträume.</p>
   </div>
 </div>
 
@@ -1200,7 +1200,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=53"></script>
+<script type="module" src="js/app.js?v=54"></script>
 
 </body>
 </html>

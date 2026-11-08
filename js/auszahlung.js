@@ -24,8 +24,8 @@
    die Vorlage baute Zeichenketten zusammen und hatte dabei eine Lücke bei den
    Spaltenköpfen der Gesamtübersicht.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=53';
-import { basisJahresNetto } from './salary-calc.js?v=53';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=54';
+import { basisJahresNetto } from './salary-calc.js?v=54';
 
 const STORE_KEY = 'auszahlungen.v1';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -302,7 +302,7 @@ function renderWidget(){
     anteilDrittel);
   azWidget.replaceChildren(frag);
   if(azBtn){
-    azBtn.setAttribute('aria-label', 'Auszahlungs-Tracker öffnen. Ø ' + jahr + ': ' + euroGanz(avg) + ', Tendenz ' +
+    azBtn.setAttribute('aria-label', 'Sparausgaben öffnen. Ø ' + jahr + ': ' + euroGanz(avg) + ', Tendenz ' +
       ({ hoch: 'steigend', runter: 'fallend', gleich: 'gleichbleibend' })[tendenz] + '. Hochrechnung bis Dezember ' +
       kurzK(hoch) + ', ' + anteil + ' vom Jahresnetto.');
   }
@@ -740,7 +740,7 @@ function baueBalkenDiagramm(labels, values, hervorIdx, avgIdx){
   const barW = Math.min(48, slot * 0.6);
 
   const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img' });
-  svg.appendChild(svgEl('title', {})).textContent = 'Balkendiagramm der Auszahlungen';
+  svg.appendChild(svgEl('title', {})).textContent = 'Balkendiagramm der Sparausgaben';
 
   const nullLinieY = minV < 0 ? zeroY : (padT + plotH);
   svg.appendChild(svgEl('line', {

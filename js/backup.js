@@ -1,14 +1,14 @@
 /* =============================================================================
    SICHERN / WIEDERHERSTELLEN
    ============================================================================= */
-import { MAX_IMPORT_BYTES } from './constants.js?v=53';
-import { el } from './dom.js?v=53';
+import { MAX_IMPORT_BYTES } from './constants.js?v=54';
+import { el } from './dom.js?v=54';
 // Zirkulärer Import: storage.js importiert umgekehrt showBackupMsg aus
 // diesem Modul (für den Fehlerfall beim Schreiben in localStorage). Sicher,
 // weil storage.js diese Funktion nur im catch-Block von writeStorage()
 // aufruft — nie beim Modul-Start selbst.
-import { allData, saveAll, sanitizeAll, setAllData } from './storage.js?v=53';
-import { showOverview } from './navigation.js?v=53';
+import { allData, saveAll, sanitizeAll, setAllData } from './storage.js?v=54';
+import { showOverview } from './navigation.js?v=54';
 
 export function showBackupMsg(text, isError){
   el.backupMsg.textContent = text;
