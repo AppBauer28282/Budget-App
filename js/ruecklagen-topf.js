@@ -10,7 +10,7 @@
    Berechnung aus. Alle Texte per textContent, kein innerHTML.
    ============================================================================= */
 import { categoryDefs, MAX_TEXT_LENGTH, AMOUNT_MAX_CENTS, SLICE_COLORS } from './constants.js?v=56';
-import { formatCents, parseEuroInputToCents } from './utils.js?v=56';
+import { parseEuroInputToCents } from './utils.js?v=56';
 import { allData, saveAll, RT_KEYS, sanitizeRuecklagenTopf } from './storage.js?v=56';
 import { openOverlay, closeOverlay } from './overlays.js?v=56';
 
@@ -41,17 +41,30 @@ function daten(){
   if(!allData.ruecklagenTopf) allData.ruecklagenTopf = sanitizeRuecklagenTopf(null);
   return allData.ruecklagenTopf;
 }
+// In diesem Fenster gibt es nur volle Euro (v56): Eingaben werden auf ganze
+// Euro gerundet, Anzeigen ohne Nachkommastellen.
+const ganz = (c) => Math.round(c / 100) * 100;
+function formatCents(c){
+  return (c / 100).toLocaleString('de-DE', { maximumFractionDigits: 0 }) + '\u00a0€';
+}
 function centsZuText(c){
   if(!c) return '';
-  const nk = c % 100 ? 2 : 0;   // 1.500,50 statt 1.500,5 — ganze Euro ohne Komma
-  return (c / 100).toLocaleString('de-DE', { minimumFractionDigits: nk, maximumFractionDigits: nk });
+  return (c / 100).toLocaleString('de-DE', { maximumFractionDigits: 0 });
 }
-// Leer → 0, ungültig → null.
+// Ältere Stände mit Cent-Beträgen einmalig auf volle Euro bringen.
+function aufGanzeEuro(d){
+  let geaendert = false;
+  const fix = (o) => { const g = ganz(o.cents); if(g !== o.cents){ o.cents = g; geaendert = true; } };
+  if(ganz(d.kontoCents) !== d.kontoCents){ d.kontoCents = ganz(d.kontoCents); geaendert = true; }
+  d.toepfe.forEach(t => { fix(t); t.wuensche.forEach(fix); });
+  return geaendert;
+}
+// Leer → 0, ungültig → null; sonst auf volle Euro gerundet.
 function lies(text){
   const roh = String(text).trim();
   if(roh === '') return 0;
   const c = parseEuroInputToCents(roh);
-  return c === null || c < 0 || c > AMOUNT_MAX_CENTS ? null : c;
+  return c === null || c < 0 || c > AMOUNT_MAX_CENTS ? null : ganz(c);
 }
 function speichern(){ saveAll(true); }
 const summe = (liste) => liste.reduce((s, x) => s + x.cents, 0);
@@ -60,7 +73,7 @@ const summe = (liste) => liste.reduce((s, x) => s + x.cents, 0);
 function betragFeld(cents, label, beiAenderung){
   const input = document.createElement('input');
   input.type = 'text';
-  input.inputMode = 'decimal';
+  input.inputMode = 'numeric';
   input.autocomplete = 'off';
   input.className = 'bt-input';
   input.placeholder = '€';
@@ -307,11 +320,8 @@ function renderKpis(d){
   aktualisierer.push(() => {
     const verteilt = summe(d.toepfe);
     const geplant = d.toepfe.reduce((x, t) => x + summe(t.wuensche), 0);
-    // Ganze Euro, damit die Kacheln auch auf schmalen Handys nicht
-    // abschneiden. "Frei" = gerundetes Konto − gerundet verteilt, damit
-    // Verteilt + Frei immer genau den angezeigten Kontostand ergeben.
     const r = (c) => Math.round(c / 100);
-    const euro = { verteilt: r(verteilt), frei: r(d.kontoCents) - r(verteilt), geplant: r(geplant) };
+    const euro = { verteilt: r(verteilt), frei: r(d.kontoCents - verteilt), geplant: r(geplant) };
     werte.forEach(([kachel, v, k]) => {
       v.textContent = euro[k].toLocaleString('de-DE') + ' €';
       kachel.classList.toggle('drueber', euro[k] < 0 || (k === 'frei' && d.kontoCents - verteilt < 0));
@@ -331,6 +341,7 @@ function render(){
 
 function oeffnen(){
   kontoIn.classList.remove('ungueltig');
+  if(aufGanzeEuro(daten())) speichern();
   kontoIn.value = centsZuText(daten().kontoCents);
   render();
   openOverlay(overlay, schliessen);
