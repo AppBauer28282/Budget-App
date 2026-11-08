@@ -10,9 +10,9 @@
    Posten mit derselben Bezeichnung gibt (z. B. nur der Betrag der Miete
    ändert sich). Neue Posten starten nicht abgehakt.
    ============================================================================= */
-import { MAX_TEXT_LENGTH } from './constants.js?v=47';
-import { formatCents, parseEuroInputToCents } from './utils.js?v=47';
-import { allData, saveAll, fixkostenVon, fixkostenVorlage, MAX_FIXKOSTEN } from './storage.js?v=47';
+import { MAX_TEXT_LENGTH } from './constants.js?v=48';
+import { formatCents, parseEuroInputToCents } from './utils.js?v=48';
+import { allData, saveAll, fixkostenVon, fixkostenVorlage, MAX_FIXKOSTEN } from './storage.js?v=48';
 
 const $ = (id) => document.getElementById(id);
 const bereich  = $('fix-einstellung');

@@ -26,7 +26,7 @@
    Oberfläche kollidieren. Aufbau der Listen über die DOM-API statt über
    innerHTML, wie überall sonst in dieser App.
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=47';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=48';
 
 const STORE_KEY = 'konsumtopf.v3';
 const STORE_VERSION = 3;
@@ -832,7 +832,7 @@ function regelnSpeichern(){
   save();
   ktRegelnInput.blur();
   renderRegeln();
-  if(ktRegelnMsg) ktRegelnMsg.textContent = state.regeln ? 'Gespeichert – steht oben unter „Regeln“.' : 'Regeln gelöscht.';
+  if(ktRegelnMsg) ktRegelnMsg.textContent = state.regeln ? 'Gespeichert.' : 'Regeln gelöscht.';
 }
 
 function render(){
