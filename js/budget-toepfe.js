@@ -4,6 +4,9 @@
    steht, wie viel davon im Jahr schon verbraucht ist — gezählt genau wie in
    der Analyse (alle Monate des Jahres, Fixkosten nur abgehakt).
 
+   Rücklagen zählen netto (abzüglich "Auflösung Rücklagen"), es gibt keinen
+   eigenen Topf für Auflösungen.
+
    Reine Anzeige: Die Budgets stehen in allData.budgetToepfe (läuft über
    Cloud-Abgleich und Sichern/Wiederherstellen), wirken sich aber auf keine
    andere Berechnung der App aus.
@@ -45,13 +48,17 @@ function verbrauchJahr(jahr){
   return map;
 }
 
+// Netto-Betrag: Rücklagen abzüglich Auflösungen können negativ werden
+// (mehr aufgelöst als zurückgelegt) — dann mit "+" wie in der Monatsliste.
+function netto(c){ return c < 0 ? '+ ' + formatCents(-c) : formatCents(c); }
+
 function balken(verbraucht, budget){
   const track = document.createElement('div');
   track.className = 'bt-track';
   const fill = document.createElement('div');
   fill.className = 'bt-fill';
   const pct = budget > 0 ? verbraucht / budget * 100 : 0;
-  fill.style.width = Math.min(100, pct).toFixed(1) + '%';
+  fill.style.width = Math.max(0, Math.min(100, pct)).toFixed(1) + '%';
   if(pct > 100) fill.classList.add('drueber');
   else if(pct >= 85) fill.classList.add('knapp');
   track.appendChild(fill);
@@ -108,14 +115,14 @@ function render(){
       topf.appendChild(balken(verbraucht, budget));
       const rest = budget - verbraucht;
       const links = document.createElement('span');
-      links.textContent = formatCents(verbraucht) + ' von ' + formatCents(budget) + ' · ' + Math.round(verbraucht / budget * 100) + ' %';
+      links.textContent = netto(verbraucht) + ' von ' + formatCents(budget) + ' · ' + Math.max(0, Math.round(verbraucht / budget * 100)) + ' %';
       const rechts = document.createElement('span');
       rechts.className = rest < 0 ? 'bt-rest drueber' : 'bt-rest';
       rechts.textContent = rest < 0 ? formatCents(-rest) + ' drüber' : 'noch ' + formatCents(rest);
       info.append(links, rechts);
     } else {
       const links = document.createElement('span');
-      links.textContent = 'verbraucht ' + formatCents(verbraucht) + ' · kein Budget';
+      links.textContent = 'verbraucht ' + netto(verbraucht) + ' · kein Budget';
       info.appendChild(links);
     }
     topf.appendChild(info);
@@ -132,7 +139,7 @@ function render(){
     t.className = 'bt-gesamt-kopf';
     const l = document.createElement('span'); l.textContent = 'Alle Töpfe mit Budget';
     const r = document.createElement('span');
-    r.textContent = formatCents(sumVerbrauchMitBudget) + ' / ' + formatCents(sumBudget);
+    r.textContent = netto(sumVerbrauchMitBudget) + ' / ' + formatCents(sumBudget);
     t.append(l, r);
     box.append(t, balken(sumVerbrauchMitBudget, sumBudget));
     g.appendChild(box);
