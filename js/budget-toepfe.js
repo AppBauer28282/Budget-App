@@ -8,10 +8,10 @@
    Cloud-Abgleich und Sichern/Wiederherstellen), wirken sich aber auf keine
    andere Berechnung der App aus.
    ============================================================================= */
-import { formatCents, parseEuroInputToCents } from './utils.js?v=50';
-import { allData, saveAll } from './storage.js?v=50';
-import { ANALYSIS_CATEGORIES, computeAnalysisData } from './analysis.js?v=50';
-import { openOverlay, closeOverlay } from './overlays.js?v=50';
+import { formatCents, parseEuroInputToCents } from './utils.js?v=51';
+import { allData, saveAll } from './storage.js?v=51';
+import { ANALYSIS_CATEGORIES, computeAnalysisData } from './analysis.js?v=51';
+import { openOverlay, closeOverlay } from './overlays.js?v=51';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('budget-toepfe-btn');

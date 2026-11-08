@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=50">
+<link rel="stylesheet" href="styles.css?v=51">
 </head>
 <body>
 
@@ -123,22 +123,6 @@
              js/salary-calc.js (renderGehaltWidget). -->
         <span class="home-widget-kopf">KT5 · 39,5 Std.</span>
         <span class="home-widget gw-box" id="gehalt-widget"></span>
-      </button>
-      <button type="button" class="home-tile" id="konsum-btn" aria-label="Konsumtopf öffnen">
-        <span class="home-tile-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-          <path d="M10.1 2.6h3.8l-1.1 3.1h-1.6z"/>
-          <path d="M11.2 5.7C8 6.9 5.2 10.4 5.2 14.1c0 4.2 2.8 6.4 6.8 6.4s6.8-2.2 6.8-6.4c0-3.7-2.8-7.2-6-8.4"/>
-          <path d="M14 11.9a3.1 3.1 0 1 0 0 4.4"/>
-          <path d="M9.4 13.3h4.1"/>
-          <path d="M9.4 14.9h4.1"/>
-          </svg>
-        </span>
-        <span class="home-tile-text">
-          <span class="home-tile-name">Konsumtopf</span>
-          <span class="home-tile-sub">Topf für den Monat</span>
-        </span>
       </button>
       <button type="button" class="home-tile" id="pentracker-btn" aria-label="Pen-Tracker öffnen">
         <span class="home-tile-icon" aria-hidden="true">
@@ -770,93 +754,6 @@
   </div>
 </div>
 
-<!-- Konsumtopf-Overlay: eigenständiges Planungswerkzeug hinter dem Geldsack-
-     Symbol rechts oben. Verwaltet mehrere Jahre mit je zwölf Monaten (Zufluss
-     und geplante Ausgabenposten), rechnet den Rest als Übertrag in den
-     Folgemonat und führt eine davon unabhängige Bucket-List. Speichert unter
-     einem eigenen Schlüssel und rührt die Budget-Daten nicht an. -->
-<div class="receipt-overlay konsum-overlay" id="konsum-overlay" hidden>
-  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="konsum-title">
-    <div class="receipt-head">
-      <h2 id="konsum-title">Konsumtopf</h2>
-      <button type="button" class="receipt-close" id="konsum-close" aria-label="Konsumtopf schließen">✕</button>
-    </div>
-    <div class="receipt-body">
-
-      <div id="kt-warn" hidden></div>
-
-      <p class="kt-sub">Drei Töpfe mit Übertrag &amp; Bucket List</p>
-
-      <div class="kt-card">
-        <div class="kt-row">
-          <div style="flex:0 0 110px">
-            <label for="kt-jahr">Jahr</label>
-            <select id="kt-jahr"></select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Die drei aufklappbaren Bereiche "Konsum", "Gesundheit/Lifestyle"
-           und "Zufluss" baut js/konsumtopf.js hier per DOM-API auf. -->
-      <div id="kt-bereiche"></div>
-
-      <div class="kt-card kt-topf">
-        <div class="kt-lbl">Topfstand Jahresende (geplant, alle Töpfe)</div>
-        <div class="kt-val" id="kt-topf-plan">0 €</div>
-        <div class="kt-mini">
-          <div>Zuflüsse gesamt: <b id="kt-sum-zu">0 €</b></div>
-          <div>Ausgaben gesamt: <b id="kt-sum-aus">0 €</b></div>
-        </div>
-      </div>
-
-      <button type="button" class="kt-gh" id="kt-beleg-btn" aria-expanded="false"
-              aria-controls="kt-beleg-card">Beleg anzeigen</button>
-      <div class="kt-card" id="kt-beleg-card" hidden>
-        <div id="kt-beleg-liste"></div>
-        <div class="kt-sum tot"><span>Summe Ausgaben (alle Töpfe)</span><b id="kt-beleg-sum">0 €</b></div>
-      </div>
-
-      <p class="kt-h2">Bucket List</p>
-      <p class="kt-sub">Unabhängig von der Jahresplanung</p>
-      <div class="kt-card">
-        <div id="kt-bucket"></div>
-        <div class="kt-add">
-          <input type="text" class="kt-n" id="kt-bl-name" maxlength="80"
-                 autocomplete="off" placeholder="Wunsch / Ziel"
-                 aria-label="Wunsch oder Ziel">
-          <input type="text" class="kt-b" id="kt-bl-kosten" inputmode="decimal"
-                 maxlength="12" autocomplete="off" placeholder="€"
-                 aria-label="Geplante Kosten">
-          <button type="button" class="kt-pri" id="kt-bl-add"
-                  aria-label="Eintrag hinzufügen">+</button>
-        </div>
-        <div class="kt-sum tot"><span>Summe offen</span><b id="kt-bl-sum">0 €</b></div>
-      </div>
-
-      <p class="kt-h2">Regeln</p>
-      <!-- Gespeicherte Regeln: schlichter Text auf dem Hintergrund, direkt
-           über dem Eingabefeld (leer = ausgeblendet). -->
-      <div class="kt-regeln" id="kt-regeln-box" hidden>
-        <p class="kt-regeln-text" id="kt-regeln-text"></p>
-      </div>
-      <div class="kt-card">
-        <label for="kt-regeln-input" class="visually-hidden">Regeln</label>
-        <textarea id="kt-regeln-input" class="kt-regeln-input" rows="5" maxlength="2000"
-                  placeholder="Eigene Regeln für den Konsumtopf …"></textarea>
-        <button type="button" class="kt-pri kt-regeln-save" id="kt-regeln-save">Speichern</button>
-        <p class="kt-regeln-msg" id="kt-regeln-msg" role="status"></p>
-      </div>
-
-      <div class="kt-actions">
-        <button type="button" id="kt-export">Export</button>
-        <button type="button" id="kt-import">Import</button>
-        <input type="file" id="kt-file" accept="application/json,.json" hidden>
-      </div>
-
-    </div>
-  </div>
-</div>
-
 <!-- Pen-Tracker-Overlay: eigenständiges Werkzeug hinter dem Waagen-Symbol
      rechts oben. Erfasst Pens (Preis, Einheiten, Wochendosen) und das
      Körpergewicht und rechnet daraus Kosten, BMI und Prognose. Speichert wie
@@ -1274,7 +1171,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=50"></script>
+<script type="module" src="js/app.js?v=51"></script>
 
 </body>
 </html>
