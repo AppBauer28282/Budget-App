@@ -3691,6 +3691,10 @@
   /* Auszahlungs-Diagramm (SVG mit festen Attributfarben aus
      js/auszahlung.js): im Dunkelmodus über die Attribute umfärben. Das
      Diagramm liegt im Unterfenster (.az-dialog), nicht im Hauptfenster. */
+  /* Vermögens-Tracker: Ringdiagramm (feste Attributfarben aus js/vermoegen.js)
+     im Dunkelmodus umfärben — sonst steht die Summe schwarz auf schwarz. */
+  [data-theme="dark"] .donut svg text[fill="#1c1c1e"]{ fill: #ffffff; }
+  [data-theme="dark"] :is(.donut, .vt-overlay) svg text[fill="#6b6b70"]{ fill: #98989f; }
   [data-theme="dark"] :is(.az-overlay, .az-dialog) svg text[fill="#1a1a1a"]{ fill: #ebebf5; }
   [data-theme="dark"] :is(.az-overlay, .az-dialog) svg text[fill="#555"]{ fill: #98989f; }
   [data-theme="dark"] :is(.az-overlay, .az-dialog) svg rect[fill="#1f3057"]{ fill: #0a84ff; }
