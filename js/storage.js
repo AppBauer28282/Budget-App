@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=52';
-import { clamp, monthKey } from './utils.js?v=52';
+} from './constants.js?v=53';
+import { clamp, monthKey } from './utils.js?v=53';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=52';
+import { showBackupMsg } from './backup.js?v=53';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -246,11 +246,37 @@ function sanitizeBudgetToepfe(raw){
   return out;
 }
 
+// Rücklagen Topf: Kontostand des Rücklagen-Kontos, Aufteilung auf Töpfe
+// (je Kategorie höchstens einmal) und je Topf eine Wunschliste.
+// Beträge 0 sind erlaubt (frisch angelegte, noch leere Zeilen).
+export const RT_KEYS = categoryDefs.map(d => d.key).filter(k => k !== 'ruecklagen' && k !== 'aufloesung');
+function rtCents(v){
+  if(!Number.isFinite(v)) return 0;
+  const c = Math.round(v);
+  return c > 0 && c <= AMOUNT_MAX_CENTS ? c : 0;
+}
+export function sanitizeRuecklagenTopf(raw){
+  const out = { kontoCents: 0, toepfe: [] };
+  if(!raw || typeof raw !== 'object') return out;
+  out.kontoCents = rtCents(raw.kontoCents);
+  const gesehen = new Set();
+  (Array.isArray(raw.toepfe) ? raw.toepfe : []).forEach(t => {
+    if(!t || typeof t !== 'object' || !RT_KEYS.includes(t.key) || gesehen.has(t.key)) return;
+    gesehen.add(t.key);
+    const wuensche = (Array.isArray(t.wuensche) ? t.wuensche : []).slice(0, 100)
+      .filter(w => w && typeof w === 'object')
+      .map(w => ({ name: typeof w.name === 'string' ? w.name.trim().slice(0, MAX_TEXT_LENGTH) : '', cents: rtCents(w.cents) }));
+    out.toepfe.push({ key: t.key, cents: rtCents(t.cents), wuensche });
+  });
+  return out;
+}
+
 // Nur gültige Monats-Einträge werden übernommen — alles andere (inkl. des
 // alten Datenformats ohne Jahr) wird verworfen.
 export function sanitizeAll(raw){
-  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [], budgetToepfe: Object.create(null) };
+  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [], budgetToepfe: Object.create(null), ruecklagenTopf: sanitizeRuecklagenTopf(null) };
   if(!raw || typeof raw !== 'object') return clean;
+  clean.ruecklagenTopf = sanitizeRuecklagenTopf(raw.ruecklagenTopf);
   clean.fixkostenVorlage = sanitizeEntries(raw.fixkostenVorlage, true).slice(0, MAX_FIXKOSTEN);
   clean.budgetToepfe = sanitizeBudgetToepfe(raw.budgetToepfe);
   if(!clean.fixkostenVorlage.length && raw.monthEntries && Object.keys(raw.monthEntries).length){

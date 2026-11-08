@@ -3546,6 +3546,45 @@
   [data-theme="dark"] .bt-input{ background: #2c2c2e; border-color: #48484a; }
   [data-theme="dark"] .bt-gesamt{ background: #2c2c2e; }
 
+  /* ---------- Rücklagen Topf (js/ruecklagen-topf.js) ---------- */
+  #rt-overlay .receipt-body{ max-height: calc(100vh - 140px); overflow-y: auto; }
+  .rt-konto{ padding: 14px; border-radius: var(--radius-klein); background: var(--paper); margin-bottom: 16px; }
+  .rt-konto-label{ display:block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px; }
+  .rt-konto-input{
+    width: 100%; box-sizing: border-box; font-family: inherit; font-size: 28px; font-weight: 700;
+    font-variant-numeric: tabular-nums; padding: 6px 10px; color: var(--ink);
+    border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--card, #fff);
+  }
+  .rt-konto-input:focus{ outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(10,132,255,0.25); }
+  .rt-konto-input.ungueltig{ border-color: var(--error); }
+  .rt-abschnitt-kopf{ display:flex; flex-wrap: wrap; justify-content:space-between; align-items:baseline; gap: 2px 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .rt-abschnitt-titel{ font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--brass); }
+  .rt-diff{ font-size: 12px; font-weight: 600; color: #ff9500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rt-diff{ margin-left: auto; text-align: right; }
+  .rt-wunsch-titel .rt-diff{ white-space: normal; }
+  .rt-diff.null{ color: var(--ok); }
+  .rt-diff.drueber{ color: var(--error); }
+  .rt-wunsch-titel{ margin-top: 22px; }
+  .rt-wunsch-titel .rt-diff{ color: var(--ink-soft); }
+  .rt-topf-zeile{ display:grid; grid-template-columns: minmax(0,1fr) 120px 32px; gap: 8px; align-items:center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .rt-topf-zeile .bt-input{ width: auto; min-width: 0; }
+  .rt-plus-zeile{ display:flex; gap: 10px; align-items:center; padding: 10px 0 0; }
+  .rt-neu-select{ flex: 1; min-width: 0; font-family: inherit; font-size: 16px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink); }
+  .rt-leer{ font-size: 13px; color: var(--ink-soft); margin: 10px 0 0; }
+  .rt-gruppe{ padding: 12px 0 6px; border-bottom: 1px solid var(--line); }
+  .rt-gruppe:last-child{ border-bottom: none; }
+  .rt-gruppe-kopf{ display:flex; justify-content:space-between; font-weight: 600; font-size: 15px; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+  .rt-gruppe-fuss .fc-edit-plus{ white-space: nowrap; }
+  .rt-gruppe-fuss{ display:flex; justify-content:space-between; align-items:center; gap: 8px; }
+  .rt-gruppe-info{ font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: right; }
+  .rt-abw{ font-weight: 600; color: var(--ok); white-space: nowrap; }
+  .rt-abw.drueber{ color: var(--error); }
+  [data-theme="dark"] #rt-overlay .receipt-card,
+  [data-theme="dark"] #rt-overlay .receipt-head{ background: #1c1c1e; }
+  [data-theme="dark"] .rt-konto{ background: #2c2c2e; }
+  [data-theme="dark"] .rt-konto-input{ background: #1c1c1e; border-color: #48484a; }
+  [data-theme="dark"] .rt-neu-select{ background: #2c2c2e; border-color: #48484a; }
+
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */
   .sc-prozent-zeile{ display:flex; gap: 8px; }
   .sc-prozent-zeile input{ flex: 1 1 auto; }

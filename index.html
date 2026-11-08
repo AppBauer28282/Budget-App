@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=52">
+<link rel="stylesheet" href="styles.css?v=53">
 </head>
 <body>
 
@@ -241,6 +241,7 @@
 
   <button type="button" class="receipt-btn" id="analysis-btn">Analyse</button>
   <button type="button" class="receipt-btn" id="budget-toepfe-btn">Budget Töpfe</button>
+  <button type="button" class="receipt-btn" id="rt-btn">Rücklagen Topf</button>
 
   <!-- Fixkosten einstellen (js/fixkosten.js): gilt für neue und alle offenen
        Monate, abgeschlossene Monate behalten ihre damaligen Fixkosten. -->
@@ -576,6 +577,34 @@
       <p class="categories-hint">Jahresbudget je Kategorie eintragen. Verbraucht zählt wie in der Analyse (alle Monate des Jahres). Nur zur Übersicht — hat keine Auswirkung auf andere Werte.</p>
       <div id="budget-gesamt"></div>
       <div id="budget-liste"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Rücklagen Topf (js/ruecklagen-topf.js): Kontostand des Rücklagen-Kontos,
+     Aufteilung auf Töpfe je Kategorie und Wunschliste je Topf. Nur Planung. -->
+<div class="receipt-overlay" id="rt-overlay" hidden>
+  <div class="receipt-card bt-card" role="dialog" aria-modal="true" aria-labelledby="rt-title">
+    <div class="receipt-head">
+      <h2 id="rt-title">Rücklagen Topf</h2>
+      <button type="button" class="receipt-close" id="rt-close" aria-label="Rücklagen Topf schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <div class="rt-konto">
+        <label for="rt-konto-input" class="rt-konto-label">Rücklagen-Konto</label>
+        <input type="text" id="rt-konto-input" class="rt-konto-input" inputmode="decimal" autocomplete="off" placeholder="0 €">
+      </div>
+      <div class="rt-abschnitt-kopf">
+        <span class="rt-abschnitt-titel">Aufteilung</span>
+        <span class="rt-diff" id="rt-diff"></span>
+      </div>
+      <div id="rt-toepfe"></div>
+      <div class="rt-plus-zeile" id="rt-plus-zeile"></div>
+      <div class="rt-abschnitt-kopf rt-wunsch-titel">
+        <span class="rt-abschnitt-titel">Wunschliste</span>
+        <span class="rt-diff" id="rt-wunsch-gesamt"></span>
+      </div>
+      <div id="rt-wuensche"></div>
     </div>
   </div>
 </div>
@@ -1171,7 +1200,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=52"></script>
+<script type="module" src="js/app.js?v=53"></script>
 
 </body>
 </html>
