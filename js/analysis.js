@@ -7,23 +7,23 @@
    samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
    nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { categoryDefs, MONTHS, SLICE_COLORS } from './constants.js?v=49';
-import { el } from './dom.js?v=49';
-import { formatCents } from './utils.js?v=49';
-import { allData, fixkostenVon } from './storage.js?v=49';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=49';
-import { openOverlay, closeOverlay } from './overlays.js?v=49';
+import { categoryDefs, MONTHS, SLICE_COLORS } from './constants.js?v=50';
+import { el } from './dom.js?v=50';
+import { formatCents } from './utils.js?v=50';
+import { allData, fixkostenVon } from './storage.js?v=50';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=50';
+import { openOverlay, closeOverlay } from './overlays.js?v=50';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.
-// Sparen, Rücklagen und Auflösung Rücklagen stehen hier auf Nutzerwunsch als
-// ganz normale, einzeln abwählbare Positionen — sie erscheinen damit im
+// Sparen und Auflösung Rücklagen stehen hier auf Nutzerwunsch als ganz
+// normale, einzeln abwählbare Positionen (Rücklagen gehören seit v50 zu den
+// Sonstige-Ausgaben-Kategorien) — sie erscheinen damit im
 // selben Diagramm und in derselben Liste wie die übrigen Kategorien.
-const ANALYSIS_CATEGORIES = [
+export const ANALYSIS_CATEGORIES = [
   { key: 'fixed', name: 'Fixkosten' },
   ...categoryDefs.map(d => ({ key: d.key, name: d.name })),
   { key: 'sparen', name: 'Sparen' },
-  { key: 'ruecklagen', name: 'Rücklagen' },
   { key: 'aufloesung', name: 'Auflösung Rücklagen' }
 ];
 
@@ -124,7 +124,7 @@ function getSelectedCategoryKeys(){
 // wenn im jeweiligen Monat abgehakt (konsistent mit "Ist-Ausgaben" an
 // anderer Stelle der App). Die Sparen-Arten haben keinen eigenen
 // Beschreibungstext — dort ist der Kategoriename selbst die "Beschreibung".
-function computeAnalysisData(year, monthSet, categorySet){
+export function computeAnalysisData(year, monthSet, categorySet){
   const groups = ANALYSIS_CATEGORIES
     .filter(cat => categorySet.has(cat.key))
     .map(cat => ({ key: cat.key, name: cat.name, color: SLICE_COLORS[cat.key], map: new Map() }));
@@ -149,7 +149,7 @@ function computeAnalysisData(year, monthSet, categorySet){
       if(!groupByKey.has(def.key)) return;
       m.categories[def.key].forEach(e => addToGroup(def.key, e.name, e.cents));
     });
-    ['sparen', 'ruecklagen', 'aufloesung'].forEach(key => {
+    ['sparen', 'aufloesung'].forEach(key => {
       if(!groupByKey.has(key)) return;
       const sum = m.saving[key].reduce((s, e) => s + e.cents, 0);
       addToGroup(key, groupByKey.get(key).name, sum);
@@ -171,7 +171,7 @@ function computeAnalysisData(year, monthSet, categorySet){
 // Töpfe statt der 13 Einzelkategorien — es geht nur um das Verhältnis von
 // Fixem, laufenden Ausgaben und Zurückgelegtem:
 //   Fix      = abgehakte Fixkosten + Jahresfix
-//   Ausgaben = alle übrigen Sonstige-Ausgaben-Kategorien + Rücklagen
+//   Ausgaben = alle übrigen Sonstige-Ausgaben-Kategorien (inkl. Rücklagen)
 //              + Auflösung Rücklagen
 //   Sparen   = Sparen
 // Jahresfix zählt ausschließlich zu "Fix" und ist deshalb aus "Ausgaben"
@@ -198,7 +198,6 @@ function computeSummaryData(year, monthSet){
     });
 
     sparenCents   += m.saving.sparen.reduce((s, e) => s + e.cents, 0);
-    ausgabenCents += m.saving.ruecklagen.reduce((s, e) => s + e.cents, 0);
     ausgabenCents += m.saving.aufloesung.reduce((s, e) => s + e.cents, 0);
   });
 
@@ -248,7 +247,7 @@ function renderChartSection(container, title, slices, emptyText){
 
 function renderAnalysisChart(container, groups){
   const slices = groups.map(g => ({ label: g.name, cents: g.subtotal, color: g.color }));
-  renderChartSection(container, 'Ausgaben', slices, 'Keine Daten für diese Auswahl.');
+  renderChartSection(container, durchschnitt ? 'Ausgaben (Ø pro Monat)' : 'Ausgaben', slices, 'Keine Daten für diese Auswahl.');
 }
 
 function renderSummaryChart(container, slices){
@@ -307,7 +306,7 @@ function renderAnalysisList(container, groups){
   const grand = document.createElement('div');
   grand.className = 'cat-grand-total';
   const gl = document.createElement('span');
-  gl.textContent = 'Gesamtsumme';
+  gl.textContent = durchschnitt ? 'Gesamt (Ø pro Monat)' : 'Gesamtsumme';
   const ga = document.createElement('span');
   ga.className = 'cat-grand-total-amount';
   ga.textContent = formatCents(grandTotal);
@@ -315,13 +314,42 @@ function renderAnalysisList(container, groups){
   container.appendChild(grand);
 }
 
+/* ---------- Summe / Durchschnitt ----------
+   Schalter neben dem Jahr: Σ zeigt die Summe der ausgewählten Monate, Ø den
+   Durchschnitt je Monat. Geteilt wird durch die ausgewählten Monate, die im
+   Haushaltsbuch auch angelegt sind (ein nie angelegter Monat zählt nicht). */
+const avgBtn = document.getElementById('analysis-avg-toggle');
+let durchschnitt = false;
+function setzeModus(avg){
+  durchschnitt = avg;
+  if(avgBtn){
+    avgBtn.setAttribute('aria-checked', String(avg));
+    avgBtn.classList.toggle('avg', avg);
+  }
+}
+function anzahlMonateMitDaten(year, monthSet){
+  const set = new Set();
+  Object.values(allData.monthEntries).forEach(e => {
+    if(e.year === year && monthSet.has(e.monthIndex)) set.add(e.monthIndex);
+  });
+  return set.size;
+}
+function teile(cents, n){ return Math.round(cents / n); }
+
 function updateAnalysis(){
   const year = Number(el.analysisYear.value);
   if(!Number.isInteger(year)) return;
   const monthSet = new Set(getSelectedMonthIndexes());
   const categorySet = new Set(getSelectedCategoryKeys());
 
-  const groups = computeAnalysisData(year, monthSet, categorySet);
+  let groups = computeAnalysisData(year, monthSet, categorySet);
+  let summary = computeSummaryData(year, monthSet);
+  const n = anzahlMonateMitDaten(year, monthSet);
+  if(durchschnitt && n > 0){
+    groups = groups.map(g => ({ ...g, subtotal: teile(g.subtotal, n),
+      entries: g.entries.map(e => ({ ...e, cents: teile(e.cents, n) })) }));
+    summary = summary.map(x => ({ ...x, cents: teile(x.cents, n) }));
+  }
 
   const fragment = document.createDocumentFragment();
 
@@ -335,8 +363,18 @@ function updateAnalysis(){
 
   // Grobe Dreiteilung ganz unten.
   const summaryWrap = document.createElement('div');
-  renderSummaryChart(summaryWrap, computeSummaryData(year, monthSet));
+  renderSummaryChart(summaryWrap, summary);
   fragment.appendChild(summaryWrap);
+
+  // Hinweis, worauf sich der Durchschnitt bezieht.
+  if(durchschnitt){
+    const hint = document.createElement('p');
+    hint.className = 'analysis-avg-hint';
+    hint.textContent = n > 0
+      ? 'Durchschnitt pro Monat über ' + n + (n === 1 ? ' angelegten Monat.' : ' angelegte Monate.')
+      : 'Keine angelegten Monate in dieser Auswahl.';
+    fragment.insertBefore(hint, fragment.firstChild);
+  }
 
   el.analysisResults.replaceChildren(fragment);
 }
@@ -375,5 +413,9 @@ el.analysisCategories.addEventListener('change', () => {
   updateAnalysis();
 });
 
+if(avgBtn){
+  setzeModus(false);
+  avgBtn.addEventListener('click', () => { setzeModus(!durchschnitt); updateAnalysis(); });
+}
 wireToggleAllButton(el.analysisMonthsToggle, el.analysisMonths);
 wireToggleAllButton(el.analysisCategoriesToggle, el.analysisCategories);

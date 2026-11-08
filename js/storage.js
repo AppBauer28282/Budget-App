@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=49';
-import { clamp, monthKey } from './utils.js?v=49';
+} from './constants.js?v=50';
+import { clamp, monthKey } from './utils.js?v=50';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=49';
+import { showBackupMsg } from './backup.js?v=50';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -148,6 +148,13 @@ export function sanitizeMonthData(raw){
   categoryDefs.forEach(def => {
     month.categories[def.key] = sanitizeEntries(rawCats[def.key], true);
   });
+  // Umzug (v50): Rücklagen standen früher unter "Sparen" (ohne Bezeichnung)
+  // und gehören jetzt zu "Sonstige Ausgaben".
+  const altRuecklagen = (raw.saving && typeof raw.saving === 'object') ? raw.saving.ruecklagen : null;
+  if(Array.isArray(altRuecklagen) && altRuecklagen.length){
+    const umzug = sanitizeEntries(altRuecklagen, false).map(e => ({ name: 'Rücklagen', cents: e.cents }));
+    month.categories.ruecklagen = month.categories.ruecklagen.concat(umzug).slice(0, MAX_ENTRIES_PER_KEY);
+  }
 
   const rawSav = (raw.saving && typeof raw.saving === 'object') ? raw.saving : {};
   savingDefs.forEach(def => {
@@ -211,12 +218,34 @@ export function sanitizeMonthEntry(raw){
   };
 }
 
+// Budget-Töpfe (Analyse): je Jahr und Analyse-Kategorie ein Jahresbudget in
+// Cent. Nur bekannte Jahre/Schlüssel, nur positive Beträge.
+export const BUDGET_KEYS = ['fixed', ...categoryDefs.map(d => d.key), ...savingDefs.map(d => d.key)];
+function sanitizeBudgetToepfe(raw){
+  const out = Object.create(null);
+  if(!raw || typeof raw !== 'object') return out;
+  Object.keys(raw).filter(k => /^\d{4}$/.test(k) && +k >= 2000 && +k <= 2100).slice(0, 50).forEach(jahr => {
+    const r = raw[jahr];
+    if(!r || typeof r !== 'object') return;
+    const j = Object.create(null);
+    BUDGET_KEYS.forEach(key => {
+      if(Number.isFinite(r[key])){
+        const c = Math.round(r[key]);
+        if(c > 0 && c <= AMOUNT_MAX_CENTS) j[key] = c;
+      }
+    });
+    if(Object.keys(j).length) out[jahr] = j;
+  });
+  return out;
+}
+
 // Nur gültige Monats-Einträge werden übernommen — alles andere (inkl. des
 // alten Datenformats ohne Jahr) wird verworfen.
 export function sanitizeAll(raw){
-  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [] };
+  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [], budgetToepfe: Object.create(null) };
   if(!raw || typeof raw !== 'object') return clean;
   clean.fixkostenVorlage = sanitizeEntries(raw.fixkostenVorlage, true).slice(0, MAX_FIXKOSTEN);
+  clean.budgetToepfe = sanitizeBudgetToepfe(raw.budgetToepfe);
   if(!clean.fixkostenVorlage.length && raw.monthEntries && Object.keys(raw.monthEntries).length){
     clean.fixkostenVorlage = festeListeKopie();
     fixkostenUebernahmeOffen = true;

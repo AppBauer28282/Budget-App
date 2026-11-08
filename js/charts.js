@@ -6,12 +6,12 @@
    <path> per Trigonometrie berechnet. Gleiche Anzeigelogik wie der Beleg
    (Overlay, nur per Button sichtbar).
    ============================================================================= */
-import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS } from './constants.js?v=49';
-import { el } from './dom.js?v=49';
-import { formatCents } from './utils.js?v=49';
-import { computeTotals, sumEntries } from './compute.js?v=49';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=49';
-import { openOverlay, closeOverlay } from './overlays.js?v=49';
+import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS } from './constants.js?v=50';
+import { el } from './dom.js?v=50';
+import { formatCents } from './utils.js?v=50';
+import { computeTotals, sumEntries } from './compute.js?v=50';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=50';
+import { openOverlay, closeOverlay } from './overlays.js?v=50';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -116,7 +116,6 @@ function computeChartSlices(){
     push(real, def.name, sumEntries(m.categories[def.key]), SLICE_COLORS[def.key]);
   });
   push(real, 'Sparen', sumEntries(m.saving.sparen), SLICE_COLORS.sparen);
-  push(real, 'Rücklagen', sumEntries(m.saving.ruecklagen), SLICE_COLORS.ruecklagen);
 
   const withForecast = [];
   push(withForecast, 'Fixkosten', t.fixedPaid + t.fixedRest, SLICE_COLORS.fixed);
@@ -124,7 +123,6 @@ function computeChartSlices(){
     push(withForecast, def.name, sumEntries(m.categories[def.key]), SLICE_COLORS[def.key]);
   });
   push(withForecast, 'Sparen', sumEntries(m.saving.sparen), SLICE_COLORS.sparen);
-  push(withForecast, 'Rücklagen', sumEntries(m.saving.ruecklagen), SLICE_COLORS.ruecklagen);
   FC_DEFS.forEach(def => {
     push(withForecast, FC_LABELS[def.key] + ' (Forecast)', m.forecast[def.key], SLICE_COLORS['fc_' + def.key]);
   });

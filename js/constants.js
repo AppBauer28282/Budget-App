@@ -22,7 +22,7 @@
 //   sed -i "s/?v=ALT\b/?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v49';
+export const APP_VERSION = 'v50';
 export const APP_VERSION_DATE = '2026-11-07';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
@@ -48,12 +48,15 @@ export const categoryDefs = [
   { key: 'freizeit',     name: 'Freizeit' },
   { key: 'urlaub',       name: 'Urlaub' },
   { key: 'jahresfix',    name: 'Jahresfix' },
-  { key: 'kfz_sonstige', name: 'sonstige KFZ-Ausgaben' }
+  { key: 'kfz_sonstige', name: 'sonstige KFZ-Ausgaben' },
+  // Rücklagen zählen seit v50 als Ausgabe, nicht mehr als Sparen. Ältere
+  // Stände (saving.ruecklagen) werden beim Laden hierher umgezogen
+  // (storage.js sanitizeMonthData).
+  { key: 'ruecklagen',   name: 'Rücklagen' }
 ];
 
 export const savingDefs = [
   { key: 'sparen',     name: 'Sparen' },
-  { key: 'ruecklagen', name: 'Rücklagen' },
   { key: 'aufloesung', name: 'Auflösung Rücklagen' }
 ];
 
@@ -103,7 +106,9 @@ export const FC_LABELS = { lebensmittel: 'Lebensmittel', konsum: 'Konsum', sprit
 // Forecast" — eigene Palette, damit sie sich von den echten Kategorien
 // unterscheiden lassen.
 export const SLICE_COLORS = {
-  fixed:          '#1c1c1e', // ink — abgehakte + offene Fixkosten zusammen
+  // Als CSS-Variable, damit sie im Dunkelmodus (styles.css) heller wird —
+  // sonst wäre das fast schwarze Segment auf dunklem Grund unsichtbar.
+  fixed:          'var(--slice-fixed, #1c1c1e)', // abgehakte + offene Fixkosten
   einkauf:        '#34c759',
   benzin:         '#ff3b30',
   gesundheit:     '#32ade6',

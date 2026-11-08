@@ -2888,6 +2888,7 @@
     --ok: #30d158;
     --schatten: none;
     /* Werkzeug-eigene Tokens */
+    --slice-fixed: #8e8e93;   /* Fixkosten-Segment in Diagrammen */
     --pt-forecast: #48484a;
     --pt-nodose: #3a3a3c;
     --chart-text: #ebebf5;
@@ -3478,6 +3479,71 @@
   .kt-regeln-msg{ margin: 6px 0 0; font-size: 12px; color: #6b6b70; min-height: 14px; }
   [data-theme="dark"] .konsum-overlay textarea.kt-regeln-input{ background: #2c2c2e; border-color: #48484a; color: #fff; }
   [data-theme="dark"] .kt-regeln-msg{ color: #98989f; }
+
+  /* ---------- Analyse: Umschalter Σ / Ø (rechteckiger An/Aus-Schalter) ---------- */
+  .analysis-avg-toggle{
+    position: relative;
+    display: inline-flex;
+    margin-left: auto;
+    padding: 2px;
+    border: none;
+    border-radius: 9px;
+    background: #e8e8ed;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .analysis-avg-toggle .seite{
+    position: relative; z-index: 1;
+    width: 40px; padding: 5px 0;
+    text-align: center; font-size: 17px; font-weight: 700;
+    color: var(--ink-soft);
+    transition: color 0.2s ease;
+  }
+  /* Der weiße "Knopf" gleitet unter das aktive Zeichen. */
+  .analysis-avg-toggle::before{
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 40px; height: calc(100% - 4px);
+    border-radius: 7px; background: var(--paper-2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+  }
+  .analysis-avg-toggle.avg::before{ transform: translateX(40px); background: var(--brass); }
+  .analysis-avg-toggle:not(.avg) .seite.links{ color: var(--ink); }
+  .analysis-avg-toggle.avg .seite.rechts{ color: #fff; }
+  .analysis-avg-toggle:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  [data-theme="dark"] .analysis-avg-toggle{ background: #2c2c2e; }
+  [data-theme="dark"] .analysis-avg-toggle:not(.avg)::before{ background: #636366; }
+  .analysis-avg-hint{ margin: 4px 0 10px; font-size: 12px; color: var(--ink-soft); }
+
+  /* ---------- Budget Töpfe ---------- */
+  .bt-card{ max-width: 460px; }
+  #budget-overlay .receipt-body{ max-height: calc(100vh - 140px); overflow-y: auto; }
+  .bt-topf{ padding: 10px 0 12px; border-bottom: 1px solid var(--line); }
+  .bt-topf:last-child{ border-bottom: none; }
+  .bt-kopf{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+  .bt-name{ font-weight: 600; font-size: 15px; }
+  .bt-input{
+    width: 120px; font-family: inherit; font-size: 16px; text-align: right;
+    padding: 6px 9px; border: 1px solid var(--line); border-radius: var(--radius-klein);
+    background: var(--paper); color: var(--ink);
+  }
+  .bt-input:focus{ outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(10,132,255,0.25); }
+  .bt-input.ungueltig{ border-color: var(--error); }
+  .bt-track{ height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 8px 0 5px; }
+  .bt-fill{ height: 100%; border-radius: 4px; background: var(--ok); }
+  .bt-fill.knapp{ background: #ff9500; }
+  .bt-fill.drueber{ background: var(--error); }
+  .bt-info{ display:flex; justify-content:space-between; gap: 8px; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .bt-topf.ohne .bt-info{ margin-top: 6px; }
+  .bt-rest{ font-weight: 600; color: var(--ok); white-space: nowrap; }
+  .bt-rest.drueber{ color: var(--error); }
+  .bt-gesamt{ padding: 10px 12px; margin-bottom: 8px; border-radius: var(--radius-klein); background: var(--paper); }
+  .bt-gesamt-kopf{ display:flex; justify-content:space-between; gap: 10px; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .bt-gesamt-kopf span:last-child{ white-space: nowrap; }
+  [data-theme="dark"] #budget-overlay .receipt-card,
+  [data-theme="dark"] #budget-overlay .receipt-head{ background: #1c1c1e; }
+  [data-theme="dark"] .bt-input{ background: #2c2c2e; border-color: #48484a; }
+  [data-theme="dark"] .bt-gesamt{ background: #2c2c2e; }
 
   /* Speichern-Knopf neben dem Prozentfeld im Gehaltsrechner */
   .sc-prozent-zeile{ display:flex; gap: 8px; }

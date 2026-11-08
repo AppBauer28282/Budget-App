@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=49">
+<link rel="stylesheet" href="styles.css?v=50">
 </head>
 <body>
 
@@ -256,6 +256,7 @@
   </details>
 
   <button type="button" class="receipt-btn" id="analysis-btn">Analyse</button>
+  <button type="button" class="receipt-btn" id="budget-toepfe-btn">Budget Töpfe</button>
 
   <!-- Fixkosten einstellen (js/fixkosten.js): gilt für neue und alle offenen
        Monate, abgeschlossene Monate behalten ihre damaligen Fixkosten. -->
@@ -575,6 +576,26 @@
   </div>
 </div>
 
+<!-- Budget Töpfe (js/budget-toepfe.js): Jahresbudget je Analyse-Kategorie
+     und wie viel davon verbraucht ist. Nur Anzeige, keine Auswirkung sonst. -->
+<div class="receipt-overlay" id="budget-overlay" hidden>
+  <div class="receipt-card bt-card" role="dialog" aria-modal="true" aria-labelledby="budget-title">
+    <div class="receipt-head">
+      <h2 id="budget-title">Budget Töpfe</h2>
+      <button type="button" class="receipt-close" id="budget-close" aria-label="Budget Töpfe schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <div class="analysis-filter-row">
+        <label for="budget-year" class="month-label">Jahr</label>
+        <select id="budget-year"></select>
+      </div>
+      <p class="categories-hint">Jahresbudget je Kategorie eintragen. Verbraucht zählt wie in der Analyse (alle Monate des Jahres). Nur zur Übersicht — hat keine Auswirkung auf andere Werte.</p>
+      <div id="budget-gesamt"></div>
+      <div id="budget-liste"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Forecast bearbeiten: Tabelle mit Posten je Kategorie (js/forecast-edit.js). -->
 <div class="receipt-overlay" id="fc-edit-overlay" hidden>
   <div class="receipt-card fc-edit-card" role="dialog" aria-modal="true" aria-labelledby="fc-edit-title">
@@ -632,6 +653,11 @@
       <div class="analysis-filter-row">
         <label for="analysis-year" class="month-label">Jahr</label>
         <select id="analysis-year"></select>
+        <!-- Umschalter Summe / Durchschnitt (rechteckiger An/Aus-Schalter) -->
+        <button type="button" class="analysis-avg-toggle" id="analysis-avg-toggle"
+                role="switch" aria-checked="false" aria-label="Durchschnitt pro Monat anzeigen">
+          <span class="seite links">Σ</span><span class="seite rechts">Ø</span>
+        </button>
       </div>
 
       <div class="analysis-filter-head">
@@ -1248,7 +1274,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=49"></script>
+<script type="module" src="js/app.js?v=50"></script>
 
 </body>
 </html>
