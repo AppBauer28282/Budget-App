@@ -7,12 +7,12 @@
    samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
    nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=54';
-import { el } from './dom.js?v=54';
-import { formatCents } from './utils.js?v=54';
-import { allData, fixkostenVon } from './storage.js?v=54';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=54';
-import { openOverlay, closeOverlay } from './overlays.js?v=54';
+import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=55';
+import { el } from './dom.js?v=55';
+import { formatCents } from './utils.js?v=55';
+import { allData, fixkostenVon } from './storage.js?v=55';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=55';
+import { openOverlay, closeOverlay } from './overlays.js?v=55';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.
@@ -48,24 +48,45 @@ function populateYearSelect(){
   el.analysisYear.value = String(years[years.length - 1]); // neuestes Jahr zuerst
 }
 
-// Monats- und Kategorie-Checkboxen ändern sich nie zur Laufzeit — einmalig
-// beim Laden dieses Moduls aufgebaut, alle standardmäßig angehakt (sofortiger
-// Gesamtüberblick beim ersten Öffnen).
-function buildMonthCheckboxes(){
+// Monats-Checkboxen: nur die Monate des gewählten Jahres, die im
+// Haushaltsbuch angelegt sind (v54) — neu aufgebaut beim Öffnen und bei
+// jedem Jahreswechsel. Neue Monate sind angehakt; was man im selben Jahr
+// abgewählt hat, bleibt beim erneuten Öffnen abgewählt.
+// Kategorie-Checkboxen ändern sich nie zur Laufzeit — einmalig beim Laden
+// dieses Moduls aufgebaut, alle standardmäßig angehakt.
+let monateJahr = null;
+let abgewaehlt = new Set();
+function buildMonthCheckboxes(year){
+  if(year !== monateJahr){ abgewaehlt = new Set(); monateJahr = year; }
+  else {
+    el.analysisMonths.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      if(cb.checked) abgewaehlt.delete(Number(cb.dataset.month)); else abgewaehlt.add(Number(cb.dataset.month));
+    });
+  }
+  const vorhanden = new Set();
+  Object.values(allData.monthEntries).forEach(e => { if(e.year === year) vorhanden.add(e.monthIndex); });
   const fragment = document.createDocumentFragment();
   MONTHS.forEach((name, idx) => {
+    if(!vorhanden.has(idx)) return;
     const label = document.createElement('label');
     label.className = 'analysis-check';
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.dataset.month = String(idx);
-    cb.checked = true;
+    cb.checked = !abgewaehlt.has(idx);
     const span = document.createElement('span');
     span.textContent = name;
     label.append(cb, span);
     fragment.appendChild(label);
   });
+  if(!vorhanden.size){
+    const p = document.createElement('p');
+    p.className = 'analysis-results-empty';
+    p.textContent = 'In diesem Jahr sind noch keine Monate angelegt.';
+    fragment.appendChild(p);
+  }
   el.analysisMonths.replaceChildren(fragment);
+  updateToggleAllLabel(el.analysisMonths, el.analysisMonthsToggle);
 }
 
 function buildCategoryCheckboxes(){
@@ -84,7 +105,6 @@ function buildCategoryCheckboxes(){
   });
   el.analysisCategories.replaceChildren(fragment);
 }
-buildMonthCheckboxes();
 buildCategoryCheckboxes();
 
 // "Alle auswählen/abwählen"-Umschaltknopf: Beschriftung zeigt immer die
@@ -387,7 +407,7 @@ function updateAnalysis(){
 
 function openAnalysis(){
   populateYearSelect();
-  updateToggleAllLabel(el.analysisMonths, el.analysisMonthsToggle);
+  buildMonthCheckboxes(Number(el.analysisYear.value));
   updateToggleAllLabel(el.analysisCategories, el.analysisCategoriesToggle);
   updateAnalysis();
   openOverlay(el.analysisOverlay, el.analysisClose);
@@ -409,7 +429,10 @@ document.addEventListener('keydown', (e) => {
 // jeweiligen Container statt einem Listener pro Checkbox). Die Umschalt-
 // Beschriftung ("Alle auswählen"/"Alle abwählen") muss bei jeder manuellen
 // Einzelauswahl mit aktualisiert werden.
-el.analysisYear.addEventListener('change', updateAnalysis);
+el.analysisYear.addEventListener('change', () => {
+  buildMonthCheckboxes(Number(el.analysisYear.value));
+  updateAnalysis();
+});
 el.analysisMonths.addEventListener('change', () => {
   updateToggleAllLabel(el.analysisMonths, el.analysisMonthsToggle);
   updateAnalysis();

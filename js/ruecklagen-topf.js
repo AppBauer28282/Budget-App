@@ -9,10 +9,10 @@
    Cloud-Abgleich und Sichern/Wiederherstellen), wirkt sich auf keine andere
    Berechnung aus. Alle Texte per textContent, kein innerHTML.
    ============================================================================= */
-import { categoryDefs, MAX_TEXT_LENGTH, AMOUNT_MAX_CENTS } from './constants.js?v=54';
-import { formatCents, parseEuroInputToCents } from './utils.js?v=54';
-import { allData, saveAll, RT_KEYS, sanitizeRuecklagenTopf } from './storage.js?v=54';
-import { openOverlay, closeOverlay } from './overlays.js?v=54';
+import { categoryDefs, MAX_TEXT_LENGTH, AMOUNT_MAX_CENTS } from './constants.js?v=55';
+import { formatCents, parseEuroInputToCents } from './utils.js?v=55';
+import { allData, saveAll, RT_KEYS, sanitizeRuecklagenTopf } from './storage.js?v=55';
+import { openOverlay, closeOverlay } from './overlays.js?v=55';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('rt-btn');
