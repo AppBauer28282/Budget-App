@@ -3298,6 +3298,28 @@
     .ptw-gauge.seite .ptw-value{ font-size: 19px; }
     .ptw-gauge.mitte .ptw-value{ font-size: 22px; }
   }
+  /* BMI-Skala im Pen-Tracker-Widget (WHO-Kategorien) */
+  .ptw-bmi{ position: relative; display:block; padding: 0 2px; }
+  .ptw-bmi-oben{ position: relative; display:block; height: 26px; }
+  .ptw-bmi-jetzt{ position: absolute; bottom: 0; transform: translateX(-50%); display:flex; flex-direction: column; align-items:center; }
+  .ptw-bmi-jetzt-wert{ font-size: 11px; font-weight: 700; color: var(--error); white-space: nowrap; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .ptw-bmi-dreieck{ width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--error); margin-top: 1px; }
+  .ptw-bmi-balken{ position: relative; display:block; height: 14px; border-radius: 7px; overflow: hidden; background: var(--line); }
+  .ptw-bmi-stueck{ position: absolute; top: 0; bottom: 0; display:flex; align-items:center; justify-content:center; overflow: hidden; }
+  .ptw-bmi-stueck + .ptw-bmi-stueck{ box-shadow: inset 1px 0 0 rgba(255,255,255,.7); }
+  .ptw-bmi-stueck.a3{ background: #b3261e; }
+  .ptw-bmi-stueck.a2{ background: #ff3b30; }
+  .ptw-bmi-stueck.a1{ background: #ff9500; }
+  .ptw-bmi-stueck.ue{ background: #ffcc00; }
+  .ptw-bmi-stueck.ng{ background: #34c759; }
+  .ptw-bmi-stueck.ug{ background: #32ade6; }
+  .ptw-bmi-name{ font-size: 9px; font-weight: 700; color: rgba(0,0,0,.62); white-space: nowrap; letter-spacing: .2px; }
+  .ptw-bmi-strich{ position: absolute; top: 0; height: 5px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--ink-soft); }
+  .ptw-bmi-unten{ position: relative; display:block; height: 22px; margin-top: 2px; }
+  .ptw-bmi-label{ position: absolute; top: 6px; font-size: 11px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ptw-bmi-label.start{ transform: translateX(-20%); }
+  .ptw-bmi-label.ziel{ transform: translateX(-80%); }
+  [data-theme="dark"] .ptw-bmi-stueck + .ptw-bmi-stueck{ box-shadow: inset 1px 0 0 rgba(0,0,0,.5); }
   .ptw-chart{ display:flex; gap: 4px; }
   .ptw-empty{ font-size: 12px; color: var(--ink-soft); padding: 8px 0; }
   .ptw-axis{ position: relative; width: 20px; height: 124px; flex-shrink: 0; }

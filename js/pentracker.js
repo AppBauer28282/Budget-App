@@ -1197,6 +1197,73 @@ function gauge(cls, valueText, unitText, opts){
   return g;
 }
 
+// Offizielle BMI-Kategorien (WHO), von oben nach unten.
+const BMI_KATEGORIEN = [
+  { ab: 40,   name: 'Adipositas III', cls: 'a3' },
+  { ab: 35,   name: 'Adipositas II',  cls: 'a2' },
+  { ab: 30,   name: 'Adipositas I',   cls: 'a1' },
+  { ab: 25,   name: 'Übergewicht',    cls: 'ue' },
+  { ab: 18.5, name: 'Normalgewicht',  cls: 'ng' },
+  { ab: 0,    name: 'Untergewicht',   cls: 'ug' }
+];
+function bmiKategorie(b){ return BMI_KATEGORIEN.find(k => b >= k.ab); }
+
+function renderBmiSkala(start, now, goal){
+  const bStart = bmi(start), bZiel = bmi(goal), bJetzt = bmi(now);
+  if(bStart == null || bZiel == null || !(bStart > bZiel)) return null;
+  const links = Math.floor(bStart) + 1;         // höchster Wert, steht links
+  const rechts = Math.max(10, Math.ceil(bZiel) - 2);
+  const spanne = links - rechts;
+  const pos = (b) => Math.min(100, Math.max(0, (links - b) / spanne * 100));
+
+  const box = elem('span', 'ptw-bmi');
+  box.title = 'BMI: Start ' + fmtNum(bStart, 1) + ' · aktuell ' + (bJetzt != null ? fmtNum(bJetzt, 1) : '–') + ' · Ziel ' + fmtNum(bZiel, 1);
+
+  // Aktueller BMI: Wert + rotes Dreieck über dem Balken.
+  const oben = elem('span', 'ptw-bmi-oben');
+  if(bJetzt != null){
+    const m = elem('span', 'ptw-bmi-jetzt');
+    m.style.left = pos(bJetzt).toFixed(2) + '%';
+    m.appendChild(elem('span', 'ptw-bmi-jetzt-wert', 'BMI ' + fmtNum(bJetzt, 1)));
+    m.appendChild(elem('span', 'ptw-bmi-dreieck'));
+    oben.appendChild(m);
+  }
+  box.appendChild(oben);
+
+  // Farbige Abschnitte je Kategorie im sichtbaren Bereich.
+  const balken = elem('span', 'ptw-bmi-balken');
+  BMI_KATEGORIEN.forEach((k, i) => {
+    const bis = i === 0 ? Infinity : BMI_KATEGORIEN[i - 1].ab;   // obere Grenze
+    const von = Math.max(k.ab, rechts), hoch = Math.min(bis, links);
+    if(hoch <= von) return;
+    const st = elem('span', 'ptw-bmi-stueck ' + k.cls);
+    st.style.left = pos(hoch).toFixed(2) + '%';
+    st.style.width = (pos(von) - pos(hoch)).toFixed(2) + '%';
+    st.title = k.name;
+    const breite = pos(von) - pos(hoch);
+    if(breite >= 17) st.appendChild(elem('span', 'ptw-bmi-name', k.name));
+    balken.appendChild(st);
+  });
+  box.appendChild(balken);
+
+  // Darunter: feiner Strich an Start und Ziel, darunter die Beschriftung
+  // (der Strich sitzt bewusst unter dem Balken, damit er keine
+  // Kategorienamen durchschneidet).
+  const unten = elem('span', 'ptw-bmi-unten');
+  [['start', bStart], ['ziel', bZiel]].forEach(([cls, b]) => {
+    const strich = elem('span', 'ptw-bmi-strich ' + cls);
+    strich.style.left = pos(b).toFixed(2) + '%';
+    unten.appendChild(strich);
+  });
+  const lStart = elem('span', 'ptw-bmi-label start', 'Start ' + fmtNum(bStart, 1));
+  lStart.style.left = pos(bStart).toFixed(2) + '%';
+  const lZiel = elem('span', 'ptw-bmi-label ziel', 'Ziel ' + fmtNum(bZiel, 1));
+  lZiel.style.left = pos(bZiel).toFixed(2) + '%';
+  unten.append(lStart, lZiel);
+  box.appendChild(unten);
+  return box;
+}
+
 function renderWidget(){
   if(!ptWidget) return;
   clear(ptWidget);
@@ -1238,6 +1305,13 @@ function renderWidget(){
   const zielDatum = fc && !fc.reached ? fmtDate(fc.date) : (fc && fc.reached ? 'Ziel erreicht' : '');
   row.appendChild(gauge('seite rechts', weeksText, weeksText === '–' ? '' : 'W', { bogenText: zielDatum }));
   ptWidget.appendChild(row);
+
+  /* BMI-Skala: links Start-BMI, rechts Ziel-BMI (aus dem Zielgewicht), mit
+     Überstand: links ganze Zahl über dem Start (34,x → 35), rechts zwei
+     unter dem Ziel (23 → 21). Abschnitte in den Farben der WHO-Kategorien, aktueller BMI
+     als rotes Dreieck. */
+  const bmiSkala = renderBmiSkala(start, now, goal);
+  if(bmiSkala) ptWidget.appendChild(bmiSkala);
 
   /* Verlauf: je Monat ein Balken mit dem letzten Eintrag dieses Monats */
   const byMonth = [];
