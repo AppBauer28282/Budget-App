@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=57">
+<link rel="stylesheet" href="styles.css?v=58">
 </head>
 <body>
 
@@ -61,10 +61,10 @@
   <div class="lock-card">
     <p class="eyebrow">Monatsbudget</p>
     <h1 class="lock-title">Entsperren</h1>
-    <p class="lock-sub">6-stellige PIN eingeben. Beim allerersten Mal wird sie automatisch als deine PIN angelegt.</p>
+    <p class="lock-sub">PIN eingeben.</p>
 
     <label class="visually-hidden" for="lock-pin">PIN</label>
-    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12"
            id="lock-pin" placeholder="••••••" autocomplete="off">
 
     <button type="button" class="lock-submit-btn" id="lock-submit">Weiter</button>
@@ -540,18 +540,18 @@
       <button type="button" class="receipt-close" id="pin-close" aria-label="Fenster schließen">✕</button>
     </div>
     <div class="receipt-body">
-      <p class="categories-hint">Aktuelle PIN zur Bestätigung, danach zweimal die neue 6-stellige PIN eingeben.</p>
+      <p class="categories-hint">Aktuelle PIN zur Bestätigung, danach zweimal die neue PIN eingeben (8 bis 12 Ziffern).</p>
 
       <label class="visually-hidden" for="pin-current">Aktuelle PIN</label>
-      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off"
              id="pin-current" placeholder="Aktuelle PIN" class="pin-change-input">
 
       <label class="visually-hidden" for="pin-new">Neue PIN</label>
-      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off"
              id="pin-new" placeholder="Neue PIN" class="pin-change-input">
 
       <label class="visually-hidden" for="pin-new-repeat">Neue PIN wiederholen</label>
-      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off"
              id="pin-new-repeat" placeholder="Neue PIN wiederholen" class="pin-change-input">
 
       <button type="button" class="salary-save-btn" id="pin-change-btn">PIN ändern</button>
@@ -1212,7 +1212,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=57"></script>
+<script type="module" src="js/app.js?v=58"></script>
 
 </body>
 </html>
