@@ -1,12 +1,10 @@
 /* =============================================================================
    CLOUD-BRÜCKE + LOGIN + CLOUD-SYNC
    Ablauf:
-   1. Nutzer gibt seine PIN ein (6 bis 12 Ziffern; neue PINs ab v58
-      mindestens 8 Ziffern, siehe "PIN ändern").
-   2. Login mit der festen Kennung und der PIN als Passwort. Ein neues Konto
-      legt die App seit v58 NICHT mehr an — das Konto existiert, und die
-      Registrierung ist in der Firebase-Konsole abgeschaltet. Jeder Fehler
-      mit falschen Zugangsdaten bedeutet schlicht "Falsche PIN".
+   1. Nutzer gibt 6-stellige PIN ein.
+   2. Zuerst wird ein Login versucht (Rückkehrer). Schlägt das fehl, wird
+      versucht, das Konto neu anzulegen (allererstes Mal). Schlägt AUCH das
+      fehl (Konto existiert schon), war die PIN schlicht falsch.
    3. Nach erfolgreichem Login: Datenstand aus Firestore laden (oder, falls
       noch keiner existiert, den aktuellen lokalen Stand hochladen) und die
       App sichtbar machen.
@@ -17,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=58';
+import { el } from './dom.js?v=57';
 import {
   allData, currentMonthKey, writeStorage, fixkostenUebernahmeAbholen,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=58';
-import { renderMonth } from './render.js?v=58';
-import { renderOverview } from './navigation.js?v=58';
+} from './storage.js?v=57';
+import { renderMonth } from './render.js?v=57';
+import { renderOverview } from './navigation.js?v=57';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).
@@ -113,6 +111,35 @@ window.__onLocalSave = function(data){
     .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
 };
 
+// ---------- Konsumtopf-Sync ----------
+// Gleicher Mechanismus wie oben fürs Budget, nur für ein eigenes Dokument
+// und einen eigenen Zeitstempel-Schlüssel — der Konsumtopf ist bewusst ein
+// getrenntes Werkzeug mit eigenem Speicher (siehe js/konsumtopf.js), soll
+// aber genauso zwischen Geräten abgeglichen werden wie das Budget selbst.
+// Fehlt window.__konsumtopfCloud (Modul nicht geladen, oder eine ältere
+// zwischengespeicherte Fassung ohne diese Schnittstelle), bleibt der
+// Konsumtopf einfach unsynchronisiert lokal — kein Fehler, kein Blockieren.
+const konsumtopfDocRef = (uid) => db.collection('konsumtopf').doc(uid);
+const KT_LOCAL_UPDATED_KEY = 'kontor_konsumtopf_updated_at';
+function getKtLocalUpdatedAt(){
+  const raw = localStorage.getItem(KT_LOCAL_UPDATED_KEY);
+  const n = raw ? parseInt(raw, 10) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+function setKtLocalUpdatedAt(ts){
+  try{ localStorage.setItem(KT_LOCAL_UPDATED_KEY, String(ts)); }catch(e){}
+}
+let suppressKonsumtopfPush = false;
+
+window.__onKonsumtopfLocalSave = function(data){
+  if(suppressKonsumtopfPush) return;
+  const ts = Date.now();
+  setKtLocalUpdatedAt(ts);
+  if(!auth.currentUser) return;
+  konsumtopfDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: data })
+    .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
+};
+
 // ---------- Pen-Tracker-Sync ----------
 // Gleicher Mechanismus wie oben, nur für js/pentracker.js und dessen
 // eigenes Dokument. Bewusst kein Datum wird hier je vorbelegt — der
@@ -194,41 +221,60 @@ window.__onVermoegenLocalSave = function(data){
     .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
 };
 
-// PIN-Längen: Anmelden geht mit 6 bis 12 Ziffern (ältere PINs haben 6),
-// eine NEUE PIN muss mindestens 8 Ziffern haben — 100-mal mehr
-// Möglichkeiten als 6 Ziffern, damit Durchprobieren aussichtslos wird.
-const PIN_LOGIN_RE = /^\d{6,12}$/;
-const PIN_NEU_RE = /^\d{8,12}$/;
-const PIN_MAX = 12;
-
 async function unlock(){
   const pin = lockPin.value.trim();
-  if(!PIN_LOGIN_RE.test(pin)){
-    lockError.textContent = 'Bitte deine PIN eingeben (6 bis 12 Ziffern).';
+  if(!/^\d{6}$/.test(pin)){
+    lockError.textContent = 'Bitte eine 6-stellige PIN eingeben.';
     return;
   }
   lockError.textContent = '';
   lockSubmit.disabled = true;
   lockStatus.textContent = 'Anmelden…';
 
+  // Nur bei diesen Fehlercodes ist "kein Konto / falsches Passwort" die
+  // plausible Ursache — dann lohnt sich der Versuch, ein neues Konto
+  // anzulegen. Bei jedem anderen Fehler (z. B. zu viele Versuche, Netzwerk)
+  // zeigen wir den echten Grund, statt pauschal "Falsche PIN" zu behaupten.
+  const credentialErrorCodes = [
+    'auth/user-not-found', 'auth/wrong-password',
+    'auth/invalid-credential', 'auth/invalid-login-credentials'
+  ];
+
   try{
+    // Fall A: Konto existiert schon (Rückkehrer) — normaler Login.
     await auth.signInWithEmailAndPassword(FIXED_EMAIL, pin);
-    // Erfolgreich — onAuthStateChanged übernimmt den Rest.
-  }catch(err){
-    lockSubmit.disabled = false;
-    lockStatus.textContent = '';
-    const code = err && err.code;
-    if(['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials',
-        'auth/user-not-found', 'auth/invalid-password'].includes(code)){
-      lockError.textContent = 'Falsche PIN.';
-    } else if(code === 'auth/too-many-requests'){
-      lockError.textContent = 'Zu viele Versuche – bitte später erneut versuchen.';
-    } else if(code === 'auth/network-request-failed'){
-      lockError.textContent = 'Keine Internetverbindung – zum Anmelden nötig.';
-    } else {
-      lockError.textContent = 'Anmeldung fehlgeschlagen: ' + (code || (err && err.message) || 'unbekannter Fehler');
+  }catch(signInErr){
+    if(!credentialErrorCodes.includes(signInErr.code)){
+      // Kein Anmeldedaten-Problem, sondern etwas anderes — echten Grund zeigen.
+      lockSubmit.disabled = false;
+      lockStatus.textContent = '';
+      lockError.textContent = 'Anmeldung fehlgeschlagen: ' +
+        (signInErr.code || signInErr.message || 'unbekannter Fehler');
+      return;
+    }
+    try{
+      // Fall B: allererstes Mal — Konto mit dieser PIN als Passwort anlegen.
+      await auth.createUserWithEmailAndPassword(FIXED_EMAIL, pin);
+    }catch(createErr){
+      lockSubmit.disabled = false;
+      lockStatus.textContent = '';
+      if(createErr.code === 'auth/email-already-in-use'){
+        // Konto existiert, Login schlug aber fehl → PIN passt nicht.
+        // Der technische Code des ursprünglichen Login-Fehlers wird
+        // mitangezeigt, damit man z. B. eine Sperre nach zu vielen
+        // Versuchen von einer wirklich falschen PIN unterscheiden kann.
+        lockError.textContent = 'Falsche PIN. (' + (signInErr.code || 'kein Code') + ')';
+      } else if(createErr.code === 'auth/weak-password'){
+        lockError.textContent = 'PIN muss mindestens 6 Ziffern haben.';
+      } else if(createErr.code === 'auth/network-request-failed'){
+        lockError.textContent = 'Keine Internetverbindung — beim allerersten Mal zwingend nötig.';
+      } else {
+        lockError.textContent = 'Anmeldung fehlgeschlagen: ' + (createErr.code || 'unbekannt');
+      }
+      return;
     }
   }
+  // Erfolgreicher Login (Fall A oder B) — onAuthStateChanged übernimmt den Rest.
 }
 
 lockSubmit.addEventListener('click', unlock);
@@ -237,8 +283,7 @@ lockPin.addEventListener('keydown', (e) => {
 });
 // Nur Ziffern zulassen, Rest stillschweigend verwerfen.
 lockPin.addEventListener('input', () => {
-  lockPin.value = lockPin.value.replace(/\D/g, '').slice(0, PIN_MAX);
-  lockError.textContent = '';   // alte Meldung verschwindet beim Neu-Tippen
+  lockPin.value = lockPin.value.replace(/\D/g, '').slice(0, 6);
 });
 
 // Abmelden: sperrt die App wieder, ohne Daten zu löschen (bleiben in der
@@ -287,8 +332,7 @@ document.addEventListener('keydown', (e) => {
 // Nur Ziffern in den drei PIN-Feldern zulassen.
 [pinCurrent, pinNew, pinNewRepeat].forEach(input => {
   input.addEventListener('input', () => {
-    input.value = input.value.replace(/\D/g, '').slice(0, PIN_MAX);
-    pinChangeError.textContent = '';
+    input.value = input.value.replace(/\D/g, '').slice(0, 6);
   });
 });
 
@@ -297,12 +341,8 @@ async function changePin(){
   const next = pinNew.value.trim();
   const repeat = pinNewRepeat.value.trim();
 
-  if(!PIN_LOGIN_RE.test(cur)){
-    pinChangeError.textContent = 'Bitte die aktuelle PIN eingeben.';
-    return;
-  }
-  if(!PIN_NEU_RE.test(next)){
-    pinChangeError.textContent = 'Die neue PIN muss 8 bis 12 Ziffern haben.';
+  if(!/^\d{6}$/.test(cur) || !/^\d{6}$/.test(next)){
+    pinChangeError.textContent = 'Bitte alle Felder mit 6 Ziffern ausfüllen.';
     return;
   }
   if(next !== repeat){
@@ -341,10 +381,10 @@ async function changePin(){
   }catch(err){
     pinChangeBtn.disabled = false;
     pinChangeStatus.textContent = '';
-    if(['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err.code)){
+    if(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'){
       pinChangeError.textContent = 'Aktuelle PIN ist falsch.';
     } else if(err.code === 'auth/weak-password'){
-      pinChangeError.textContent = 'Die neue PIN muss 8 bis 12 Ziffern haben.';
+      pinChangeError.textContent = 'Neue PIN muss mindestens 6 Ziffern haben.';
     } else if(err.code === 'auth/too-many-requests'){
       pinChangeError.textContent = 'Zu viele Versuche — bitte kurz warten.';
     } else {
@@ -402,9 +442,40 @@ auth.onAuthStateChanged(async (user) => {
       lockError.textContent = 'Cloud gerade nicht erreichbar — arbeite lokal weiter.';
     }
 
-    // Jeder weitere Bereich wird als eigener Versuch abgeglichen: ein
-    // Fehlschlag (Netzwerk, Modul nicht geladen) darf den Budget-Login nie
-    // blockieren — deshalb jeweils eigenes try/catch ohne Fehlermeldung.
+    // Gleicher Abgleich für den Konsumtopf, als eigener Versuch: ein
+    // Fehlschlag hier (Netzwerk, oder das Modul ist gar nicht geladen) darf
+    // den Budget-Login niemals blockieren — deshalb eigenes try/catch und
+    // keine Fehlermeldung, die die des Budgets überschreiben würde.
+    if(window.__konsumtopfCloud){
+      try{
+        const ktSnap = await konsumtopfDocRef(user.uid).get();
+        if(ktSnap.exists){
+          const raw = ktSnap.data() || {};
+          const isNewFormat = raw.data && typeof raw.data === 'object';
+          const cloudPayload = isNewFormat ? raw.data : raw;
+          const cloudUpdatedAt = Number(raw.updatedAt) || 0;
+          const localUpdatedAt = getKtLocalUpdatedAt();
+          const cloudWins = localUpdatedAt === 0 || cloudUpdatedAt > localUpdatedAt;
+
+          if(cloudWins){
+            suppressKonsumtopfPush = true;
+            window.__konsumtopfCloud.replaceAllData(cloudPayload);
+            suppressKonsumtopfPush = false;
+            setKtLocalUpdatedAt(cloudUpdatedAt || Date.now());
+          } else {
+            const ts = localUpdatedAt;
+            await konsumtopfDocRef(user.uid).set({ updatedAt: ts, data: window.__konsumtopfCloud.getSnapshot() });
+          }
+        } else {
+          // Allererster Login: aktuellen lokalen Stand (die Vorbelegung,
+          // falls noch nichts eingetragen wurde) als Startpunkt hochladen.
+          const ts = Date.now();
+          setKtLocalUpdatedAt(ts);
+          await konsumtopfDocRef(user.uid).set({ updatedAt: ts, data: window.__konsumtopfCloud.getSnapshot() });
+        }
+      }catch(err){ /* Konsumtopf bleibt lokal nutzbar, auch ohne Cloud */ }
+    }
+
     // Gleicher Abgleich für den Pen-Tracker, ebenfalls als eigener Versuch.
     if(window.__pentrackerCloud){
       try{
@@ -512,7 +583,7 @@ auth.onAuthStateChanged(async (user) => {
     // aufheben, damit der Sperrbildschirm nicht blockiert dargestellt wird.
     document.body.style.overflow = '';
     ['receipt-overlay','chart-overlay','pin-overlay','analysis-overlay','fc-edit-overlay','budget-overlay','rt-overlay',
-     'salary-calc-overlay','pentracker-overlay',
+     'salary-calc-overlay','konsum-overlay','pentracker-overlay',
      'auszahlung-overlay','vermoegen-overlay'].forEach(id => {
       const ov = document.getElementById(id);
       if(ov) ov.hidden = true;
