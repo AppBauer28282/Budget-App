@@ -234,7 +234,7 @@ function renderWuensche(d){
     wahl.value = w.key;
     const faerbe = () => {
       const f = w.key ? farbe(w.key) : OHNE_FARBE;
-      wahl.style.background = f;
+      wahl.style.backgroundColor = f;   // nur die Farbe — der Punkt bleibt klein (background-clip in styles.css)
       z.style.setProperty('--rt-farbe', f);
       wahl.title = w.key ? NAME[w.key] : 'Ohne Topf';
     };

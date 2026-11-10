@@ -3680,25 +3680,29 @@
   .rt-neu-select{ flex: 1; min-width: 0; font-family: inherit; font-size: 16px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink); }
   .rt-leer{ font-size: 13px; color: var(--ink-soft); margin: 4px 0 0; }
 
-  /* Wunschliste (v59): eine einzige Liste. Der runde Farbknopf links ist
-     die Topf-Auswahl — sichtbar ist nur die Farbe des Topfs. */
-  .rt-wunsch-liste{ border-radius: 14px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); padding: 4px 10px; margin-bottom: 10px; }
-  .rt-wunsch{ display:grid; grid-template-columns: 26px minmax(0,1fr) 92px 28px; gap: 8px; align-items:center; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+  /* Wunschliste (v59): eine einzige Liste, optisch wie eine schlichte
+     Textliste — keine Karte, keine Eingabekästen. Die Felder bleiben
+     antippbar (beim Bearbeiten erscheint eine feine Unterstreichung). Der
+     kleine Farbpunkt links ist die Topf-Auswahl. */
+  .rt-wunsch-liste{ margin-bottom: 6px; }
+  .rt-wunsch{ display:grid; grid-template-columns: 28px minmax(0,1fr) 84px 24px; gap: 4px; align-items:center; padding: 3px 0; border-bottom: 1px solid var(--line); }
   .rt-wunsch:last-child{ border-bottom: none; }
-  .rt-wunsch input{
-    font-family: inherit; font-size: 16px; padding: 7px 9px; min-width: 0; width: 100%; box-sizing: border-box;
-    border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink);
+  #rt-overlay .rt-wunsch input{
+    font-family: inherit; font-size: 16px; padding: 7px 0; min-width: 0; width: 100%; box-sizing: border-box;
+    border: none; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; color: var(--ink);
   }
-  .rt-wunsch .fc-edit-betrag{ text-align: right; font-variant-numeric: tabular-nums; }
-  .rt-wunsch input:focus{ outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(10,132,255,0.25); }
-  .rt-wunsch input.ungueltig{ border-color: var(--error); }
-  .rt-farbwahl{
-    -webkit-appearance: none; appearance: none; width: 26px; height: 26px; padding: 0; border-radius: 50%;
-    border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer;
-    color: transparent; font-size: 16px; text-indent: -999px; overflow: hidden;
+  #rt-overlay .rt-wunsch .fc-edit-betrag{ text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  #rt-overlay .rt-wunsch input:focus{ outline: none; border-color: transparent; border-bottom-color: var(--brass); }
+  #rt-overlay .rt-wunsch input.ungueltig{ border-bottom-color: var(--error); }
+  #rt-overlay .rt-wunsch input::placeholder{ color: var(--ink-soft); opacity: .6; }
+  .rt-wunsch .fc-edit-weg{ font-size: 13px; opacity: .7; padding: 4px 0; }
+  #rt-overlay .rt-farbwahl{
+    -webkit-appearance: none; appearance: none; width: 12px; height: 12px; min-height: 0; padding: 8px; margin: 0; border-radius: 50%;   /* 28 px Tippfläche, sichtbar nur der Punkt */
+    border: none; cursor: pointer; color: transparent; font-size: 16px; text-indent: -999px; overflow: hidden;
+    box-sizing: content-box; background-clip: content-box;
   }
   .rt-farbwahl option{ color: #000; background: #fff; }
-  .rt-farbwahl:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  #rt-overlay .rt-farbwahl:focus-visible{ outline: 2px solid var(--brass); outline-offset: 3px; }
   #rt-wunsch-plus{ display:block; margin: 2px 0 14px; }
   .rt-je-topf{ border-top: 1px dashed var(--line); padding-top: 8px; }
   .rt-gruppe{ display:grid; grid-template-columns: minmax(0,1fr) auto; gap: 0 10px; padding: 6px 0; font-variant-numeric: tabular-nums; }
@@ -3710,12 +3714,9 @@
 
   [data-theme="dark"] #rt-overlay .receipt-card,
   [data-theme="dark"] #rt-overlay .receipt-head{ background: #1c1c1e; }
-  [data-theme="dark"] .rt-block-konto,
-  [data-theme="dark"] .rt-wunsch-liste{ background: #2c2c2e; box-shadow: none; }
+  [data-theme="dark"] .rt-block-konto{ background: #2c2c2e; box-shadow: none; }
   [data-theme="dark"] .rt-konto-input,
-  [data-theme="dark"] .rt-kpi,
-  [data-theme="dark"] .rt-wunsch input{ background: #1c1c1e; border-color: #48484a; }
-  [data-theme="dark"] .rt-farbwahl{ border-color: #2c2c2e; box-shadow: 0 0 0 1px #48484a; }
+  [data-theme="dark"] .rt-kpi{ background: #1c1c1e; border-color: #48484a; }
   [data-theme="dark"] .rt-neu-select{ background: #2c2c2e; border-color: #48484a; }
   [data-theme="dark"] .rt-trenner{ border-top-color: #48484a; }
 
