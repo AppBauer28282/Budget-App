@@ -9,10 +9,11 @@
    Beide Balken rechnen mit verteiltem Jahresfix (js/auswertung.js), damit
    sie vergleichbar sind.
 
-   "Aktueller Monat" = neuester offener Monat; ohne offenen der zuletzt
-   abgeschlossene. Reine Anzeige; alle Texte per textContent.
+   "Aktueller Monat" = ÄLTESTER offener Monat (seit v59 — der, an dem gerade
+   gearbeitet wird; ein schon angelegter Folgemonat ist noch leer); ohne
+   offenen der zuletzt abgeschlossene. Reine Anzeige; alle Texte per textContent.
    ============================================================================= */
-import { alleEintraege, monatsWerte, schnitt, dreiteilung } from './auswertung.js?v=58';
+import { alleEintraege, monatsWerte, schnitt, dreiteilung } from './auswertung.js?v=59';
 
 const box = document.getElementById('budget-widget');
 const kachel = document.getElementById('budget-tile');
@@ -83,7 +84,7 @@ export function renderBudgetWidget(){
   const alle = alleEintraege();
   const offen = alle.filter(e => e.status === 'open');
   const zu = alle.filter(e => e.status === 'closed');
-  const aktuell = offen.length ? offen[offen.length - 1] : (zu.length ? zu[zu.length - 1] : null);
+  const aktuell = offen.length ? offen[0] : (zu.length ? zu[zu.length - 1] : null);
 
   const frag = document.createDocumentFragment();
   if(!aktuell){

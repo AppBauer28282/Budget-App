@@ -15,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=58';
+import { el } from './dom.js?v=59';
 import {
   allData, currentMonthKey, writeStorage, fixkostenUebernahmeAbholen,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=58';
-import { renderMonth } from './render.js?v=58';
-import { renderOverview } from './navigation.js?v=58';
+} from './storage.js?v=59';
+import { renderMonth } from './render.js?v=59';
+import { renderOverview } from './navigation.js?v=59';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).

@@ -1,7 +1,8 @@
 /* =============================================================================
    MONATSVERGLEICH (Balkendiagramm pro Monat)
-   Übersicht "Deine Monate", Knopf unter "Analyse". Je angelegtem Monat des
-   gewählten Jahres ein gestapelter Balken: wie viel in welcher Kategorie
+   Übersicht "Deine Monate", Knopf unter "Analyse". Je ABGESCHLOSSENEM Monat
+   (seit v59; offene Monate sind noch unvollständig) des gewählten Jahres ein
+   gestapelter Balken: wie viel in welcher Kategorie
    ausgegeben wurde. Kategorien lassen sich an- und abwählen.
 
    Ganz links steht als Vergleich "Ø <Vorjahr>": der Durchschnitt der
@@ -12,9 +13,9 @@
    damit der Buchungsmonat nicht herausragt. Reine SVG-Erzeugung per DOM-API;
    Farben von Text und Linien kommen aus styles.css (hell/dunkel).
    ============================================================================= */
-import { categoryDefs, SLICE_COLORS, VERRECHNET_IN } from './constants.js?v=58';
-import { alleEintraege, monatsWerte, schnitt, AUSWERTUNG_KEYS } from './auswertung.js?v=58';
-import { openOverlay, closeOverlay } from './overlays.js?v=58';
+import { categoryDefs, SLICE_COLORS, VERRECHNET_IN } from './constants.js?v=59';
+import { alleEintraege, monatsWerte, schnitt, AUSWERTUNG_KEYS } from './auswertung.js?v=59';
+import { openOverlay, closeOverlay } from './overlays.js?v=59';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('mb-btn');
@@ -80,7 +81,7 @@ function zeichne(){
   const jahr = Number(jahrSel.value);
   const keys = gewaehlt();
   const alle = alleEintraege();
-  const monate = alle.filter(e => e.year === jahr);
+  const monate = alle.filter(e => e.year === jahr && e.status === 'closed');
   const vorjahrZu = alle.filter(e => e.year === jahr - 1 && e.status === 'closed');
 
   // Spalten: optional "Ø Vorjahr", dann jeder angelegte Monat des Jahres.
@@ -90,12 +91,12 @@ function zeichne(){
       titel: 'Durchschnitt der ' + vorjahrZu.length + ' abgeschlossenen Monate ' + (jahr - 1) });
   }
   monate.forEach(e => spalten.push({ label: MON_KURZ[e.monthIndex], werte: monatsWerte(e, true),
-    art: e.status === 'open' ? 'offen' : 'zu', titel: e.monthName + ' ' + e.year + (e.status === 'open' ? ' (offen)' : '') }));
+    art: 'zu', titel: e.monthName + ' ' + e.year }));
 
   chartBox.replaceChildren();
   legendeBox.replaceChildren();
   if(!monate.length){
-    chartBox.appendChild(html('p', 'analysis-results-empty', 'In diesem Jahr sind noch keine Monate angelegt.'));
+    chartBox.appendChild(html('p', 'analysis-results-empty', 'In diesem Jahr ist noch kein Monat abgeschlossen.'));
     return;
   }
   if(!keys.length){
@@ -179,13 +180,13 @@ function zeichne(){
     html('span', 'mb-leg-wert', euro(gesamt)));
   legendeBox.prepend(kopf);
   const hinweis = [];
-  if(monate.some(e => e.status === 'open')) hinweis.push('Heller dargestellte Monate sind noch offen.');
+  hinweis.push('Gezeigt werden nur abgeschlossene Monate.');
   if(keys.includes('jahresfix')) hinweis.push('Jahresfix ist gleichmäßig verteilt (Jahressumme ÷ 12).');
   if(hinweis.length) legendeBox.appendChild(html('p', 'categories-hint mb-hinweis', hinweis.join(' ')));
 }
 
 function oeffnen(){
-  const jahre = Array.from(new Set(alleEintraege().map(e => e.year)));
+  const jahre = Array.from(new Set(alleEintraege().filter(e => e.status === 'closed').map(e => e.year)));
   if(!jahre.length) jahre.push(new Date().getFullYear());
   const frag = document.createDocumentFragment();
   jahre.forEach(j => { const o = document.createElement('option'); o.value = String(j); o.textContent = String(j); frag.appendChild(o); });

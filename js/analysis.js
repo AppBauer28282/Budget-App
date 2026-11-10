@@ -1,19 +1,20 @@
 /* =============================================================================
    ANALYSE (monatsübergreifende Auswertung)
    Wertet — anders als Beleg/Diagramm, die immer nur den aktuell geöffneten
-   Monat zeigen — ALLE gespeicherten Monate aus (offen und abgeschlossen).
+   Monat zeigen — alle ABGESCHLOSSENEN Monate aus (seit v59; offene Monate
+   sind noch unvollständig und würden Summen und Durchschnitte verfälschen).
    Nutzer wählt ein Jahr, beliebige Monate dieses Jahres und beliebige
    Kategorien; Ergebnis ist ein Tortendiagramm (Verteilung je Kategorie)
    samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
    nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=58';
-import { el } from './dom.js?v=58';
-import { formatCents } from './utils.js?v=58';
-import { allData, fixkostenVon } from './storage.js?v=58';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=58';
-import { openOverlay, closeOverlay } from './overlays.js?v=58';
-import { jahresfixProMonat } from './auswertung.js?v=58';
+import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=59';
+import { el } from './dom.js?v=59';
+import { formatCents } from './utils.js?v=59';
+import { allData, fixkostenVon } from './storage.js?v=59';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=59';
+import { openOverlay, closeOverlay } from './overlays.js?v=59';
+import { jahresfixProMonat } from './auswertung.js?v=59';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.
@@ -29,7 +30,7 @@ export const ANALYSIS_CATEGORIES = [
 
 function getAvailableYears(){
   const years = new Set();
-  Object.values(allData.monthEntries).forEach(entry => years.add(entry.year));
+  Object.values(allData.monthEntries).forEach(entry => { if(entry.status === 'closed') years.add(entry.year); });
   if(years.size === 0) years.add(new Date().getFullYear());
   return Array.from(years).sort((a, b) => a - b);
 }
@@ -65,7 +66,7 @@ function buildMonthCheckboxes(year){
     });
   }
   const vorhanden = new Set();
-  Object.values(allData.monthEntries).forEach(e => { if(e.year === year) vorhanden.add(e.monthIndex); });
+  Object.values(allData.monthEntries).forEach(e => { if(e.year === year && e.status === 'closed') vorhanden.add(e.monthIndex); });
   const fragment = document.createDocumentFragment();
   MONTHS.forEach((name, idx) => {
     if(!vorhanden.has(idx)) return;
@@ -83,7 +84,7 @@ function buildMonthCheckboxes(year){
   if(!vorhanden.size){
     const p = document.createElement('p');
     p.className = 'analysis-results-empty';
-    p.textContent = 'In diesem Jahr sind noch keine Monate angelegt.';
+    p.textContent = 'In diesem Jahr ist noch kein Monat abgeschlossen.';
     fragment.appendChild(p);
   }
   el.analysisMonths.replaceChildren(fragment);
@@ -144,7 +145,9 @@ function getSelectedCategoryKeys(){
 // wenn im jeweiligen Monat abgehakt (konsistent mit "Ist-Ausgaben" an
 // anderer Stelle der App). Die Sparen-Arten haben keinen eigenen
 // Beschreibungstext — dort ist der Kategoriename selbst die "Beschreibung".
-export function computeAnalysisData(year, monthSet, categorySet){
+// nurAbgeschlossen: die Analyse zählt nur abgeschlossene Monate; die Budget
+// Töpfe (js/budget-toepfe.js) und die Jahresfix-Jahressumme zählen alle.
+export function computeAnalysisData(year, monthSet, categorySet, nurAbgeschlossen){
   const groups = ANALYSIS_CATEGORIES
     .filter(cat => categorySet.has(cat.key))
     .map(cat => ({ key: cat.key, name: cat.name, color: SLICE_COLORS[cat.key], map: new Map() }));
@@ -158,6 +161,7 @@ export function computeAnalysisData(year, monthSet, categorySet){
 
   Object.values(allData.monthEntries).forEach(entry => {
     if(entry.year !== year || !monthSet.has(entry.monthIndex)) return;
+    if(nurAbgeschlossen && entry.status !== 'closed') return;
     const m = entry.data;
 
     if(groupByKey.has('fixed')){
@@ -213,7 +217,7 @@ function computeSummaryData(year, monthSet){
   let fixCents = 0, ausgabenCents = 0, sparenCents = 0, jahresfixCents = 0;
 
   Object.values(allData.monthEntries).forEach(entry => {
-    if(entry.year !== year || !monthSet.has(entry.monthIndex)) return;
+    if(entry.year !== year || !monthSet.has(entry.monthIndex) || entry.status !== 'closed') return;
     const m = entry.data;
 
     fixkostenVon(m).forEach((item, i) => {
@@ -359,7 +363,7 @@ function setzeModus(avg){
 function anzahlMonateMitDaten(year, monthSet){
   const set = new Set();
   Object.values(allData.monthEntries).forEach(e => {
-    if(e.year === year && monthSet.has(e.monthIndex)) set.add(e.monthIndex);
+    if(e.year === year && monthSet.has(e.monthIndex) && e.status === 'closed') set.add(e.monthIndex);
   });
   return set.size;
 }
@@ -371,7 +375,7 @@ function updateAnalysis(){
   const monthSet = new Set(getSelectedMonthIndexes());
   const categorySet = new Set(getSelectedCategoryKeys());
 
-  let groups = computeAnalysisData(year, monthSet, categorySet);
+  let groups = computeAnalysisData(year, monthSet, categorySet, true);
   let summary = computeSummaryData(year, monthSet);
   const n = anzahlMonateMitDaten(year, monthSet);
   if(durchschnitt && n > 0){
@@ -416,9 +420,9 @@ function updateAnalysis(){
     const hint = document.createElement('p');
     hint.className = 'analysis-avg-hint';
     hint.textContent = n > 0
-      ? 'Durchschnitt pro Monat über ' + n + (n === 1 ? ' angelegten Monat.' : ' angelegte Monate.') +
+      ? 'Durchschnitt pro Monat über ' + n + (n === 1 ? ' abgeschlossenen Monat.' : ' abgeschlossene Monate.') +
         ' Jahresfix zählt mit einem Zwölftel der Jahressumme.'
-      : 'Keine angelegten Monate in dieser Auswahl.';
+      : 'Keine abgeschlossenen Monate in dieser Auswahl.';
     fragment.insertBefore(hint, fragment.firstChild);
   }
 

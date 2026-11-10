@@ -2,17 +2,19 @@
    RÜCKLAGEN TOPF (Übersicht "Deine Monate", unter "Budget Töpfe")
    Oben der Kontostand des Rücklagen-Kontos. Darunter die Aufteilung dieses
    Betrags auf Töpfe (je Kategorie ein Topf, über "+ Topf"); eine kleine Zahl
-   zeigt, wie viel noch nicht verteilt ist. Ganz unten je Topf eine
-   Wunschliste mit geplanten Ausgaben, deren Summe und die Abweichung zum Topf.
+   zeigt, wie viel noch nicht verteilt ist. Ganz unten EINE Wunschliste
+   (v59): alle geplanten Ausgaben untereinander in Eingabe-Reihenfolge. Jeder
+   Wunsch gehört zu einem Topf — sichtbar nur an der Farbe (Farbknopf links,
+   antippen zum Wechseln). Darunter je Topf: geplant, Topf, Abweichung.
 
    Reine Planung: gespeichert in allData.ruecklagenTopf (läuft über
    Cloud-Abgleich und Sichern/Wiederherstellen), wirkt sich auf keine andere
    Berechnung aus. Alle Texte per textContent, kein innerHTML.
    ============================================================================= */
-import { categoryDefs, MAX_TEXT_LENGTH, AMOUNT_MAX_CENTS, SLICE_COLORS } from './constants.js?v=58';
-import { parseEuroInputToCents } from './utils.js?v=58';
-import { allData, saveAll, RT_KEYS, sanitizeRuecklagenTopf } from './storage.js?v=58';
-import { openOverlay, closeOverlay } from './overlays.js?v=58';
+import { categoryDefs, MAX_TEXT_LENGTH, AMOUNT_MAX_CENTS, SLICE_COLORS } from './constants.js?v=59';
+import { parseEuroInputToCents } from './utils.js?v=59';
+import { allData, saveAll, RT_KEYS, sanitizeRuecklagenTopf } from './storage.js?v=59';
+import { openOverlay, closeOverlay } from './overlays.js?v=59';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('rt-btn');
@@ -38,7 +40,9 @@ function punkt(key){
 const NAME = Object.fromEntries(categoryDefs.map(d => [d.key, d.name]));
 
 function daten(){
-  if(!allData.ruecklagenTopf) allData.ruecklagenTopf = sanitizeRuecklagenTopf(null);
+  if(!allData.ruecklagenTopf || !Array.isArray(allData.ruecklagenTopf.wuensche)){
+    allData.ruecklagenTopf = sanitizeRuecklagenTopf(allData.ruecklagenTopf);
+  }
   return allData.ruecklagenTopf;
 }
 // In diesem Fenster gibt es nur volle Euro (v56): Eingaben werden auf ganze
@@ -56,7 +60,8 @@ function aufGanzeEuro(d){
   let geaendert = false;
   const fix = (o) => { const g = ganz(o.cents); if(g !== o.cents){ o.cents = g; geaendert = true; } };
   if(ganz(d.kontoCents) !== d.kontoCents){ d.kontoCents = ganz(d.kontoCents); geaendert = true; }
-  d.toepfe.forEach(t => { fix(t); t.wuensche.forEach(fix); });
+  d.toepfe.forEach(fix);
+  d.wuensche.forEach(fix);
   return geaendert;
 }
 // Leer → 0, ungültig → null; sonst auf volle Euro gerundet.
@@ -131,7 +136,11 @@ function renderToepfe(d){
     });
     z.append(name,
       betragFeld(t.cents, 'Topf ' + NAME[t.key], c => { t.cents = c; }),
-      wegKnopf('Topf ' + NAME[t.key] + ' entfernen', () => { d.toepfe.splice(idx, 1); }));
+      // Wünsche des Topfs bleiben in der Liste, nur ohne Topf (grau).
+      wegKnopf('Topf ' + NAME[t.key] + ' entfernen', () => {
+        d.toepfe.splice(idx, 1);
+        d.wuensche.forEach(w => { if(w.key === t.key) w.key = ''; });
+      }));
     frag.appendChild(z);
   });
   if(!d.toepfe.length){
@@ -187,7 +196,7 @@ function renderToepfe(d){
     plus.className = 'fc-edit-plus';
     plus.textContent = '+ Topf';
     plus.addEventListener('click', () => {
-      d.toepfe.push({ key: sel.value, cents: 0, wuensche: [] });
+      d.toepfe.push({ key: sel.value, cents: 0 });
       speichern();
       render();
       const inputs = toepfeEl.querySelectorAll('.bt-input');
@@ -198,93 +207,117 @@ function renderToepfe(d){
   plusZeile.replaceChildren(pf);
 }
 
+const OHNE_FARBE = '#8e8e93';
+const geplantFuer = (d, key) => d.wuensche.reduce((x, w) => x + (w.key === key ? w.cents : 0), 0);
+
 function renderWuensche(d){
   const frag = document.createDocumentFragment();
-  d.toepfe.forEach(t => {
-    const g = document.createElement('section');
-    g.className = 'rt-gruppe';
-    g.dataset.key = t.key;
+  const liste = document.createElement('div');
+  liste.className = 'rt-wunsch-liste';
 
-    const kopf = document.createElement('div');
-    kopf.className = 'rt-gruppe-kopf';
-    g.style.setProperty('--rt-farbe', farbe(t.key));
-    const n = document.createElement('span');
-    n.className = 'rt-gruppe-name';
-    n.append(punkt(t.key), document.createTextNode(NAME[t.key]));
-    const s = document.createElement('span');
-    s.className = 'rt-gruppe-summe';
-    kopf.append(n, s);
-    g.appendChild(kopf);
+  d.wuensche.forEach((w, i) => {
+    const z = document.createElement('div');
+    z.className = 'rt-wunsch';
+    z.dataset.key = w.key;
 
-    // Fortschritt: geplant im Verhältnis zum Topf.
-    const track = document.createElement('div');
-    track.className = 'bt-track rt-track';
-    const fill = document.createElement('div');
-    fill.className = 'bt-fill';
-    track.appendChild(fill);
-    g.appendChild(track);
-
-    const liste = document.createElement('div');
-    liste.className = 'rt-wunsch-liste';
-    g.appendChild(liste);
-
-    t.wuensche.forEach((w, i) => {
-      const z = document.createElement('div');
-      z.className = 'fc-edit-zeile';
-      const name = document.createElement('input');
-      name.type = 'text';
-      name.className = 'fc-edit-name';
-      name.maxLength = MAX_TEXT_LENGTH;
-      name.placeholder = 'Wunsch';
-      name.autocomplete = 'off';
-      name.value = w.name;
-      name.setAttribute('aria-label', NAME[t.key] + ': Wunsch ' + (i + 1));
-      name.addEventListener('change', () => { w.name = name.value.trim().slice(0, MAX_TEXT_LENGTH); speichern(); });
-      const betrag = betragFeld(w.cents, NAME[t.key] + ': Betrag ' + (i + 1), c => { w.cents = c; });
-      betrag.className = 'fc-edit-betrag';
-      z.append(name, betrag, wegKnopf('Wunsch entfernen', () => { t.wuensche.splice(i, 1); }));
-      liste.appendChild(z);
-      if(fokusWunsch && fokusWunsch.key === t.key && fokusWunsch.i === i) setTimeout(() => name.focus(), 0);
+    // Farbknopf = Topf-Auswahl. Sichtbar ist nur die Farbe des Topfs.
+    const wahl = document.createElement('select');
+    wahl.className = 'rt-farbwahl';
+    wahl.setAttribute('aria-label', 'Topf für Wunsch ' + (i + 1));
+    const optionen = d.toepfe.map(t => [t.key, NAME[t.key]]);
+    if(w.key === '' || !d.toepfe.length) optionen.unshift(['', 'Ohne Topf']);
+    optionen.forEach(([wert, text]) => {
+      const o = document.createElement('option');
+      o.value = wert; o.textContent = text;
+      wahl.appendChild(o);
+    });
+    wahl.value = w.key;
+    const faerbe = () => {
+      const f = w.key ? farbe(w.key) : OHNE_FARBE;
+      wahl.style.background = f;
+      z.style.setProperty('--rt-farbe', f);
+      wahl.title = w.key ? NAME[w.key] : 'Ohne Topf';
+    };
+    faerbe();
+    wahl.addEventListener('change', () => {
+      w.key = wahl.value;
+      z.dataset.key = w.key;
+      faerbe();
+      speichern();
+      zahlen();
     });
 
-    const fuss = document.createElement('div');
-    fuss.className = 'rt-gruppe-fuss';
+    const name = document.createElement('input');
+    name.type = 'text';
+    name.className = 'fc-edit-name';
+    name.maxLength = MAX_TEXT_LENGTH;
+    name.placeholder = 'Wunsch';
+    name.autocomplete = 'off';
+    name.value = w.name;
+    name.setAttribute('aria-label', 'Wunsch ' + (i + 1));
+    name.addEventListener('change', () => { w.name = name.value.trim().slice(0, MAX_TEXT_LENGTH); speichern(); });
+    const betrag = betragFeld(w.cents, 'Betrag Wunsch ' + (i + 1), c => { w.cents = c; });
+    betrag.className = 'fc-edit-betrag';
+    z.append(wahl, name, betrag, wegKnopf('Wunsch entfernen', () => { d.wuensche.splice(i, 1); }));
+    liste.appendChild(z);
+    if(fokusWunsch === i) setTimeout(() => name.focus(), 0);
+  });
+  if(d.wuensche.length) frag.appendChild(liste);
+
+  // Ein "+ Wunsch" für die ganze Liste; der neue Wunsch übernimmt den Topf
+  // des letzten Eintrags (sonst den ersten Topf).
+  if(d.toepfe.length){
     const plus = document.createElement('button');
     plus.type = 'button';
+    plus.id = 'rt-wunsch-plus';
     plus.className = 'fc-edit-plus';
     plus.textContent = '+ Wunsch';
     plus.addEventListener('click', () => {
-      if(t.wuensche.length >= 100) return;
-      t.wuensche.push({ name: '', cents: 0 });
-      fokusWunsch = { key: t.key, i: t.wuensche.length - 1 };
+      if(d.wuensche.length >= 300) return;
+      const letzter = d.wuensche[d.wuensche.length - 1];
+      const key = letzter && letzter.key ? letzter.key : d.toepfe[0].key;
+      d.wuensche.push({ key, name: '', cents: 0 });
+      fokusWunsch = d.wuensche.length - 1;
       speichern();
       render();
       fokusWunsch = null;
     });
-    const info = document.createElement('span');
-    info.className = 'rt-gruppe-info';
-    const topf = document.createElement('span');
-    const abw = document.createElement('span');
-    info.append(topf, abw);
-    aktualisierer.push(() => {
-      const geplant = summe(t.wuensche);
-      s.textContent = formatCents(geplant);
-      topf.textContent = 'Topf ' + formatCents(t.cents) + ' · ';
-      abweichung(abw, t.cents - geplant);
-      const pct = t.cents > 0 ? geplant / t.cents * 100 : (geplant > 0 ? 101 : 0);
-      fill.style.width = Math.min(100, pct).toFixed(1) + '%';
-      fill.classList.toggle('drueber', pct > 100);
-      fill.classList.toggle('knapp', pct >= 85 && pct <= 100);
-    });
-    fuss.append(plus, info);
-    g.appendChild(fuss);
-    frag.appendChild(g);
-  });
-  if(!d.toepfe.length){
+    frag.appendChild(plus);
+  } else {
     const p = document.createElement('p');
     p.className = 'rt-leer';
     p.textContent = 'Erscheint, sobald oben ein Topf angelegt ist.';
     frag.appendChild(p);
+  }
+
+  // Je Topf eine schlanke Zeile: geplant · Topf · Abweichung.
+  if(d.toepfe.length){
+    const je = document.createElement('div');
+    je.className = 'rt-je-topf';
+    d.toepfe.forEach(t => {
+      const z = document.createElement('div');
+      z.className = 'rt-gruppe';
+      z.dataset.key = t.key;
+      const n = document.createElement('span');
+      n.className = 'rt-gruppe-name';
+      n.append(punkt(t.key), document.createTextNode(NAME[t.key]));
+      const s = document.createElement('span');
+      s.className = 'rt-gruppe-summe';
+      const info = document.createElement('span');
+      info.className = 'rt-gruppe-info';
+      const topf = document.createElement('span');
+      const abw = document.createElement('span');
+      info.append(topf, abw);
+      z.append(n, s, info);
+      aktualisierer.push(() => {
+        const geplant = geplantFuer(d, t.key);
+        s.textContent = formatCents(geplant);
+        topf.textContent = 'Topf ' + formatCents(t.cents) + ' · ';
+        abweichung(abw, t.cents - geplant);
+      });
+      je.appendChild(z);
+    });
+    frag.appendChild(je);
   }
   wuenscheEl.replaceChildren(frag);
 
@@ -295,7 +328,7 @@ function renderWuensche(d){
     const b = document.createElement('span');
     wunschGes.append(a, b);
     aktualisierer.push(() => {
-      const gesamt = d.toepfe.reduce((x, t) => x + summe(t.wuensche), 0);
+      const gesamt = summe(d.wuensche);
       a.textContent = formatCents(gesamt) + ' · ';
       abweichung(b, d.kontoCents - gesamt);
     });
@@ -319,7 +352,7 @@ function renderKpis(d){
   kpisEl.replaceChildren(...werte.map(w => w[0]));
   aktualisierer.push(() => {
     const verteilt = summe(d.toepfe);
-    const geplant = d.toepfe.reduce((x, t) => x + summe(t.wuensche), 0);
+    const geplant = summe(d.wuensche);
     const r = (c) => Math.round(c / 100);
     const euro = { verteilt: r(verteilt), frei: r(d.kontoCents - verteilt), geplant: r(geplant) };
     werte.forEach(([kachel, v, k]) => {

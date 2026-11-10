@@ -14,10 +14,10 @@
    (openAppScreen/closeAppScreen in js/overlays.js) und blenden sie beim
    Schließen selbst wieder ein; dafür ist hier nichts zu tun.
    ============================================================================= */
-import { el } from './dom.js?v=58';
-import { showOverview } from './navigation.js?v=58';
-import { scrollToTop } from './overlays.js?v=58';
-import { renderBudgetWidget } from './budget-widget.js?v=58';
+import { el } from './dom.js?v=59';
+import { showOverview } from './navigation.js?v=59';
+import { scrollToTop } from './overlays.js?v=59';
+import { renderBudgetWidget } from './budget-widget.js?v=59';
 
 const homeScreen   = document.getElementById('home-screen');
 const budgetTile   = document.getElementById('budget-tile');

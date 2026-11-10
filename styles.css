@@ -3680,29 +3680,42 @@
   .rt-neu-select{ flex: 1; min-width: 0; font-family: inherit; font-size: 16px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink); }
   .rt-leer{ font-size: 13px; color: var(--ink-soft); margin: 4px 0 0; }
 
-  .rt-gruppe{
-    padding: 14px 14px 10px; margin-bottom: 16px; border-radius: 14px;
-    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); border-left: 4px solid var(--rt-farbe, var(--brass));
+  /* Wunschliste (v59): eine einzige Liste. Der runde Farbknopf links ist
+     die Topf-Auswahl — sichtbar ist nur die Farbe des Topfs. */
+  .rt-wunsch-liste{ border-radius: 14px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); padding: 4px 10px; margin-bottom: 10px; }
+  .rt-wunsch{ display:grid; grid-template-columns: 26px minmax(0,1fr) 92px 28px; gap: 8px; align-items:center; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+  .rt-wunsch:last-child{ border-bottom: none; }
+  .rt-wunsch input{
+    font-family: inherit; font-size: 16px; padding: 7px 9px; min-width: 0; width: 100%; box-sizing: border-box;
+    border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink);
   }
-  .rt-gruppe:last-child{ margin-bottom: 0; }
-  .rt-gruppe-kopf{ display:flex; justify-content:space-between; align-items:center; gap: 8px; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
-  .rt-gruppe-name{ display:flex; align-items:center; gap: 8px; min-width: 0; }
-  .rt-track{ margin: 10px 0 12px; height: 6px; }
-  .rt-wunsch-liste .fc-edit-zeile{ margin-bottom: 8px; }
-  .rt-wunsch-liste .fc-edit-zeile input{ background: var(--paper); }
-  .rt-gruppe-fuss{ display:flex; justify-content:space-between; align-items:center; gap: 8px; padding-top: 8px; margin-top: 4px; border-top: 1px dashed var(--line); }
-  .rt-gruppe-fuss .fc-edit-plus{ white-space: nowrap; }
-  .rt-gruppe-info{ font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: right; }
+  .rt-wunsch .fc-edit-betrag{ text-align: right; font-variant-numeric: tabular-nums; }
+  .rt-wunsch input:focus{ outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(10,132,255,0.25); }
+  .rt-wunsch input.ungueltig{ border-color: var(--error); }
+  .rt-farbwahl{
+    -webkit-appearance: none; appearance: none; width: 26px; height: 26px; padding: 0; border-radius: 50%;
+    border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer;
+    color: transparent; font-size: 16px; text-indent: -999px; overflow: hidden;
+  }
+  .rt-farbwahl option{ color: #000; background: #fff; }
+  .rt-farbwahl:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  #rt-wunsch-plus{ display:block; margin: 2px 0 14px; }
+  .rt-je-topf{ border-top: 1px dashed var(--line); padding-top: 8px; }
+  .rt-gruppe{ display:grid; grid-template-columns: minmax(0,1fr) auto; gap: 0 10px; padding: 6px 0; font-variant-numeric: tabular-nums; }
+  .rt-gruppe-name{ display:flex; align-items:center; gap: 8px; min-width: 0; font-weight: 600; font-size: 14px; }
+  .rt-gruppe-summe{ font-weight: 700; font-size: 14px; text-align: right; }
+  .rt-gruppe-info{ grid-column: 1 / -1; font-size: 12px; color: var(--ink-soft); padding-left: 18px; }
   .rt-abw{ font-weight: 600; color: var(--ok); white-space: nowrap; }
   .rt-abw.drueber{ color: var(--error); }
 
   [data-theme="dark"] #rt-overlay .receipt-card,
   [data-theme="dark"] #rt-overlay .receipt-head{ background: #1c1c1e; }
   [data-theme="dark"] .rt-block-konto,
-  [data-theme="dark"] .rt-gruppe{ background: #2c2c2e; box-shadow: none; }
+  [data-theme="dark"] .rt-wunsch-liste{ background: #2c2c2e; box-shadow: none; }
   [data-theme="dark"] .rt-konto-input,
   [data-theme="dark"] .rt-kpi,
-  [data-theme="dark"] .rt-wunsch-liste .fc-edit-zeile input{ background: #1c1c1e; border-color: #48484a; }
+  [data-theme="dark"] .rt-wunsch input{ background: #1c1c1e; border-color: #48484a; }
+  [data-theme="dark"] .rt-farbwahl{ border-color: #2c2c2e; box-shadow: 0 0 0 1px #48484a; }
   [data-theme="dark"] .rt-neu-select{ background: #2c2c2e; border-color: #48484a; }
   [data-theme="dark"] .rt-trenner{ border-top-color: #48484a; }
 

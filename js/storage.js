@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=58';
-import { clamp, monthKey } from './utils.js?v=58';
+} from './constants.js?v=59';
+import { clamp, monthKey } from './utils.js?v=59';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=58';
+import { showBackupMsg } from './backup.js?v=59';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -258,19 +258,34 @@ function rtCents(v){
   const c = Math.round(v);
   return c > 0 && c <= AMOUNT_MAX_CENTS ? c : 0;
 }
+// Wunschliste (v59): EINE gemeinsame Liste in Eingabe-Reihenfolge; jeder
+// Wunsch trägt den Schlüssel seines Topfs (nur für Farbe und Topf-Summe,
+// '' = ohne Topf). Ältere Stände mit je Topf verschachtelten Wünschen
+// (toepfe[].wuensche) werden beim Laden in die gemeinsame Liste überführt.
+const RT_MAX_WUENSCHE = 300;
 export function sanitizeRuecklagenTopf(raw){
-  const out = { kontoCents: 0, toepfe: [] };
+  const out = { kontoCents: 0, toepfe: [], wuensche: [] };
   if(!raw || typeof raw !== 'object') return out;
   out.kontoCents = rtCents(raw.kontoCents);
   const gesehen = new Set();
+  const wunsch = (w, key) => ({
+    key,
+    name: typeof w.name === 'string' ? w.name.trim().slice(0, MAX_TEXT_LENGTH) : '',
+    cents: rtCents(w.cents)
+  });
+  const alt = [];
   (Array.isArray(raw.toepfe) ? raw.toepfe : []).forEach(t => {
     if(!t || typeof t !== 'object' || !RT_KEYS.includes(t.key) || gesehen.has(t.key)) return;
     gesehen.add(t.key);
-    const wuensche = (Array.isArray(t.wuensche) ? t.wuensche : []).slice(0, 100)
-      .filter(w => w && typeof w === 'object')
-      .map(w => ({ name: typeof w.name === 'string' ? w.name.trim().slice(0, MAX_TEXT_LENGTH) : '', cents: rtCents(w.cents) }));
-    out.toepfe.push({ key: t.key, cents: rtCents(t.cents), wuensche });
+    out.toepfe.push({ key: t.key, cents: rtCents(t.cents) });
+    (Array.isArray(t.wuensche) ? t.wuensche : []).forEach(w => {
+      if(w && typeof w === 'object') alt.push(wunsch(w, t.key));
+    });
   });
+  const neu = (Array.isArray(raw.wuensche) ? raw.wuensche : [])
+    .filter(w => w && typeof w === 'object')
+    .map(w => wunsch(w, gesehen.has(w.key) ? w.key : ''));
+  out.wuensche = neu.concat(alt).slice(0, RT_MAX_WUENSCHE);
   return out;
 }
 
