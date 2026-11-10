@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=57">
+<link rel="stylesheet" href="styles.css?v=58">
 </head>
 <body>
 
@@ -101,6 +101,9 @@
       <span class="home-tile-name">Monatsbudget</span>
       <span class="home-tile-sub">Fixkosten, Ausgaben und Rücklagen je Monat</span>
     </span>
+    <!-- Widget: Monatszahlen + Querbalken Fix/Variabel/Sparen, gefüllt von
+         js/budget-widget.js. Nur in der Widget-Ansicht sichtbar. -->
+    <span class="home-widget bw" id="budget-widget"></span>
   </button>
 
   <p class="home-gruppe">Werkzeuge</p>
@@ -240,6 +243,13 @@
   </details>
 
   <button type="button" class="receipt-btn" id="analysis-btn">Analyse</button>
+  <button type="button" class="receipt-btn mb-btn" id="mb-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" aria-hidden="true" focusable="false">
+      <path d="M4 20V11"/><path d="M10 20V5"/><path d="M16 20v-7"/><path d="M22 20H2"/>
+    </svg>
+    Monatsvergleich
+  </button>
   <button type="button" class="receipt-btn" id="budget-toepfe-btn">Budget Töpfe</button>
   <button type="button" class="receipt-btn" id="rt-btn">Rücklagen Topf</button>
 
@@ -561,6 +571,30 @@
   </div>
 </div>
 
+<!-- Monatsvergleich (js/monats-balken.js): gestapeltes Balkendiagramm je
+     Monat, Kategorien an-/abwählbar, links der Ø des Vorjahres. -->
+<div class="receipt-overlay" id="mb-overlay" hidden>
+  <div class="receipt-card bt-card" role="dialog" aria-modal="true" aria-labelledby="mb-title">
+    <div class="receipt-head">
+      <h2 id="mb-title">Monatsvergleich</h2>
+      <button type="button" class="receipt-close" id="mb-close" aria-label="Monatsvergleich schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <div class="analysis-filter-row">
+        <label for="mb-year" class="month-label">Jahr</label>
+        <select id="mb-year"></select>
+      </div>
+      <div class="analysis-filter-head">
+        <p class="analysis-filter-label">Kategorien</p>
+        <button type="button" class="analysis-toggle-all" id="mb-kat-toggle">Alle abwählen</button>
+      </div>
+      <div class="analysis-filter-grid" id="mb-kategorien"></div>
+      <div class="mb-chart" id="mb-chart"></div>
+      <div class="mb-legende" id="mb-legende"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Budget Töpfe (js/budget-toepfe.js): Jahresbudget je Analyse-Kategorie
      und wie viel davon verbraucht ist. Nur Anzeige, keine Auswirkung sonst. -->
 <div class="receipt-overlay" id="budget-overlay" hidden>
@@ -575,6 +609,7 @@
         <select id="budget-year"></select>
       </div>
       <p class="categories-hint">Jahresbudget je Kategorie eintragen. Verbraucht zählt wie in der Analyse (alle Monate des Jahres). Nur zur Übersicht — hat keine Auswirkung auf andere Werte.</p>
+      <p class="categories-hint bt-erbt" id="budget-erbt" hidden></p>
       <div id="budget-gesamt"></div>
       <div id="budget-liste"></div>
     </div>
@@ -1212,7 +1247,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=57"></script>
+<script type="module" src="js/app.js?v=58"></script>
 
 </body>
 </html>

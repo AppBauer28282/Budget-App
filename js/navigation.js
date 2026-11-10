@@ -5,16 +5,16 @@
    abgeschlossenen Monat direkt die schreibgeschützte Belegansicht gezeigt —
    ein editierbares "sheet" existiert für abgeschlossene Monate gar nicht.
    ============================================================================= */
-import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=57';
-import { el } from './dom.js?v=57';
-import { monthKey } from './utils.js?v=57';
-import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey, fixkostenVorlage } from './storage.js?v=57';
-import { renderMonth } from './render.js?v=57';
+import { MONTHS, MAX_OPEN_MONTHS } from './constants.js?v=58';
+import { el } from './dom.js?v=58';
+import { monthKey } from './utils.js?v=58';
+import { allData, saveAll, countOpenMonths, emptyMonthData, setCurrentMonthKey, currentMonthKey, fixkostenVorlage } from './storage.js?v=58';
+import { renderMonth } from './render.js?v=58';
 // Zirkulärer Import: receipt.js importiert umgekehrt showOverview aus diesem
 // Modul (für den Rückweg von der Belegansicht eines abgeschlossenen Monats
 // zur Übersicht). Sicher, weil beide Seiten die importierte Funktion erst
 // in späteren Event-Handlern aufrufen, nie beim Modul-Start.
-import { openReceipt } from './receipt.js?v=57';
+import { openReceipt } from './receipt.js?v=58';
 
 export function showOverview(){
   el.sheet.hidden = true;
@@ -23,7 +23,7 @@ export function showOverview(){
   renderOverview();
 }
 
-function renderMonthListItems(listEl, entries, emptyText){
+function renderMonthListItems(listEl, entries, emptyText, mitWiederOeffnen){
   const fragment = document.createDocumentFragment();
   if(entries.length === 0){
     const li = document.createElement('li');
@@ -42,6 +42,17 @@ function renderMonthListItems(listEl, entries, emptyText){
       btn.textContent = entry.monthName + ' ' + entry.year;
       btn.dataset.key = key;
       li.appendChild(btn);
+
+      // Abgeschlossene Monate lassen sich wieder öffnen (v58).
+      if(mitWiederOeffnen){
+        const reBtn = document.createElement('button');
+        reBtn.type = 'button';
+        reBtn.className = 'month-reopen-btn';
+        reBtn.dataset.key = key;
+        reBtn.textContent = 'Wieder öffnen';
+        reBtn.setAttribute('aria-label', entry.monthName + ' ' + entry.year + ' wieder öffnen');
+        li.appendChild(reBtn);
+      }
 
       // Löscht den kompletten Monat (offen wie abgeschlossen) — der Schlüssel
       // wird dadurch wieder frei, der Monat lässt sich anschließend über
@@ -68,7 +79,7 @@ export function renderOverview(){
   renderMonthListItems(el.openMonthList, entries.filter(e => e.status === 'open'),
     'Noch keine offenen Monate.');
   renderMonthListItems(el.closedMonthList, entries.filter(e => e.status === 'closed'),
-    'Noch keine abgeschlossenen Monate.');
+    'Noch keine abgeschlossenen Monate.', true);
 }
 
 export function openMonthDetail(key){
@@ -114,6 +125,26 @@ function handleMonthListDelete(e){
 el.openMonthList.addEventListener('click', handleMonthListDelete);
 el.closedMonthList.addEventListener('click', handleMonthListDelete);
 
+// Öffnet einen abgeschlossenen Monat wieder zur Bearbeitung. Die Daten
+// bleiben unverändert; es gilt weiter die Grenze gleichzeitig offener Monate.
+function handleMonthListReopen(e){
+  const btn = e.target.closest('.month-reopen-btn');
+  if(!btn) return;
+  const entry = allData.monthEntries[btn.dataset.key];
+  if(!entry || entry.status !== 'closed') return;
+  const label = entry.monthName + ' ' + entry.year;
+  if(countOpenMonths() >= MAX_OPEN_MONTHS){
+    alert('Es können maximal ' + MAX_OPEN_MONTHS + ' Monate gleichzeitig offen sein. Bitte zuerst einen Monat abschließen.');
+    return;
+  }
+  if(!confirm(label + ' wieder öffnen? Der Monat lässt sich dann wieder bearbeiten.')) return;
+  entry.status = 'open';
+  entry.closedAt = null;
+  saveAll(true);
+  renderOverview();
+}
+el.closedMonthList.addEventListener('click', handleMonthListReopen);
+
 function handleAddMonth(){
   const monthIndex = Number(el.addMonthSelect.value);
   const year = Number(el.addYearSelect.value);
@@ -150,7 +181,7 @@ el.addMonthBtn.addEventListener('click', handleAddMonth);
 function handleCloseMonth(){
   const entry = allData.monthEntries[currentMonthKey];
   if(!entry) return;
-  if(!confirm('Monat abschließen? Danach sind keine Änderungen mehr möglich.')) return;
+  if(!confirm('Monat abschließen? Er kann später wieder geöffnet werden.')) return;
   entry.status = 'closed';
   entry.closedAt = Date.now();
   saveAll(true);

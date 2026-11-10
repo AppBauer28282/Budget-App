@@ -7,12 +7,13 @@
    samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
    nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=57';
-import { el } from './dom.js?v=57';
-import { formatCents } from './utils.js?v=57';
-import { allData, fixkostenVon } from './storage.js?v=57';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=57';
-import { openOverlay, closeOverlay } from './overlays.js?v=57';
+import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=58';
+import { el } from './dom.js?v=58';
+import { formatCents } from './utils.js?v=58';
+import { allData, fixkostenVon } from './storage.js?v=58';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=58';
+import { openOverlay, closeOverlay } from './overlays.js?v=58';
+import { jahresfixProMonat } from './auswertung.js?v=58';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.
@@ -207,7 +208,9 @@ export function computeAnalysisData(year, monthSet, categorySet){
 const SUMMARY_FIX_CATEGORIES = ['jahresfix'];
 
 function computeSummaryData(year, monthSet){
-  let fixCents = 0, ausgabenCents = 0, sparenCents = 0;
+  // jahresfixCents: der in fixCents enthaltene Jahresfix-Anteil — im Ø-Modus
+  // wird er durch Jahressumme ÷ 12 ersetzt (siehe updateAnalysis).
+  let fixCents = 0, ausgabenCents = 0, sparenCents = 0, jahresfixCents = 0;
 
   Object.values(allData.monthEntries).forEach(entry => {
     if(entry.year !== year || !monthSet.has(entry.monthIndex)) return;
@@ -219,7 +222,7 @@ function computeSummaryData(year, monthSet){
 
     categoryDefs.forEach(def => {
       const sum = (VERRECHNET_IN[def.key] ? -1 : 1) * m.categories[def.key].reduce((s, e) => s + e.cents, 0);
-      if(SUMMARY_FIX_CATEGORIES.includes(def.key)) fixCents += sum;
+      if(SUMMARY_FIX_CATEGORIES.includes(def.key)){ fixCents += sum; jahresfixCents += sum; }
       else ausgabenCents += sum;
     });
 
@@ -227,10 +230,10 @@ function computeSummaryData(year, monthSet){
   });
 
   return [
-    { label: 'Fix',      cents: fixCents,      color: SLICE_COLORS.fixed },
+    { label: 'Fix',      cents: fixCents,      color: SLICE_COLORS.fixed, jahresfix: jahresfixCents },
     { label: 'Ausgaben', cents: ausgabenCents, color: SLICE_COLORS.summary_ausgaben },
     { label: 'Sparen',   cents: sparenCents,   color: SLICE_COLORS.sparen }
-  ].filter(slice => slice.cents > 0);
+  ];
 }
 
 // Titel + Tortendiagramm + Legende + Gesamt-Zeile, oder ein
@@ -372,10 +375,26 @@ function updateAnalysis(){
   let summary = computeSummaryData(year, monthSet);
   const n = anzahlMonateMitDaten(year, monthSet);
   if(durchschnitt && n > 0){
-    groups = groups.map(g => ({ ...g, subtotal: teile(g.subtotal, n),
+    // Jahresfix verzerrt den Buchungsmonat. Im Durchschnitt zählt deshalb
+    // die Jahressumme ÷ 12 — unabhängig davon, welche Monate gewählt sind.
+    const alleMonate = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    const jfJahr = categorySet.has('jahresfix')
+      ? computeAnalysisData(year, alleMonate, new Set(['jahresfix']))[0] : null;
+    groups = groups.filter(g => g.key !== 'jahresfix').map(g => ({ ...g, subtotal: teile(g.subtotal, n),
       entries: g.entries.map(e => ({ ...e, cents: teile(e.cents, n) })) }));
-    summary = summary.map(x => ({ ...x, cents: teile(x.cents, n) }));
+    if(jfJahr){
+      const jf = { ...jfJahr, subtotal: teile(jfJahr.subtotal, 12),
+        entries: jfJahr.entries.map(e => ({ ...e, cents: teile(e.cents, 12) })) };
+      // An der gewohnten Stelle (Reihenfolge der Kategorien) einsortieren.
+      const rang = (key) => ANALYSIS_CATEGORIES.findIndex(c => c.key === key);
+      groups.push(jf);
+      groups.sort((a, b) => rang(a.key) - rang(b.key));
+    }
+    summary = summary.map(x => ({ ...x, cents: x.jahresfix === undefined
+      ? teile(x.cents, n)
+      : teile(x.cents - x.jahresfix, n) + jahresfixProMonat(year) }));
   }
+  summary = summary.filter(x => x.cents > 0);
 
   const fragment = document.createDocumentFragment();
 
@@ -397,7 +416,8 @@ function updateAnalysis(){
     const hint = document.createElement('p');
     hint.className = 'analysis-avg-hint';
     hint.textContent = n > 0
-      ? 'Durchschnitt pro Monat über ' + n + (n === 1 ? ' angelegten Monat.' : ' angelegte Monate.')
+      ? 'Durchschnitt pro Monat über ' + n + (n === 1 ? ' angelegten Monat.' : ' angelegte Monate.') +
+        ' Jahresfix zählt mit einem Zwölftel der Jahressumme.'
       : 'Keine angelegten Monate in dieser Auswahl.';
     fragment.insertBefore(hint, fragment.firstChild);
   }

@@ -7,14 +7,19 @@
    Rücklagen zählen netto (abzüglich "Auflösung Rücklagen"), es gibt keinen
    eigenen Topf für Auflösungen.
 
+   ÜBERNAHME INS NÄCHSTE JAHR: Hat ein Jahr noch keinen eigenen Eintrag,
+   gelten automatisch die Budgets des nächstfrüheren Jahres mit Eintrag. Die
+   erste Änderung legt für das Jahr einen eigenen Stand an (Kopie der
+   übernommenen Budgets); ein bewusst geleertes Jahr bleibt leer.
+
    Reine Anzeige: Die Budgets stehen in allData.budgetToepfe (läuft über
    Cloud-Abgleich und Sichern/Wiederherstellen), wirken sich aber auf keine
    andere Berechnung der App aus.
    ============================================================================= */
-import { formatCents, parseEuroInputToCents } from './utils.js?v=57';
-import { allData, saveAll } from './storage.js?v=57';
-import { ANALYSIS_CATEGORIES, computeAnalysisData } from './analysis.js?v=57';
-import { openOverlay, closeOverlay } from './overlays.js?v=57';
+import { formatCents, parseEuroInputToCents } from './utils.js?v=58';
+import { allData, saveAll } from './storage.js?v=58';
+import { ANALYSIS_CATEGORIES, computeAnalysisData } from './analysis.js?v=58';
+import { openOverlay, closeOverlay } from './overlays.js?v=58';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('budget-toepfe-btn');
@@ -23,16 +28,32 @@ const schliessen = $('budget-close');
 const jahrSel    = $('budget-year');
 const liste      = $('budget-liste');
 const gesamtEl   = $('budget-gesamt');
+const erbtEl     = $('budget-erbt');
 
 function jahre(){
   const set = new Set(Object.values(allData.monthEntries).map(e => e.year));
   Object.keys(allData.budgetToepfe || {}).forEach(j => set.add(Number(j)));
   set.add(new Date().getFullYear());
+  set.add(new Date().getFullYear() + 1);   // nächstes Jahr schon planbar
   return Array.from(set).sort((a, b) => a - b);
 }
-function budgetsFuer(jahr){
+function alleBudgets(){
   if(!allData.budgetToepfe) allData.budgetToepfe = Object.create(null);
-  return allData.budgetToepfe[String(jahr)] || Object.create(null);
+  return allData.budgetToepfe;
+}
+// Jahr, von dem die Budgets übernommen werden — null, wenn das Jahr einen
+// eigenen Eintrag hat oder es kein früheres Jahr mit Eintrag gibt.
+function geerbtVon(jahr){
+  const b = alleBudgets();
+  if(b[String(jahr)]) return null;
+  const frueher = Object.keys(b).map(Number).filter(j => j < jahr).sort((x, y) => y - x);
+  return frueher.length ? frueher[0] : null;
+}
+function budgetsFuer(jahr){
+  const b = alleBudgets();
+  if(b[String(jahr)]) return b[String(jahr)];
+  const von = geerbtVon(jahr);
+  return von === null ? Object.create(null) : b[String(von)];
 }
 function centsZuText(c){
   return (c / 100).toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -69,6 +90,9 @@ function render(){
   const jahr = Number(jahrSel.value);
   const budgets = budgetsFuer(jahr);
   const verbrauch = verbrauchJahr(jahr);
+  const von = geerbtVon(jahr);
+  erbtEl.hidden = von === null;
+  erbtEl.textContent = von === null ? '' : 'Budgets übernommen aus ' + von + '. Eine Änderung gilt nur für ' + jahr + '.';
   const frag = document.createDocumentFragment();
   let sumBudget = 0, sumVerbrauchMitBudget = 0;
 
@@ -99,10 +123,12 @@ function render(){
       const c = roh === '' ? 0 : parseEuroInputToCents(roh);
       if(c === null){ input.classList.add('ungueltig'); return; }
       input.classList.remove('ungueltig');
-      if(!allData.budgetToepfe) allData.budgetToepfe = Object.create(null);
-      const j = allData.budgetToepfe[String(jahr)] || (allData.budgetToepfe[String(jahr)] = Object.create(null));
+      // Erste Änderung in einem Jahr: übernommene Budgets als eigenen Stand
+      // kopieren. Der Eintrag bleibt auch leer bestehen (bewusst kein Budget).
+      const b = alleBudgets();
+      if(!b[String(jahr)]) b[String(jahr)] = Object.assign(Object.create(null), budgetsFuer(jahr));
+      const j = b[String(jahr)];
       if(c > 0) j[cat.key] = c; else delete j[cat.key];
-      if(!Object.keys(j).length) delete allData.budgetToepfe[String(jahr)];
       saveAll(true);
       render();
     });
@@ -159,7 +185,7 @@ function oeffnen(){
 }
 function zu(){ closeOverlay(overlay, oeffnenBtn); }
 
-if([oeffnenBtn, overlay, schliessen, jahrSel, liste, gesamtEl].every(n => n !== null)){
+if([oeffnenBtn, overlay, schliessen, jahrSel, liste, gesamtEl, erbtEl].every(n => n !== null)){
   oeffnenBtn.addEventListener('click', oeffnen);
   schliessen.addEventListener('click', zu);
   overlay.addEventListener('click', (e) => { if(e.target === overlay) zu(); });

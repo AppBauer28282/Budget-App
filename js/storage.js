@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=57';
-import { clamp, monthKey } from './utils.js?v=57';
+} from './constants.js?v=58';
+import { clamp, monthKey } from './utils.js?v=58';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=57';
+import { showBackupMsg } from './backup.js?v=58';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -241,7 +241,10 @@ function sanitizeBudgetToepfe(raw){
         if(c > 0 && c <= AMOUNT_MAX_CENTS) j[key] = c;
       }
     });
-    if(Object.keys(j).length) out[jahr] = j;
+    // Auch ein leerer Jahres-Eintrag bleibt erhalten: er bedeutet "bewusst
+    // kein Budget" — sonst würde das Jahr wieder die Vorjahres-Budgets erben
+    // (siehe js/budget-toepfe.js).
+    out[jahr] = j;
   });
   return out;
 }
@@ -326,13 +329,20 @@ export let currentMonthKey = null;
 export function setCurrentMonthKey(key){
   currentMonthKey = key;
 }
+// Meldet jede Änderung am Budget-Datenstand — das Monatsbudget-Widget auf
+// der Startseite (js/budget-widget.js) zeichnet sich daraufhin neu.
+function meldeAenderung(){
+  try{ document.dispatchEvent(new Event('kontor:budget')); }catch(e){}
+}
 export function replaceAllData(newData){
   allData = sanitizeAll(newData);
+  meldeAenderung();
 }
 // Für Aufrufer, die bereits selbst sanitizeAll() aufgerufen haben (z. B. der
 // Import-Dialog) — vermeidet doppeltes Sanitizing derselben Daten.
 export function setAllData(sanitizedData){
   allData = sanitizedData;
+  meldeAenderung();
 }
 
 // Schreibvorgänge werden gebündelt: Beim Ziehen eines Reglers feuert 'input'
@@ -353,6 +363,7 @@ export function writeStorage(){
   if(typeof window.__onLocalSave === 'function'){
     try{ window.__onLocalSave(allData); }catch(e){}
   }
+  meldeAenderung();
 }
 export function saveAll(immediate){
   if(saveTimer !== null) clearTimeout(saveTimer);

@@ -14,9 +14,10 @@
    (openAppScreen/closeAppScreen in js/overlays.js) und blenden sie beim
    Schließen selbst wieder ein; dafür ist hier nichts zu tun.
    ============================================================================= */
-import { el } from './dom.js?v=57';
-import { showOverview } from './navigation.js?v=57';
-import { scrollToTop } from './overlays.js?v=57';
+import { el } from './dom.js?v=58';
+import { showOverview } from './navigation.js?v=58';
+import { scrollToTop } from './overlays.js?v=58';
+import { renderBudgetWidget } from './budget-widget.js?v=58';
 
 const homeScreen   = document.getElementById('home-screen');
 const budgetTile   = document.getElementById('budget-tile');
@@ -28,6 +29,7 @@ export function showHome(){
   el.sheet.hidden = true;
   el.overviewScreen.hidden = true;
   homeScreen.hidden = false;
+  renderBudgetWidget();   // Zahlen können sich im Budget geändert haben
   scrollToTop();
 }
 
