@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=59">
+<link rel="stylesheet" href="styles.css?v=60">
 </head>
 <body>
 
@@ -406,44 +406,12 @@
         <span class="forecast-slider-val" id="forecast-fixed-rest">0,00 €</span>
       </div>
 
-      <div class="forecast-slider">
-        <div class="forecast-slider-head">
-          <span id="fc-lebensmittel-label">Lebensmittel</span>
-          <span class="forecast-slider-val" id="fc-lebensmittel-val">0,00 €</span>
-        </div>
-        <input type="text" id="fc-lebensmittel" inputmode="decimal" autocomplete="off" enterkeyhint="done"
-               placeholder="0" aria-labelledby="fc-lebensmittel-label">
-      </div>
+      <!-- Geplante Posten je Kategorie als schlichte Textliste (js/render.js
+           renderForecastListe). Ändern nur über "Bearbeiten". -->
+      <div class="fc-liste" id="fc-liste"></div>
 
-      <div class="forecast-slider">
-        <div class="forecast-slider-head">
-          <span id="fc-konsum-label">Konsum</span>
-          <span class="forecast-slider-val" id="fc-konsum-val">0,00 €</span>
-        </div>
-        <input type="text" id="fc-konsum" inputmode="decimal" autocomplete="off" enterkeyhint="done"
-               placeholder="0" aria-labelledby="fc-konsum-label">
-      </div>
-
-      <div class="forecast-slider">
-        <div class="forecast-slider-head">
-          <span id="fc-sprit-label">Sprit</span>
-          <span class="forecast-slider-val" id="fc-sprit-val">0,00 €</span>
-        </div>
-        <input type="text" id="fc-sprit" inputmode="decimal" autocomplete="off" enterkeyhint="done"
-               placeholder="0" aria-labelledby="fc-sprit-label">
-      </div>
-
-      <div class="forecast-slider">
-        <div class="forecast-slider-head">
-          <span id="fc-sonstiges-label">Sonstiges</span>
-          <span class="forecast-slider-val" id="fc-sonstiges-val">0,00 €</span>
-        </div>
-        <input type="text" id="fc-sonstiges" inputmode="decimal" autocomplete="off" enterkeyhint="done"
-               placeholder="0" aria-labelledby="fc-sonstiges-label">
-      </div>
-
-      <!-- Öffnet die Tabelle mit einzelnen Posten je Kategorie; beim Speichern
-           wird die Summe je Kategorie in die Felder oben übernommen. -->
+      <!-- Öffnet die Tabelle mit einzelnen Posten je Kategorie (einziger Weg,
+           den Forecast zu ändern); beim Speichern wird die Liste oben neu gezeichnet. -->
       <button type="button" class="receipt-btn fc-edit-btn" id="fc-edit-btn">Bearbeiten</button>
 
       <div class="forecast-note">
@@ -1247,7 +1215,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=59"></script>
+<script type="module" src="js/app.js?v=60"></script>
 
 </body>
 </html>

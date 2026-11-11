@@ -5,7 +5,7 @@
    ausgewertet werden, ist `el` faktisch ein Singleton, das von allen
    anderen Modulen importiert wird.
    ============================================================================= */
-import { fcKeys } from './constants.js?v=59';
+import { fcKeys } from './constants.js?v=60';
 
 export const el = {
   overviewScreen:  document.getElementById('overview-screen'),
@@ -113,9 +113,5 @@ export const el = {
   // Fassung dieser Datei den Rechner nicht lahmlegen.
 };
 
-export const fcSliders = {};
-export const fcVals = {};
-fcKeys.forEach(k => {
-  fcSliders[k] = document.getElementById('fc-' + k);
-  fcVals[k]    = document.getElementById('fc-' + k + '-val');
-});
+// Forecast-Posten als Textliste (seit v60 keine direkten Eingabefelder mehr).
+export const fcListe = document.getElementById('fc-liste');

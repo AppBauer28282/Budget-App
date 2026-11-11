@@ -5,12 +5,12 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS, vorzeichen, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=59';
-import { fixkostenVon } from './storage.js?v=59';
-import { el, fcSliders, fcVals } from './dom.js?v=59';
-import { formatCents } from './utils.js?v=59';
-import { computeTotals, sumEntries } from './compute.js?v=59';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=59';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS, FC_LABELS, vorzeichen, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=60';
+import { fixkostenVon } from './storage.js?v=60';
+import { el, fcListe } from './dom.js?v=60';
+import { formatCents } from './utils.js?v=60';
+import { computeTotals, sumEntries } from './compute.js?v=60';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=60';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die gegen ihre Gruppe laufen (Auflösung
@@ -353,11 +353,8 @@ export function renderMonth(){
     showSalaryFixed(m.salary);
   }
 
-  // Forecast-Regler auf gespeicherte Werte.
-  fcKeys.forEach(k => {
-    fcSliders[k].value = m.forecast[k] === 0 ? '' : String(m.forecast[k] / 100).replace('.', ',');
-    fcVals[k].textContent = formatCents(m.forecast[k]);
-  });
+  // Forecast-Posten als Textliste.
+  renderForecastListe();
 
   // Notizfeld auf gespeicherten Text.
   el.forecastNote.value = m.forecastNote || '';
@@ -373,4 +370,53 @@ export function renderMonth(){
   renderCardRausList();
 
   refreshTotals();
+}
+
+// Forecast eines Monats als schlichte Textliste: je Kategorie eine
+// Überschrift mit Summe, darunter die Posten (Bezeichnung · Betrag). Ändern
+// nur über "Bearbeiten" (js/forecast-edit.js). Ein früher direkt getippter
+// Betrag ohne Posten erscheint als Zeile "Bisher" — wie im Bearbeiten-Fenster.
+export function renderForecastListe(){
+  if(!fcListe) return;
+  const m = getMonthData(currentMonthKey);
+  const frag = document.createDocumentFragment();
+  fcKeys.forEach(k => {
+    const gruppe = document.createElement('div');
+    gruppe.className = 'fc-liste-gruppe';
+    gruppe.dataset.key = k;
+
+    const kopf = document.createElement('div');
+    kopf.className = 'fc-liste-kopf';
+    const titel = document.createElement('span');
+    titel.textContent = FC_LABELS[k];
+    const summe = document.createElement('span');
+    summe.className = 'fc-liste-summe';
+    summe.textContent = formatCents(m.forecast[k]);
+    kopf.append(titel, summe);
+    gruppe.appendChild(kopf);
+
+    const posten = (m.forecastItems && m.forecastItems[k] && m.forecastItems[k].length)
+      ? m.forecastItems[k]
+      : (m.forecast[k] > 0 ? [{ name: 'Bisher', cents: m.forecast[k] }] : []);
+    if(!posten.length){
+      const leer = document.createElement('p');
+      leer.className = 'fc-liste-leer';
+      leer.textContent = 'Nichts geplant';
+      gruppe.appendChild(leer);
+    }
+    posten.forEach(p => {
+      const z = document.createElement('div');
+      z.className = 'fc-liste-zeile';
+      const n = document.createElement('span');
+      n.className = 'fc-liste-name';
+      n.textContent = p.name;
+      const b = document.createElement('span');
+      b.className = 'fc-liste-betrag';
+      b.textContent = formatCents(p.cents);
+      z.append(n, b);
+      gruppe.appendChild(z);
+    });
+    frag.appendChild(gruppe);
+  });
+  fcListe.replaceChildren(frag);
 }

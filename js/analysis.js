@@ -8,13 +8,13 @@
    samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
    nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=59';
-import { el } from './dom.js?v=59';
-import { formatCents } from './utils.js?v=59';
-import { allData, fixkostenVon } from './storage.js?v=59';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=59';
-import { openOverlay, closeOverlay } from './overlays.js?v=59';
-import { jahresfixProMonat } from './auswertung.js?v=59';
+import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=60';
+import { el } from './dom.js?v=60';
+import { formatCents } from './utils.js?v=60';
+import { allData, fixkostenVon } from './storage.js?v=60';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=60';
+import { openOverlay, closeOverlay } from './overlays.js?v=60';
+import { jahresfixProMonat } from './auswertung.js?v=60';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.

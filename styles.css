@@ -610,28 +610,32 @@
     color: var(--brass-deep);
     font-weight: 600;
   }
-  .forecast-slider{ margin-top: 16px; }
-  .forecast-slider-head{
-    display:flex;
-    justify-content:space-between;
-    gap: 10px;
-    font-size: 11.5px;
-    color: var(--ink-soft);
-    margin-bottom: 6px;
-  }
+  /* "Restliche Fixkosten" nutzt die Wertklasse weiter. */
   .forecast-slider-val{
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  .forecast-slider input[type="text"]{
-    width:100%;
-    padding: 10px 12px;
-    font-family: inherit;
-    font-size: 16px; /* >=16px verhindert Auto-Zoom in iOS Safari */
-    color: var(--ink);
-    background: var(--paper);
-    border: 1px solid var(--line);
+
+  /* Forecast-Posten als schlichte Textliste (v60) — wie die Wunschliste im
+     Rücklagen Topf: Überschrift je Kategorie mit Summe, darunter die Posten
+     mit feiner Linie dazwischen. Nur Anzeige; ändern über "Bearbeiten". */
+  .fc-liste{ margin-top: 18px; }
+  .fc-liste-gruppe + .fc-liste-gruppe{ margin-top: 16px; }
+  .fc-liste-kopf{
+    display:flex; justify-content:space-between; align-items:baseline; gap: 10px;
+    font-size: 14px; font-weight: 600; color: var(--ink);
+    padding-bottom: 4px; border-bottom: 1px solid var(--line);
   }
+  .fc-liste-summe{ font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fc-liste-zeile{
+    display:flex; justify-content:space-between; align-items:baseline; gap: 10px;
+    padding: 8px 0; font-size: 15px; border-bottom: 1px solid var(--line);
+  }
+  .fc-liste-zeile:last-child{ border-bottom: none; }
+  .fc-liste-name{ min-width: 0; overflow-wrap: anywhere; color: var(--ink); }
+  .fc-liste-betrag{ font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+  .fc-liste-leer{ margin: 0; padding: 8px 0; font-size: 13px; color: var(--ink-soft); }
+  .fc-edit-btn{ margin-top: 18px; }
 
   .forecast-note{ margin-top: 20px; }
   .forecast-note label{
@@ -3456,7 +3460,6 @@
   .vt-widget-zeile + .vt-widget-zeile{ border-top: 1px solid var(--line); }
 
   /* ---------- Forecast bearbeiten (Tabellenansicht) ---------- */
-  .fc-edit-btn{ margin-top: 4px; }
   .fc-edit-card{ max-width: 460px; }
   #fc-edit-overlay .receipt-body{ max-height: calc(100vh - 140px); overflow-y: auto; }
   .fc-edit-gruppe{ margin: 0 0 16px; }

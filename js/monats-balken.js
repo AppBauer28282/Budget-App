@@ -13,9 +13,9 @@
    damit der Buchungsmonat nicht herausragt. Reine SVG-Erzeugung per DOM-API;
    Farben von Text und Linien kommen aus styles.css (hell/dunkel).
    ============================================================================= */
-import { categoryDefs, SLICE_COLORS, VERRECHNET_IN } from './constants.js?v=59';
-import { alleEintraege, monatsWerte, schnitt, AUSWERTUNG_KEYS } from './auswertung.js?v=59';
-import { openOverlay, closeOverlay } from './overlays.js?v=59';
+import { categoryDefs, SLICE_COLORS, VERRECHNET_IN } from './constants.js?v=60';
+import { alleEintraege, monatsWerte, schnitt, AUSWERTUNG_KEYS } from './auswertung.js?v=60';
+import { openOverlay, closeOverlay } from './overlays.js?v=60';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('mb-btn');

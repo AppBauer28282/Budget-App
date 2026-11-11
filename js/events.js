@@ -8,11 +8,11 @@ import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
   items, categoryDefs, savingDefs, fcKeys, FC_MAX
-} from './constants.js?v=59';
-import { el, fcSliders, fcVals } from './dom.js?v=59';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=59';
-import { getMonthData, currentMonthKey, saveAll, fixkostenVon } from './storage.js?v=59';
-import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=59';
+} from './constants.js?v=60';
+import { el } from './dom.js?v=60';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=60';
+import { getMonthData, currentMonthKey, saveAll, fixkostenVon } from './storage.js?v=60';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=60';
 
 // --- Gehalt (Textfeld statt Regler: exakte Eingabe) ---
 el.salarySlider.addEventListener('input', () => {
@@ -262,30 +262,8 @@ el.savList.addEventListener('click', handleRemoveClick);
 el.cardElternList.addEventListener('click', handleRemoveClick);
 el.cardRausList.addEventListener('click', handleRemoveClick);
 
-// --- Forecast-Regler --- (Liste enthält jetzt auch 'sonstiges', Schleife
-// bleibt unverändert generisch)
-fcKeys.forEach(k => {
-  // Textfeld statt Regler. Leer/ungültig zählt als 0; zu große Werte werden auf
-  // die Obergrenze geklemmt. Die Echo-Anzeige zeigt immer den verwendeten
-  // Wert, beim Verlassen des Feldes wird das Feld selbst darauf zurückgesetzt.
-  const read = () => clamp(parseEuroInputToCents(fcSliders[k].value) || 0, 0, FC_MAX[k]);
-  fcSliders[k].addEventListener('input', () => {
-    const cents = read();
-    fcVals[k].textContent = formatCents(cents);
-    const m = getMonthData(currentMonthKey);
-    m.forecast[k] = cents;
-    // Direkt getippt ersetzt die Posten aus der Tabelle — sonst würden Feld
-    // und Tabelle auseinanderlaufen. Beim nächsten "Bearbeiten" erscheint
-    // der Betrag als ein Posten.
-    if(m.forecastItems && m.forecastItems[k] && m.forecastItems[k].length) m.forecastItems[k] = [];
-    saveAll();          // gebündelt, siehe writeStorage
-    refreshTotals();
-  });
-  fcSliders[k].addEventListener('blur', () => {
-    const cents = read();
-    fcSliders[k].value = cents === 0 ? '' : String(cents / 100).replace('.', ',');
-  });
-});
+// --- Forecast --- Beträge werden seit v60 nur noch über "Bearbeiten"
+// geändert (js/forecast-edit.js); im Monat stehen sie als Textliste.
 
 // --- Forecast-Notizfeld (freier Text, kein Geldbetrag) ---
 el.forecastNote.addEventListener('input', () => {
