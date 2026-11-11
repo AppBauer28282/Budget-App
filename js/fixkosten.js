@@ -103,7 +103,9 @@ function speichern(){
   let offen = 0;
   Object.keys(allData.monthEntries).forEach(key => {
     const entry = allData.monthEntries[key];
-    if(entry.status !== 'open') return;
+    // Nur Monate, die noch nie abgeschlossen waren. Ein wieder geöffneter
+    // Monat behält seine damaligen Fixkosten (Wiederöffnen = kleine Korrektur).
+    if(entry.status !== 'open' || entry.warAbgeschlossen) return;
     offen++;
     const d = entry.data;
     const alt = fixkostenVon(d);

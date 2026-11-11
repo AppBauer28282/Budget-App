@@ -385,15 +385,20 @@ export function renderForecastListe(){
     gruppe.className = 'fc-liste-gruppe';
     gruppe.dataset.key = k;
 
+    // Links ein Rechteck mit Kategorie und Summe, rechts daneben die Posten.
     const kopf = document.createElement('div');
     kopf.className = 'fc-liste-kopf';
     const titel = document.createElement('span');
+    titel.className = 'fc-liste-titel';
     titel.textContent = FC_LABELS[k];
     const summe = document.createElement('span');
     summe.className = 'fc-liste-summe';
     summe.textContent = formatCents(m.forecast[k]);
     kopf.append(titel, summe);
     gruppe.appendChild(kopf);
+    const posten_ = document.createElement('div');
+    posten_.className = 'fc-liste-posten';
+    gruppe.appendChild(posten_);
 
     const posten = (m.forecastItems && m.forecastItems[k] && m.forecastItems[k].length)
       ? m.forecastItems[k]
@@ -402,7 +407,7 @@ export function renderForecastListe(){
       const leer = document.createElement('p');
       leer.className = 'fc-liste-leer';
       leer.textContent = 'Nichts geplant';
-      gruppe.appendChild(leer);
+      posten_.appendChild(leer);
     }
     posten.forEach(p => {
       const z = document.createElement('div');
@@ -414,7 +419,7 @@ export function renderForecastListe(){
       b.className = 'fc-liste-betrag';
       b.textContent = formatCents(p.cents);
       z.append(n, b);
-      gruppe.appendChild(z);
+      posten_.appendChild(z);
     });
     frag.appendChild(gruppe);
   });

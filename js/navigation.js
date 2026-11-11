@@ -183,6 +183,7 @@ function handleCloseMonth(){
   if(!entry) return;
   if(!confirm('Monat abschließen? Er kann später wieder geöffnet werden.')) return;
   entry.status = 'closed';
+  entry.warAbgeschlossen = true;   // behält ab jetzt seine Fixkosten (js/fixkosten.js)
   entry.closedAt = Date.now();
   saveAll(true);
   showOverview();

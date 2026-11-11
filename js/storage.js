@@ -221,6 +221,10 @@ export function sanitizeMonthEntry(raw){
     closedAt: status === 'closed'
       ? (Number.isFinite(raw.closedAt) ? raw.closedAt : Date.now())
       : null,
+    // War der Monat schon einmal abgeschlossen (v60)? Dann übernimmt er auch
+    // nach dem Wiederöffnen keine geänderten Fixkosten mehr — Wiederöffnen
+    // ist nur für kleine Korrekturen gedacht (siehe js/fixkosten.js).
+    warAbgeschlossen: status === 'closed' || raw.warAbgeschlossen === true,
     data: sanitizeMonthData(raw.data)
   };
 }

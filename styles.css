@@ -619,22 +619,30 @@
   /* Forecast-Posten als schlichte Textliste (v60) — wie die Wunschliste im
      Rücklagen Topf: Überschrift je Kategorie mit Summe, darunter die Posten
      mit feiner Linie dazwischen. Nur Anzeige; ändern über "Bearbeiten". */
-  .fc-liste{ margin-top: 18px; }
-  .fc-liste-gruppe + .fc-liste-gruppe{ margin-top: 16px; }
-  .fc-liste-kopf{
-    display:flex; justify-content:space-between; align-items:baseline; gap: 10px;
-    font-size: 14px; font-weight: 600; color: var(--ink);
-    padding-bottom: 4px; border-bottom: 1px solid var(--line);
+  .fc-liste{ margin-top: 18px; border-top: 1px solid var(--line); }
+  /* Je Kategorie eine Zeile: links ein Rechteck mit Name + Summe, rechts
+     die Posten. Zwischen den Kategorien eine durchgehende Trennlinie. */
+  .fc-liste-gruppe{
+    display:grid; grid-template-columns: 112px minmax(0,1fr); gap: 12px; align-items:start;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
   }
-  .fc-liste-summe{ font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fc-liste-kopf{
+    display:flex; flex-direction:column; gap: 2px; padding: 8px 10px;
+    border-radius: 10px; background: rgba(10,132,255,0.10); border: 1px solid rgba(10,132,255,0.25);
+  }
+  .fc-liste-titel{ font-size: 13px; font-weight: 700; color: var(--brass); overflow-wrap: anywhere; }
+  .fc-liste-summe{ font-size: 14px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fc-liste-posten{ min-width: 0; }
   .fc-liste-zeile{
     display:flex; justify-content:space-between; align-items:baseline; gap: 10px;
-    padding: 8px 0; font-size: 15px; border-bottom: 1px solid var(--line);
+    padding: 6px 0; font-size: 15px; border-bottom: 1px dashed var(--line);
   }
   .fc-liste-zeile:last-child{ border-bottom: none; }
   .fc-liste-name{ min-width: 0; overflow-wrap: anywhere; color: var(--ink); }
   .fc-liste-betrag{ font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
-  .fc-liste-leer{ margin: 0; padding: 8px 0; font-size: 13px; color: var(--ink-soft); }
+  .fc-liste-leer{ margin: 0; padding: 6px 0; font-size: 13px; color: var(--ink-soft); }
+  [data-theme="dark"] .fc-liste-kopf{ background: rgba(10,132,255,0.16); border-color: rgba(10,132,255,0.35); }
+  @media (max-width: 360px){ .fc-liste-gruppe{ grid-template-columns: 96px minmax(0,1fr); gap: 10px; } }
   .fc-edit-btn{ margin-top: 18px; }
 
   .forecast-note{ margin-top: 20px; }
