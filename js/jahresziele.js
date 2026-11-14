@@ -16,7 +16,7 @@
    kommt, läuft durch pruefe(). Die Oberfläche entsteht ausschließlich per
    DOM-API und textContent.
    ============================================================================= */
-import { openAppScreen, closeAppScreen, openOverlay, closeOverlay } from './overlays.js?v=62';
+import { openAppScreen, closeAppScreen, openOverlay, closeOverlay } from './overlays.js?v=63';
 
 const $ = (id) => document.getElementById(id);
 const jzBtn      = $('jahresziele-btn');

@@ -8,13 +8,13 @@
    samt kumulierter Liste, darunter ein grob zusammenfassendes Diagramm mit
    nur drei Segmenten — aktualisiert sich live bei jeder Filteränderung.
    ============================================================================= */
-import { categoryDefs, MONTHS, SLICE_COLORS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=62';
-import { el } from './dom.js?v=62';
-import { formatCents } from './utils.js?v=62';
-import { allData, fixkostenVon } from './storage.js?v=62';
-import { buildPieSVG, buildChartLegend } from './charts.js?v=62';
-import { openOverlay, closeOverlay } from './overlays.js?v=62';
-import { jahresfixProMonat } from './auswertung.js?v=62';
+import { categoryDefs, MONTHS, SLICE_COLORS, istMinus, zielVon, minusLabel } from './constants.js?v=63';
+import { el } from './dom.js?v=63';
+import { formatCents } from './utils.js?v=63';
+import { allData, fixkostenVon } from './storage.js?v=63';
+import { buildPieSVG, buildChartLegend } from './charts.js?v=63';
+import { openOverlay, closeOverlay } from './overlays.js?v=63';
+import { jahresfixProMonat } from './auswertung.js?v=63';
 
 // Die wählbaren "Kategorien" der Analyse: Fixkosten (Sonderfall, siehe unten),
 // die normalen Sonstige-Ausgaben-Kategorien sowie die drei Sparen-Unterarten.
@@ -24,7 +24,7 @@ import { jahresfixProMonat } from './auswertung.js?v=62';
 // zurückgelegt ergibt eine negative Zwischensumme, angezeigt mit "+").
 export const ANALYSIS_CATEGORIES = [
   { key: 'fixed', name: 'Fixkosten' },
-  ...categoryDefs.filter(d => !VERRECHNET_IN[d.key]).map(d => ({ key: d.key, name: d.name })),
+  ...categoryDefs.filter(d => !istMinus(d.key)).map(d => ({ key: d.key, name: d.name })),
   { key: 'sparen', name: 'Sparen' }
 ];
 
@@ -170,10 +170,12 @@ export function computeAnalysisData(year, monthSet, categorySet, nurAbgeschlosse
       });
     }
     categoryDefs.forEach(def => {
-      const ziel = VERRECHNET_IN[def.key];
-      if(ziel){
-        // Auflösung: negativ in der Zielgruppe (Rücklagen).
-        if(groupByKey.has(ziel)) m.categories[def.key].forEach(e => addToGroup(ziel, aufloesungLabel(e.name), -e.cents));
+      if(istMinus(def.key)){
+        // Auflösung/Rückzahlung: negativ in der jeweiligen Zielgruppe.
+        m.categories[def.key].forEach(e => {
+          const ziel = zielVon(def.key, e);
+          if(groupByKey.has(ziel)) addToGroup(ziel, minusLabel(def.key, e.name), -e.cents);
+        });
         return;
       }
       if(!groupByKey.has(def.key)) return;
@@ -225,9 +227,13 @@ function computeSummaryData(year, monthSet){
     });
 
     categoryDefs.forEach(def => {
-      const sum = (VERRECHNET_IN[def.key] ? -1 : 1) * m.categories[def.key].reduce((s, e) => s + e.cents, 0);
-      if(SUMMARY_FIX_CATEGORIES.includes(def.key)){ fixCents += sum; jahresfixCents += sum; }
-      else ausgabenCents += sum;
+      // Minus-Posten zählen negativ in dem Topf ihrer Zielkategorie.
+      m.categories[def.key].forEach(e => {
+        const ziel = istMinus(def.key) ? zielVon(def.key, e) : def.key;
+        const c = istMinus(def.key) ? -e.cents : e.cents;
+        if(SUMMARY_FIX_CATEGORIES.includes(ziel)){ fixCents += c; jahresfixCents += c; }
+        else ausgabenCents += c;
+      });
     });
 
     sparenCents   += m.saving.sparen.reduce((s, e) => s + e.cents, 0);

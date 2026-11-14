@@ -22,7 +22,7 @@
 //   sed -i "s/?v=ALT\b/?v=NEU/g" js/*.js index.html
 // Sie müssen ALLE dieselbe Zahl tragen — sonst würde ein Modul zweimal
 // geladen und der gemeinsame Datenstand liefe auseinander.
-export const APP_VERSION = 'v62';
+export const APP_VERSION = 'v63';
 export const APP_VERSION_DATE = '2026-11-14';
 
 // Fixkosten. Beträge in Cent, um Rundungsfehler mit Kommazahlen zu vermeiden
@@ -57,16 +57,43 @@ export const categoryDefs = [
   // GEGEN die Rücklagen läuft (400 € Rücklage − 300 € Auflösung = 100 €;
   // mehr aufgelöst = "+"). Überall, wo summiert wird, zählt sie negativ —
   // siehe kategorieSumme() unten.
-  { key: 'aufloesung',   name: 'Auflösung Rücklagen' }
+  { key: 'aufloesung',   name: 'Auflösung Rücklagen' },
+  // Rückzahlung (v63): Geld, das zurückkommt. Zählt negativ und mindert die
+  // Kategorie, die beim Erfassen gewählt wird (entry.gegen). entry.karte
+  // sagt, ob sie im Kreditkarten-Abgleich mitzählt.
+  { key: 'rueckzahlung', name: 'Rückzahlung' }
 ];
 // Kategorien, die beim Summieren abgezogen statt addiert werden.
-export const MINUS_KATEGORIEN = ['aufloesung'];
+export const MINUS_KATEGORIEN = ['aufloesung', 'rueckzahlung'];
+export function istMinus(key){ return MINUS_KATEGORIEN.includes(key); }
 export function vorzeichen(key){ return MINUS_KATEGORIEN.includes(key) ? -1 : 1; }
 // In welcher Kategorie eine Minus-Kategorie angezeigt/verrechnet wird.
 export const VERRECHNET_IN = { aufloesung: 'ruecklagen' };
 // Anzeigename eines Auflösungs-Eintrags innerhalb der Rücklagen.
 export function aufloesungLabel(name){
   return /^Auflösung/.test(name) ? name : 'Auflösung: ' + name;
+}
+// Kategorien, die eine Rückzahlung mindern kann (alle außer den
+// Minus-Kategorien selbst).
+export const RUECK_ZIELE = categoryDefs.map(d => d.key).filter(k => !MINUS_KATEGORIEN.includes(k));
+// Zielkategorie eines Minus-Postens: fest (Auflösung → Rücklagen) oder je
+// Posten gewählt (Rückzahlung).
+export function zielVon(key, entry){
+  return key === 'rueckzahlung' ? (entry ? entry.gegen : undefined) : VERRECHNET_IN[key];
+}
+export function minusLabel(key, name){
+  if(key === 'rueckzahlung') return /^Rückzahlung/.test(name) ? name : 'Rückzahlung: ' + name;
+  return aufloesungLabel(name);
+}
+// Alle Minus-Posten eines Monats, die gegen die Kategorie "ziel" laufen.
+export function minusPosten(categories, ziel){
+  const out = [];
+  MINUS_KATEGORIEN.forEach(mk => {
+    (categories[mk] || []).forEach((entry, idx) => {
+      if(zielVon(mk, entry) === ziel) out.push({ key: mk, idx, entry });
+    });
+  });
+  return out;
 }
 
 export const savingDefs = [
@@ -134,6 +161,7 @@ export const SLICE_COLORS = {
   sparen:         '#248a3d',
   ruecklagen:     '#5856d6',
   aufloesung:     '#ff9500',
+  rueckzahlung:   '#34c759',
   fc_lebensmittel:'#8ed99f',
   fc_konsum:      '#ff9aa8',
   fc_sprit:       '#ffc46b',

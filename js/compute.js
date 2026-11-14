@@ -3,9 +3,9 @@
    Alle Summen werden einmal pro Aktualisierung in einem Durchlauf berechnet
    und weitergereicht, statt dieselben Werte mehrfach zu ermitteln.
    ============================================================================= */
-import { categoryDefs, savingDefs, fcKeys, vorzeichen } from './constants.js?v=62';
-import { fixkostenVon } from './storage.js?v=62';
-import { getMonthData, currentMonthKey } from './storage.js?v=62';
+import { categoryDefs, savingDefs, fcKeys, vorzeichen } from './constants.js?v=63';
+import { fixkostenVon } from './storage.js?v=63';
+import { getMonthData, currentMonthKey } from './storage.js?v=63';
 
 export function sumEntries(list){
   let total = 0;
@@ -44,6 +44,11 @@ export function computeTotals(){
   // Kreditkarten-Differenz in render.js.
   const cardElternTotal = sumEntries(m.card.eltern);
   const cardRausTotal = sumEntries(m.card.raus);
+  // Rückzahlungen ohne Karten-Haken (Geld kam aufs Konto) zählen im
+  // Kreditkarten-Abgleich nicht mit: dort gelten die Ausgaben ohne sie.
+  let rueckOhneKarte = 0;
+  for(const e of m.categories.rueckzahlung) if(e.karte === false) rueckOhneKarte += e.cents;
+  const cardCatTotal = categoryTotal + rueckOhneKarte;
 
   const spent = fixedPaid + categoryTotal + savingOut;
   // Verbleibend ist null, solange kein Gehalt gespeichert wurde.
@@ -53,6 +58,7 @@ export function computeTotals(){
     checkedCount, fixedPaid, fixedRest,
     categoryTotal, savingOut, savingIn, spent, remaining,
     cardElternTotal,
+    cardCatTotal,
     cardRausTotal,
     forecastSliders,
     // Forecast: vom echten Rest gehen die sicher kommenden Fixkosten und

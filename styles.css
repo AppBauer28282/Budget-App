@@ -4031,3 +4031,87 @@
   [data-theme="dark"] #xls-overlay .xls-wahl-btn[aria-pressed="true"]{ background: #636366; color: #fff; }
   [data-theme="dark"] .xls-marke{ color: #30d158; background: rgba(48,209,88,0.16); }
   [data-theme="dark"] .xls-marke.da{ color: #ff9f0a; background: rgba(255,159,10,0.18); }
+
+  /* =========================================================================
+     v63: Budget-Töpfe im Forecast-Raster, Rückzahlung, Kreditkarte in Blöcken
+     ========================================================================= */
+  /* ---- Budget-Töpfe: links Rechteck, rechts Balken mit Quartals-Strichen ---- */
+  #budget-overlay .bt-topf{ padding: 0; }
+  #budget-overlay .bt-zeile{
+    display: grid; grid-template-columns: 124px minmax(0,1fr); gap: 12px; align-items: center;
+    width: 100%; padding: 10px 0; margin: 0; border: none; border-radius: 0; background: none;
+    color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+  }
+  #budget-overlay .bt-zeile:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 10px; }
+  .bt-kachel{
+    display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; min-width: 0;
+    border-radius: 10px; background: rgba(10,132,255,0.10); border: 1px solid rgba(10,132,255,0.25);
+  }
+  .bt-kachel .bt-name{ font-size: 13px; font-weight: 700; color: var(--brass); overflow-wrap: anywhere; }
+  .bt-budget{ font-size: 14px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bt-topf.ohne .bt-kachel{ background: transparent; border-style: dashed; border-color: var(--line-stark, var(--line)); }
+  .bt-topf.ohne .bt-budget{ font-weight: 500; font-size: 13px; color: var(--ink-soft); }
+  .bt-topf.ohne .bt-kachel .bt-name{ color: var(--ink); }
+  .bt-rechts{ display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .bt-balken{ display: block; }
+  #budget-overlay .bt-track{ position: relative; height: 12px; border-radius: 6px; margin: 0; }
+  #budget-overlay .bt-fill{ border-radius: 6px 0 0 6px; }
+  .bt-q-strich{ position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--paper-2, #fff); opacity: 0.95; }
+  .bt-q-skala{ display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 2px; font-size: 10px; line-height: 1.2; color: var(--ink-soft); text-align: center; letter-spacing: 0.02em; }
+  #budget-overlay .bt-info{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 12px; margin: 0; }
+  #budget-overlay .bt-topf.ohne .bt-info{ font-size: 13px; }
+  .bt-edit{ display: flex; gap: 8px; align-items: center; padding: 0 0 6px; }
+  #budget-overlay .bt-edit .bt-input{ flex: 1 1 0; min-width: 0; width: auto; padding: 9px 10px; }
+  #budget-overlay .bt-edit-ok,
+  #budget-overlay .bt-edit-ab{ flex-shrink: 0; min-height: 40px; padding: 0 12px; border-radius: var(--radius-klein); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #budget-overlay .bt-edit-ok{ background: var(--brass); border: 1px solid var(--brass); color: #fff; }
+  #budget-overlay .bt-edit-ab{ background: transparent; border: 1px solid var(--line); color: var(--ink); }
+  .bt-edit-tipp{ margin: 0 0 10px; font-size: 11.5px; color: var(--ink-soft); }
+  #budget-overlay .bt-gesamt .bt-balken{ margin-top: 8px; }
+  [data-theme="dark"] .bt-kachel{ background: rgba(10,132,255,0.16); border-color: rgba(10,132,255,0.35); }
+  [data-theme="dark"] .bt-topf.ohne .bt-kachel{ background: transparent; border-color: #48484a; }
+  [data-theme="dark"] .bt-q-strich{ background: #1c1c1e; }
+  [data-theme="dark"] .bt-gesamt .bt-q-strich{ background: #2c2c2e; }
+  @media (max-width: 360px){ #budget-overlay .bt-zeile{ grid-template-columns: 100px minmax(0,1fr); gap: 10px; } }
+
+  /* ---- Rückzahlung: Zusatzfelder und Marke ---- */
+  .cat-rueck-row{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 8px; padding: 10px 12px; border-radius: var(--radius-klein); background: rgba(52,199,89,0.10); border: 1px solid rgba(52,199,89,0.30); }
+  .cat-rueck-row[hidden]{ display: none; }
+  .cat-rueck-feld{ display: flex; align-items: center; gap: 8px; flex: 1 1 180px; min-width: 0; font-size: 14px; color: var(--ink-soft); }
+  .cat-rueck-feld select{ flex: 1 1 0; min-width: 0; font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink); }
+  .cat-rueck-haken{ display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); cursor: pointer; white-space: nowrap; }
+  .cat-rueck-haken input{ width: 20px; height: 20px; margin: 0; accent-color: var(--brass); }
+  .cat-entry-marke{ display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--ink-soft); border: 1px solid var(--line); white-space: nowrap; vertical-align: 1px; }
+  [data-theme="dark"] .cat-rueck-feld select{ background: #2c2c2e; border-color: #48484a; }
+
+  /* ---- Kreditkarte: vier abgesetzte Blöcke ---- */
+  .kk-block{ padding: 14px; margin-top: 12px; border-radius: var(--radius-klein); background: var(--paper); border: 1px solid var(--line); }
+  .kk-block:first-child{ margin-top: 0; }
+  .kk-titel{ margin: 0 0 10px; font-size: 16px; font-weight: 700; color: var(--ink); display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+  .kk-sub{ font-size: 12.5px; font-weight: 400; color: var(--ink-soft); }
+  .kk-zahlen{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .kk-zahl{ display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .kk-zahl-name, .kk-feldname{ font-size: 12.5px; color: var(--ink-soft); }
+  .kk-zahl-wert{ font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kk-feldname{ display: block; margin-bottom: 6px; }
+  .kk-block .cat-entry-row{ margin-top: 0; }
+  .kk-block .cat-list{ margin-bottom: 0; }
+  .kk-block .cat-empty{ margin: 0 0 8px; }
+  .kk-summe{ display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; margin: 4px 0 10px; border-top: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+  .kk-summe .cat-grand-total-amount{ font-size: 14px; font-variant-numeric: tabular-nums; }
+  .kk-abgleich{ background: rgba(10,132,255,0.08); border-color: rgba(10,132,255,0.28); }
+  .kk-rz{ display: grid; grid-template-columns: 18px minmax(0,1fr) auto; gap: 6px; align-items: baseline; padding: 5px 0; font-size: 15px; }
+  .kk-vz{ font-weight: 700; color: var(--ink-soft); text-align: center; }
+  .kk-rz-name{ min-width: 0; overflow-wrap: anywhere; }
+  .kk-rz-wert{ font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  .kk-ergebnis{ margin-top: 6px; padding-top: 10px; border-top: 2px solid var(--ink); font-weight: 700; font-size: 16px; }
+  .kk-ergebnis .kk-vz{ color: var(--ink); }
+  .kk-ergebnis .kk-rz-wert{ font-size: 20px; }
+  .kk-hinweis{ margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-soft); }
+  .kk-hinweis:empty{ display: none; }
+  [data-theme="dark"] .kk-block{ background: #2c2c2e; border-color: #38383a; }
+  [data-theme="dark"] .kk-abgleich{ background: rgba(10,132,255,0.16); border-color: rgba(10,132,255,0.38); }
+  [data-theme="dark"] .kk-block .cat-entry-row input{ background: #1c1c1e; }
+  .kk-block .cat-error:empty{ display: none; }
+  .kk-block .cat-error{ margin-top: 8px; }
+  .kk-block > .cat-entry-row:last-of-type{ margin-bottom: 0; }

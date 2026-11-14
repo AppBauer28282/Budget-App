@@ -6,12 +6,12 @@
    <path> per Trigonometrie berechnet. Gleiche Anzeigelogik wie der Beleg
    (Overlay, nur per Button sichtbar).
    ============================================================================= */
-import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS, VERRECHNET_IN } from './constants.js?v=62';
-import { el } from './dom.js?v=62';
-import { formatCents } from './utils.js?v=62';
-import { computeTotals, sumEntries } from './compute.js?v=62';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=62';
-import { openOverlay, closeOverlay } from './overlays.js?v=62';
+import { categoryDefs, FC_DEFS, FC_LABELS, SLICE_COLORS, istMinus, minusPosten } from './constants.js?v=63';
+import { el } from './dom.js?v=63';
+import { formatCents } from './utils.js?v=63';
+import { computeTotals, sumEntries } from './compute.js?v=63';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=63';
+import { openOverlay, closeOverlay } from './overlays.js?v=63';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -114,10 +114,10 @@ function computeChartSlices(){
   // Diagramm); die Auflösung selbst ist kein eigenes Tortenstück.
   function netto(key){
     let c = sumEntries(m.categories[key]);
-    Object.keys(VERRECHNET_IN).forEach(mk => { if(VERRECHNET_IN[mk] === key) c -= sumEntries(m.categories[mk]); });
+    minusPosten(m.categories, key).forEach(p => { c -= p.entry.cents; });
     return c;
   }
-  const katDefs = categoryDefs.filter(def => !VERRECHNET_IN[def.key]);
+  const katDefs = categoryDefs.filter(def => !istMinus(def.key));
 
   const real = [];
   push(real, 'Fixkosten (abgehakt)', t.fixedPaid, SLICE_COLORS.fixed);

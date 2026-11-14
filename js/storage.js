@@ -13,18 +13,18 @@
    ein importiertes Binding von außen nicht neu zugewiesen werden kann.
    ============================================================================= */
 import {
-  items, categoryDefs, savingDefs, MONTHS, FC_DEFS, fcKeys,
+  items, categoryDefs, savingDefs, MONTHS, FC_DEFS, fcKeys, RUECK_ZIELE,
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=62';
-import { clamp, monthKey } from './utils.js?v=62';
+} from './constants.js?v=63';
+import { clamp, monthKey } from './utils.js?v=63';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=62';
+import { showBackupMsg } from './backup.js?v=63';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -148,6 +148,17 @@ export function sanitizeMonthData(raw){
   categoryDefs.forEach(def => {
     month.categories[def.key] = sanitizeEntries(rawCats[def.key], true);
   });
+  // Rückzahlungen tragen zusätzlich ihre Zielkategorie und den Karten-Haken.
+  // Ohne gültiges Ziel wäre der Posten nirgends sichtbar — er wird verworfen.
+  month.categories.rueckzahlung = [];
+  if(Array.isArray(rawCats.rueckzahlung)){
+    rawCats.rueckzahlung.forEach(raw => {
+      if(month.categories.rueckzahlung.length >= MAX_ENTRIES_PER_KEY) return;
+      const e = sanitizeEntries([raw], true)[0];
+      if(!e || !RUECK_ZIELE.includes(raw.gegen)) return;
+      month.categories.rueckzahlung.push({ name: e.name, cents: e.cents, gegen: raw.gegen, karte: raw.karte !== false });
+    });
+  }
   // Umzug (v50): Rücklagen standen früher unter "Sparen" (ohne Bezeichnung)
   // und gehören jetzt zu "Sonstige Ausgaben".
   const altRuecklagen = (raw.saving && typeof raw.saving === 'object') ? raw.saving.ruecklagen : null;
@@ -256,7 +267,7 @@ function sanitizeBudgetToepfe(raw){
 // Rücklagen Topf: Kontostand des Rücklagen-Kontos, Aufteilung auf Töpfe
 // (je Kategorie höchstens einmal) und je Topf eine Wunschliste.
 // Beträge 0 sind erlaubt (frisch angelegte, noch leere Zeilen).
-export const RT_KEYS = categoryDefs.map(d => d.key).filter(k => k !== 'ruecklagen' && k !== 'aufloesung');
+export const RT_KEYS = categoryDefs.map(d => d.key).filter(k => k !== 'ruecklagen' && k !== 'aufloesung' && k !== 'rueckzahlung');
 function rtCents(v){
   if(!Number.isFinite(v)) return 0;
   const c = Math.round(v);

@@ -7,12 +7,12 @@
 import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
-  items, categoryDefs, savingDefs, fcKeys, FC_MAX
-} from './constants.js?v=62';
-import { el } from './dom.js?v=62';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=62';
-import { getMonthData, currentMonthKey, saveAll, fixkostenVon } from './storage.js?v=62';
-import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=62';
+  items, categoryDefs, savingDefs, fcKeys, FC_MAX, RUECK_ZIELE
+} from './constants.js?v=63';
+import { el } from './dom.js?v=63';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=63';
+import { getMonthData, currentMonthKey, saveAll, fixkostenVon } from './storage.js?v=63';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=63';
 
 // --- Gehalt (Textfeld statt Regler: exakte Eingabe) ---
 el.salarySlider.addEventListener('input', () => {
@@ -66,7 +66,7 @@ function saveCardRestsaldo(){
     return;
   }
   if(cents > CARD_TOTAL_CENTS){
-    el.cardError.textContent = 'Restsaldo kann nicht größer als der Gesamtsaldo (2.000 €) sein.';
+    el.cardError.textContent = 'Der Rest kann nicht größer als das Limit (2.000 €) sein.';
     return;
   }
   el.cardError.textContent = '';
@@ -179,7 +179,18 @@ function addCatEntry(){
 
   // Jeder Eintrag bleibt eine eigene Zeile — kein Zusammenführen gleicher
   // Bezeichnungen mehr, damit die Liste jede einzelne Buchung zeigt.
-  list.push({ name, cents });
+  if(key === 'rueckzahlung'){
+    // Rückzahlung: Zielkategorie und Karten-Haken gehören zum Posten.
+    const gegen = rueckGegen.value;
+    if(!RUECK_ZIELE.includes(gegen)){
+      el.catError.textContent = 'Bitte wählen, welche Kategorie die Rückzahlung mindert.';
+      return;
+    }
+    list.push({ name, cents, gegen, karte: rueckKarte.checked });
+    rueckKarte.checked = true;   // Standard für die nächste Eingabe
+  } else {
+    list.push({ name, cents });
+  }
   getMonthData(currentMonthKey).lastEntryAt = Date.now();
 
   saveAll(true);
@@ -190,6 +201,20 @@ function addCatEntry(){
   el.catAmount.value = '';
   el.catText.focus();
 }
+
+// Zusatzfelder nur bei "Rückzahlung": welche Kategorie sie mindert und ob
+// sie im Kreditkarten-Abgleich mitzählt.
+const rueckRow = document.getElementById('cat-rueck-row');
+const rueckGegen = document.getElementById('cat-gegen');
+const rueckKarte = document.getElementById('cat-karte');
+categoryDefs.filter(d => RUECK_ZIELE.includes(d.key)).forEach(d => {
+  const o = document.createElement('option');
+  o.value = d.key; o.textContent = d.name;
+  rueckGegen.appendChild(o);
+});
+function zeigeRueckFelder(){ rueckRow.hidden = el.catSelect.value !== 'rueckzahlung'; }
+el.catSelect.addEventListener('change', zeigeRueckFelder);
+zeigeRueckFelder();
 
 el.catAddBtn.addEventListener('click', addCatEntry);
 [el.catText, el.catAmount].forEach(input => {

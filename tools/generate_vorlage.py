@@ -11,10 +11,10 @@ from xml.sax.saxutils import escape
 
 ZIEL = os.path.join(os.path.dirname(__file__), '..', 'assets', 'monatsbudget-vorlage.xlsx')
 
-KOPF = ['Jahr', 'Monat', 'Bereich', 'Kategorie', 'Bezeichnung', 'Betrag']
+KOPF = ['Jahr', 'Monat', 'Bereich', 'Kategorie', 'Bezeichnung', 'Betrag', 'Gegen', 'Karte']
 BEREICHE = ['Gehalt', 'Fixkosten', 'Ausgabe', 'Sparen']
 KATEGORIEN = ['Einkauf', 'Benzin', 'Gesundheit', 'Eltern', 'Konsum', 'Freizeit', 'Urlaub',
-              'Jahresfix', 'sonstige KFZ-Ausgaben', 'Rücklagen', 'Auflösung Rücklagen']
+              'Jahresfix', 'sonstige KFZ-Ausgaben', 'Rücklagen', 'Auflösung Rücklagen', 'Rückzahlung']
 
 # Erfundene Beispielzeilen.
 ZEILEN = [
@@ -36,6 +36,7 @@ ZEILEN = [
     (2026, 2, 'Ausgabe', 'Konsum', 'Schuhe', 79.99),
     (2026, 2, 'Ausgabe', 'Gesundheit', 'Apotheke', 12.5),
     (2026, 2, 'Ausgabe', 'Auflösung Rücklagen', 'Urlaub gebucht', 100),
+    (2026, 2, 'Ausgabe', 'Rückzahlung', 'Schuhe zurück', 79.99, 'Konsum', 'ja'),
     (2026, 2, 'Sparen', '', '', 250),
 ]
 
@@ -51,7 +52,9 @@ HINWEISE = [
     'Kategorie: nur bei „Ausgabe“ nötig. Erlaubt sind:',
     '   ' + ', '.join(KATEGORIEN),
     'Bezeichnung: frei wählbar, höchstens 80 Zeichen. Bei Gehalt und Sparen nicht nötig.',
-    'Betrag: in Euro, immer größer als 0. Auch bei „Auflösung Rücklagen“ ohne Minuszeichen.',
+    'Betrag: in Euro, immer größer als 0. Auch bei „Auflösung Rücklagen“ und „Rückzahlung“ ohne Minuszeichen.',
+    'Gegen: nur bei Kategorie „Rückzahlung“ – die Kategorie, die gemindert wird, z. B. Konsum.',
+    'Karte: nur bei „Rückzahlung“ – ja, wenn sie im Kreditkarten-Abgleich zählen soll, sonst nein. Leer = ja.',
     '',
     'Mehrere Gehalts-Zeilen im selben Monat werden zusammengezählt.',
     'Monate ohne Fixkosten-Zeilen bekommen die Fixkosten-Vorlage aus der App.',
@@ -89,7 +92,8 @@ def blatt_daten():
         '</sheetView></sheetViews>'
         '<cols><col min="1" max="2" width="9" customWidth="1"/><col min="3" max="3" width="14" customWidth="1"/>'
         '<col min="4" max="4" width="26" customWidth="1"/><col min="5" max="5" width="30" customWidth="1"/>'
-        '<col min="6" max="6" width="14" customWidth="1"/></cols>'
+        '<col min="6" max="6" width="14" customWidth="1"/><col min="7" max="7" width="22" customWidth="1"/>'
+        '<col min="8" max="8" width="8" customWidth="1"/></cols>'
         '<sheetData>' + ''.join(rows) + '</sheetData>'
         '<dataValidations count="3">'
         '<dataValidation type="list" allowBlank="1" showErrorMessage="1" errorTitle="Bereich" '

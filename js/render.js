@@ -5,12 +5,12 @@
    werden (Cross-Site-Scripting) — besonders relevant, weil Daten auch aus
    importierten Dateien stammen können.
    ============================================================================= */
-import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS, FC_LABELS, vorzeichen, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=62';
-import { fixkostenVon } from './storage.js?v=62';
-import { el, fcListe } from './dom.js?v=62';
-import { formatCents } from './utils.js?v=62';
-import { computeTotals, sumEntries } from './compute.js?v=62';
-import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=62';
+import { items, categoryDefs, savingDefs, MONTHS, fcKeys, SALARY_MIN_CENTS, CARD_TOTAL_CENTS, FC_LABELS, vorzeichen, istMinus, minusPosten, minusLabel } from './constants.js?v=63';
+import { fixkostenVon } from './storage.js?v=63';
+import { el, fcListe } from './dom.js?v=63';
+import { formatCents } from './utils.js?v=63';
+import { computeTotals, sumEntries } from './compute.js?v=63';
+import { getMonthData, currentMonthKey, currentMonthLabelText } from './storage.js?v=63';
 
 // Baut eine Eintragszeile per DOM-API auf.
 // isIncome=true kennzeichnet Beträge, die gegen ihre Gruppe laufen (Auflösung
@@ -23,6 +23,13 @@ function buildEntryLine(scope, key, idx, entry, withName, isIncome){
     const text = document.createElement('span');
     text.className = 'cat-entry-text';
     text.textContent = entry.name;
+    // Rückzahlung, die nicht in den Kreditkarten-Abgleich zählt.
+    if(key === 'rueckzahlung' && entry.karte === false){
+      const marke = document.createElement('span');
+      marke.className = 'cat-entry-marke';
+      marke.textContent = 'nicht Karte';
+      text.append(' ', marke);
+    }
     line.appendChild(text);
   }
 
@@ -58,13 +65,9 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summ
   defs.forEach(def => {
     // Minus-Kategorien (Auflösung Rücklagen) stehen nicht als eigene Gruppe,
     // sondern innerhalb der Gruppe, gegen die sie verrechnet werden.
-    if(VERRECHNET_IN[def.key]) return;
+    if(istMinus(def.key)) return;
     const zeilen = dataObj[def.key].map((entry, idx) => ({ key: def.key, idx, entry, minus: false }));
-    Object.keys(VERRECHNET_IN).forEach(mk => {
-      if(VERRECHNET_IN[mk] === def.key && dataObj[mk]){
-        dataObj[mk].forEach((entry, idx) => zeilen.push({ key: mk, idx, entry, minus: true }));
-      }
-    });
+    minusPosten(dataObj, def.key).forEach(p => zeilen.push({ key: p.key, idx: p.idx, entry: p.entry, minus: true }));
     const subtotal = zeilen.reduce((s, z) => s + vorzeichen(z.key) * z.entry.cents, 0);
     grandTotal += subtotal;
     if(zeilen.length === 0) return;  // leere Gruppen ausblenden
@@ -79,7 +82,7 @@ function renderGroupedList(defs, dataObj, listEl, totalEl, withName, scope, summ
     group.appendChild(heading);
 
     zeilen.forEach(z => {
-      const entry = z.minus && withName ? { ...z.entry, name: aufloesungLabel(z.entry.name) } : z.entry;
+      const entry = z.minus && withName ? { ...z.entry, name: minusLabel(z.key, z.entry.name) } : z.entry;
       group.appendChild(buildEntryLine(scope, z.key, z.idx, entry, withName, z.minus));
     });
 
@@ -168,13 +171,20 @@ export function refreshTotals(){
   // tatsächlich erfassten "Sonstigen Ausgaben" abgleichen. ---
   const m = getMonthData(currentMonthKey);
   el.cardTotal.textContent = formatCents(CARD_TOTAL_CENTS);
-  el.cardCatTotal.textContent = formatCents(t.categoryTotal);
+  el.cardCatTotal.textContent = formatCents(t.cardCatTotal);
 
   el.cardElternRow.textContent = formatCents(t.cardElternTotal);
-  el.cardRausRow.textContent = (t.cardRausTotal ? '+ ' : '') + formatCents(t.cardRausTotal);
+  // Das Vorzeichen steht in der Abgleich-Liste vor der Zeile.
+  el.cardRausRow.textContent = formatCents(t.cardRausTotal);
+  const usedTop = document.getElementById('card-used-top');
+  const hinweis = document.getElementById('card-hinweis');
+  const rueckKonto = t.cardCatTotal - t.categoryTotal;
+  const zusatz = rueckKonto > 0 ? ' Ausgaben hier ohne ' + formatCents(rueckKonto) + ' Rückzahlung aufs Konto.' : '';
 
   if(m.card.restsaldoCents === null){
     el.cardUsed.textContent = '–';
+    if(usedTop) usedTop.textContent = '–';
+    if(hinweis) hinweis.textContent = 'Rest auf der Karte eintragen, dann erscheint der Abgleich.' + zusatz;
     el.cardDiff.textContent = '–';
     el.cardDiff.classList.remove('negative');
     el.cardSummaryTotal.textContent = '–';
@@ -188,8 +198,12 @@ export function refreshTotals(){
     // "Rausrechnen" dagegen sind Sonstige Ausgaben, die NICHT über die Karte
     // liefen (bar, anderes Konto): sie werden aus den Ausgaben herausgerechnet
     // und verkleinern damit die Lücke zwischen Karte und Ausgaben (v54).
-    const diff = used - t.categoryTotal - t.cardElternTotal + t.cardRausTotal;
+    const diff = used - t.cardCatTotal - t.cardElternTotal + t.cardRausTotal;
     el.cardUsed.textContent = formatCents(used);
+    if(usedTop) usedTop.textContent = formatCents(used);
+    if(hinweis) hinweis.textContent = (diff === 0 ? 'Alles erfasst.'
+      : diff > 0 ? formatCents(diff) + ' auf der Karte sind noch nicht als Ausgabe erfasst.'
+      : formatCents(-diff) + ' mehr erfasst, als über die Karte lief.') + zusatz;
     el.cardDiff.textContent = formatCents(diff);
     el.cardDiff.classList.toggle('negative', diff < 0);
     // Die Differenz ist die eigentliche Kennzahl dieses Bereichs — deshalb

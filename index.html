@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=62">
+<link rel="stylesheet" href="styles.css?v=63">
 </head>
 <body>
 
@@ -379,6 +379,12 @@
                inputmode="decimal" autocomplete="off" enterkeyhint="done">
         <button type="button" class="cat-add-btn" id="cat-add-btn">Hinzufügen</button>
       </div>
+      <!-- Nur bei Kategorie "Rückzahlung" (js/events.js). -->
+      <div class="cat-rueck-row" id="cat-rueck-row" hidden>
+        <label class="cat-rueck-feld" for="cat-gegen"><span>mindert</span>
+          <select id="cat-gegen"></select></label>
+        <label class="cat-rueck-haken"><input type="checkbox" id="cat-karte" checked> über Kreditkarte</label>
+      </div>
       <div class="cat-error" id="cat-error" role="alert"></div>
     </div>
   </details>
@@ -449,79 +455,73 @@
   <details class="section">
     <summary class="section-summary"><span class="section-summary-title">Kreditkarte <span class="section-summary-total" id="card-summary-total"></span></span></summary>
     <div class="section-body">
-      <div class="forecast-row">
-        <span class="forecast-row-label">Gesamtsaldo</span>
-        <span class="forecast-row-value" id="card-total">–</span>
+      <!-- Vier Blöcke (v63, nur Darstellung): Karte · Für Eltern · Nicht über
+           Karte · Abgleich. Die Rechnung selbst steht in js/render.js. -->
+      <div class="kk-block">
+        <p class="kk-titel">Karte</p>
+        <div class="kk-zahlen">
+          <div class="kk-zahl"><span class="kk-zahl-name">Limit</span><span class="kk-zahl-wert" id="card-total">–</span></div>
+          <div class="kk-zahl"><span class="kk-zahl-name">Verbraucht</span><span class="kk-zahl-wert" id="card-used-top">–</span></div>
+        </div>
+        <label class="kk-feldname" for="card-restsaldo">Rest auf der Karte</label>
+        <div class="cat-entry-row">
+          <input type="number" id="card-restsaldo" placeholder="Rest €" step="0.01" min="0" max="2000"
+                 inputmode="decimal" autocomplete="off" enterkeyhint="done">
+          <button type="button" class="cat-add-btn" id="card-save-btn">Speichern</button>
+        </div>
+        <div class="cat-error" id="card-error" role="alert"></div>
       </div>
 
-      <div class="cat-entry-row">
-        <label class="visually-hidden" for="card-restsaldo">Restsaldo in Euro</label>
-        <input type="number" id="card-restsaldo" placeholder="Restsaldo €" step="0.01" min="0" max="2000"
-               inputmode="decimal" autocomplete="off" enterkeyhint="done">
-        <button type="button" class="cat-add-btn" id="card-save-btn">Speichern</button>
+      <!-- Liefen über die Karte, werden aber von den Eltern erstattet —
+           zählen deshalb nicht als eigene Ausgabe. -->
+      <div class="kk-block">
+        <p class="kk-titel">Für Eltern <span class="kk-sub">wird erstattet</span></p>
+        <div class="cat-list" id="card-eltern-list"></div>
+        <div class="kk-summe">
+          <span>Summe</span>
+          <span class="cat-grand-total-amount" id="card-eltern-subtotal">0,00 €</span>
+        </div>
+        <div class="cat-entry-row">
+          <label class="visually-hidden" for="card-eltern-text">Bezeichnung</label>
+          <input type="text" id="card-eltern-text" placeholder="Bezeichnung" maxlength="80" autocomplete="off" enterkeyhint="done">
+          <label class="visually-hidden" for="card-eltern-amount">Betrag in Euro</label>
+          <input type="number" id="card-eltern-amount" placeholder="€" step="0.01" min="0" max="1000000"
+                 inputmode="decimal" autocomplete="off" enterkeyhint="done">
+          <button type="button" class="cat-add-btn" id="card-eltern-add-btn">Hinzufügen</button>
+        </div>
+        <div class="cat-error" id="card-eltern-error" role="alert"></div>
       </div>
-      <div class="cat-error" id="card-error" role="alert"></div>
-
-      <!-- Ausgaben, die zwar über die Kreditkarte laufen, aber für die
-           Eltern bezahlt und von ihnen zurückerstattet werden — deshalb
-           zählen sie nicht als eigene Ausgabe und werden von der Differenz
-           wieder abgezogen. -->
-      <p class="cat-group-name">Ausgaben für Eltern (wird zurückerstattet)</p>
-      <div class="cat-list" id="card-eltern-list"></div>
-      <div class="cat-grand-total">
-        <span>Zwischensumme</span>
-        <span class="cat-grand-total-amount" id="card-eltern-subtotal">0,00 €</span>
-      </div>
-
-      <div class="cat-entry-row">
-        <label class="visually-hidden" for="card-eltern-text">Bezeichnung</label>
-        <input type="text" id="card-eltern-text" maxlength="80" autocomplete="off" enterkeyhint="done">
-        <label class="visually-hidden" for="card-eltern-amount">Betrag in Euro</label>
-        <input type="number" id="card-eltern-amount" placeholder="€" step="0.01" min="0" max="1000000"
-               inputmode="decimal" autocomplete="off" enterkeyhint="done">
-        <button type="button" class="cat-add-btn" id="card-eltern-add-btn">Hinzufügen</button>
-      </div>
-      <div class="cat-error" id="card-eltern-error" role="alert"></div>
 
       <!-- Sonstige Ausgaben, die NICHT über die Karte liefen: werden aus den
            Ausgaben herausgerechnet (zählen in der Differenz mit +). -->
-      <p class="cat-group-name">Rausrechnen</p>
-      <div class="cat-list" id="card-raus-list"></div>
-      <div class="cat-grand-total">
-        <span>Zwischensumme</span>
-        <span class="cat-grand-total-amount" id="card-raus-subtotal">0,00 €</span>
+      <div class="kk-block">
+        <p class="kk-titel">Nicht über Karte <span class="kk-sub">bar oder Konto bezahlt</span></p>
+        <div class="cat-list" id="card-raus-list"></div>
+        <div class="kk-summe">
+          <span>Summe</span>
+          <span class="cat-grand-total-amount" id="card-raus-subtotal">0,00 €</span>
+        </div>
+        <div class="cat-entry-row">
+          <label class="visually-hidden" for="card-raus-text">Bezeichnung</label>
+          <input type="text" id="card-raus-text" placeholder="Bezeichnung" maxlength="80" autocomplete="off" enterkeyhint="done">
+          <label class="visually-hidden" for="card-raus-amount">Betrag in Euro</label>
+          <input type="number" id="card-raus-amount" placeholder="€" step="0.01" min="0" max="1000000"
+                 inputmode="decimal" autocomplete="off" enterkeyhint="done">
+          <button type="button" class="cat-add-btn" id="card-raus-add-btn">Hinzufügen</button>
+        </div>
+        <div class="cat-error" id="card-raus-error" role="alert"></div>
       </div>
 
-      <div class="cat-entry-row">
-        <label class="visually-hidden" for="card-raus-text">Bezeichnung</label>
-        <input type="text" id="card-raus-text" maxlength="80" autocomplete="off" enterkeyhint="done">
-        <label class="visually-hidden" for="card-raus-amount">Betrag in Euro</label>
-        <input type="number" id="card-raus-amount" placeholder="€" step="0.01" min="0" max="1000000"
-               inputmode="decimal" autocomplete="off" enterkeyhint="done">
-        <button type="button" class="cat-add-btn" id="card-raus-add-btn">Hinzufügen</button>
-      </div>
-      <div class="cat-error" id="card-raus-error" role="alert"></div>
-
-      <div class="forecast-row">
-        <span class="forecast-row-label">Verbraucht (Gesamtsaldo − Restsaldo)</span>
-        <span class="forecast-row-value" id="card-used">–</span>
-      </div>
-      <div class="forecast-row">
-        <span class="forecast-row-label">Sonstige Ausgaben (Ist)</span>
-        <span class="forecast-row-value" id="card-cat-total">–</span>
-      </div>
-      <div class="forecast-row">
-        <span class="forecast-row-label">Ausgaben für Eltern</span>
-        <span class="forecast-row-value" id="card-eltern-row">–</span>
-      </div>
-      <div class="forecast-row">
-        <span class="forecast-row-label">Rausrechnen</span>
-        <span class="forecast-row-value" id="card-raus-row">–</span>
-      </div>
-
-      <div class="forecast-result-box">
-        <span class="forecast-result-label">Differenz</span>
-        <span class="forecast-result-value" id="card-diff" aria-live="polite">–</span>
+      <div class="kk-block kk-abgleich">
+        <p class="kk-titel">Abgleich</p>
+        <div class="kk-rechnung">
+          <div class="kk-rz"><span class="kk-vz"></span><span class="kk-rz-name">Verbraucht</span><span class="kk-rz-wert" id="card-used">–</span></div>
+          <div class="kk-rz"><span class="kk-vz">−</span><span class="kk-rz-name">Ausgaben</span><span class="kk-rz-wert" id="card-cat-total">–</span></div>
+          <div class="kk-rz"><span class="kk-vz">−</span><span class="kk-rz-name">Für Eltern</span><span class="kk-rz-wert" id="card-eltern-row">–</span></div>
+          <div class="kk-rz"><span class="kk-vz">+</span><span class="kk-rz-name">Nicht über Karte</span><span class="kk-rz-wert" id="card-raus-row">–</span></div>
+          <div class="kk-rz kk-ergebnis"><span class="kk-vz">=</span><span class="kk-rz-name">Differenz</span><span class="kk-rz-wert forecast-result-value" id="card-diff" aria-live="polite">–</span></div>
+        </div>
+        <p class="kk-hinweis" id="card-hinweis"></p>
       </div>
     </div>
   </details>
@@ -599,7 +599,7 @@
         <label for="budget-year" class="month-label">Jahr</label>
         <select id="budget-year"></select>
       </div>
-      <p class="categories-hint">Jahresbudget je Kategorie eintragen. Verbraucht zählt wie in der Analyse (alle Monate des Jahres). Nur zur Übersicht — hat keine Auswirkung auf andere Werte.</p>
+      <p class="categories-hint">Position antippen, um das Jahresbudget zu ändern. Die Striche zeigen die Quartale: Ende Q1 sollte höchstens ein Viertel verbraucht sein.</p>
       <p class="categories-hint bt-erbt" id="budget-erbt" hidden></p>
       <div id="budget-gesamt"></div>
       <div id="budget-liste"></div>
@@ -1276,7 +1276,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=62"></script>
+<script type="module" src="js/app.js?v=63"></script>
 
 </body>
 </html>

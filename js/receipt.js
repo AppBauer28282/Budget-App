@@ -7,15 +7,15 @@
    Wird auch für abgeschlossene Monate genutzt — dort ist es die einzige
    noch zugängliche Ansicht (siehe navigation.js openMonthDetail).
    ============================================================================= */
-import { categoryDefs, savingDefs, fcKeys, FC_LABELS, VERRECHNET_IN, aufloesungLabel } from './constants.js?v=62';
-import { el } from './dom.js?v=62';
-import { formatCents } from './utils.js?v=62';
-import { computeTotals } from './compute.js?v=62';
-import { getMonthData, currentMonthKey, currentMonthLabelText, fixkostenVon } from './storage.js?v=62';
-import { openOverlay, closeOverlay } from './overlays.js?v=62';
+import { categoryDefs, savingDefs, fcKeys, FC_LABELS, istMinus, minusPosten, minusLabel } from './constants.js?v=63';
+import { el } from './dom.js?v=63';
+import { formatCents } from './utils.js?v=63';
+import { computeTotals } from './compute.js?v=63';
+import { getMonthData, currentMonthKey, currentMonthLabelText, fixkostenVon } from './storage.js?v=63';
+import { openOverlay, closeOverlay } from './overlays.js?v=63';
 // Zirkulärer Import: navigation.js importiert umgekehrt openReceipt aus
 // diesem Modul. Sicher, siehe Kommentar in navigation.js.
-import { showOverview } from './navigation.js?v=62';
+import { showOverview } from './navigation.js?v=63';
 
 function addReceiptSectionTitle(container, text){
   const h = document.createElement('p');
@@ -88,7 +88,7 @@ function buildReceipt(){
   addReceiptSubgroup(frag, 'Sonstige Ausgaben');
   let anyCat = false;
   categoryDefs.forEach(def => {
-    if(VERRECHNET_IN[def.key]) return; // steht bei ihrer Zielkategorie
+    if(istMinus(def.key)) return; // steht bei ihrer Zielkategorie
     // Einträge mit derselben Bezeichnung innerhalb der Kategorie werden zu
     // einer Zeile zusammengefasst (Summe), statt jede einzelne Buchung
     // aufzulisten — z. B. mehrere "Einkauf: Rewe"-Buchungen als eine Zeile.
@@ -102,14 +102,14 @@ function buildReceipt(){
       anyCat = true;
     });
     // Auflösungen direkt unter den Rücklagen, als Minus-Posten.
-    Object.keys(VERRECHNET_IN).forEach(mk => {
-      if(VERRECHNET_IN[mk] !== def.key) return;
-      const minus = new Map();
-      m.categories[mk].forEach(entry => minus.set(entry.name, (minus.get(entry.name) || 0) + entry.cents));
-      minus.forEach((cents, name) => {
-        addReceiptLine(frag, aufloesungLabel(name), cents, true);
-        anyCat = true;
-      });
+    const minus = new Map();
+    minusPosten(m.categories, def.key).forEach(p => {
+      const label = minusLabel(p.key, p.entry.name);
+      minus.set(label, (minus.get(label) || 0) + p.entry.cents);
+    });
+    minus.forEach((cents, label) => {
+      addReceiptLine(frag, label, cents, true);
+      anyCat = true;
     });
   });
   if(!anyCat) addReceiptEmptyNote(frag, 'Noch keine Einträge.');

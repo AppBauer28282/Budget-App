@@ -13,9 +13,9 @@
    damit der Buchungsmonat nicht herausragt. Reine SVG-Erzeugung per DOM-API;
    Farben von Text und Linien kommen aus styles.css (hell/dunkel).
    ============================================================================= */
-import { categoryDefs, SLICE_COLORS, VERRECHNET_IN } from './constants.js?v=62';
-import { alleEintraege, monatsWerte, schnitt, AUSWERTUNG_KEYS } from './auswertung.js?v=62';
-import { openOverlay, closeOverlay } from './overlays.js?v=62';
+import { categoryDefs, SLICE_COLORS, istMinus } from './constants.js?v=63';
+import { alleEintraege, monatsWerte, schnitt, AUSWERTUNG_KEYS } from './auswertung.js?v=63';
+import { openOverlay, closeOverlay } from './overlays.js?v=63';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('mb-btn');
@@ -30,7 +30,7 @@ const legendeBox = $('mb-legende');
 const NS = 'http://www.w3.org/2000/svg';
 const MON_KURZ = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const NAMEN = Object.assign(Object.create(null), { fixed: 'Fixkosten', sparen: 'Sparen' });
-categoryDefs.forEach(d => { if(!VERRECHNET_IN[d.key]) NAMEN[d.key] = d.name; });
+categoryDefs.forEach(d => { if(!istMinus(d.key)) NAMEN[d.key] = d.name; });
 
 const euro = (cents) => Math.round(cents / 100).toLocaleString('de-DE') + ' €';
 function svg(tag, attrs){

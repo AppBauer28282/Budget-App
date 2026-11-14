@@ -2,6 +2,8 @@
    MONATSBUDGET AUS EXCEL EINLESEN
    Liest eine Tabelle (.xlsx oder .csv) mit einer Zeile je Posten:
      Jahr | Monat | Bereich | Kategorie | Bezeichnung | Betrag
+   Optional für die Kategorie "Rückzahlung": Gegen (Zielkategorie, Pflicht)
+   und Karte (ja/nein, Standard ja).
    Die Datei wird ausschließlich hier im Browser gelesen. Vor dem Übernehmen
    zeigt ein Fenster, was gefunden wurde; erst "Übernehmen" ändert Daten.
    Jeder Monat läuft danach durch denselben Prüfrichter wie eine eingelesene
@@ -14,18 +16,18 @@
 import {
   categoryDefs, savingDefs, MONTHS, MAX_IMPORT_BYTES, AMOUNT_MAX_CENTS,
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH,
-  MAX_MONTH_ENTRIES
-} from './constants.js?v=62';
+  MAX_MONTH_ENTRIES, RUECK_ZIELE, vorzeichen
+} from './constants.js?v=63';
 import {
   allData, saveAll, setAllData, sanitizeMonthEntry, fixkostenVorlage, MAX_FIXKOSTEN
-} from './storage.js?v=62';
-import { showOverview } from './navigation.js?v=62';
-import { openOverlay, closeOverlay } from './overlays.js?v=62';
-import { formatCents, monthKey } from './utils.js?v=62';
+} from './storage.js?v=63';
+import { showOverview } from './navigation.js?v=63';
+import { openOverlay, closeOverlay } from './overlays.js?v=63';
+import { formatCents, monthKey } from './utils.js?v=63';
 
 const MAX_ZEILEN = 5000;
 const MAX_ENTPACKT = 20 * 1024 * 1024;   // Schutz vor ZIP-Bomben
-const SPALTEN = ['jahr', 'monat', 'bereich', 'kategorie', 'bezeichnung', 'betrag'];
+const SPALTEN = ['jahr', 'monat', 'bereich', 'kategorie', 'bezeichnung', 'betrag', 'gegen', 'karte'];
 
 const $ = id => document.getElementById(id);
 const fileEl = $('xls-file');
@@ -230,7 +232,8 @@ categoryDefs.forEach(d => { KATEGORIEN.set(norm(d.name), d.key); KATEGORIEN.set(
 [['konsum', 'konsum_cat'], ['kfz', 'kfz_sonstige'], ['sonstige kfz', 'kfz_sonstige'],
  ['kfz ausgaben', 'kfz_sonstige'], ['auto', 'kfz_sonstige'], ['aufloesung', 'aufloesung'],
  ['ruecklage', 'ruecklagen'], ['tanken', 'benzin'], ['sprit', 'benzin'],
- ['lebensmittel', 'einkauf'], ['einkaeufe', 'einkauf']
+ ['lebensmittel', 'einkauf'], ['einkaeufe', 'einkauf'],
+ ['rueckzahlungen', 'rueckzahlung'], ['erstattung', 'rueckzahlung']
 ].forEach(([n, k]) => { if(!KATEGORIEN.has(n)) KATEGORIEN.set(n, k); });
 const KAT_NAME = {};
 categoryDefs.forEach(d => { KAT_NAME[d.key] = d.name; });
@@ -334,6 +337,19 @@ function deute(zeilen){
       continue;
     }
 
+    // Rückzahlung: braucht die Kategorie, die sie mindert.
+    let gegen = null, karte = true;
+    if(bereich === 'ausgabe' && kat === 'rueckzahlung'){
+      const gRoh = norm(zelle(z, 'gegen'));
+      gegen = KATEGORIEN.get(gRoh) || null;
+      if(!gegen || !RUECK_ZIELE.includes(gegen)){
+        mist(gRoh === '' ? 'Rückzahlung: Spalte „Gegen“ fehlt (welche Kategorie wird gemindert?)'
+          : 'Rückzahlung: „Gegen“ unbekannt („' + String(zelle(z, 'gegen')).trim().slice(0, 30) + '“)');
+        continue;
+      }
+      karte = !/^(nein|n|no|0|false|falsch)$/.test(norm(zelle(z, 'karte')));
+    }
+
     const cents = betragAus(zelle(z, 'betrag'));
     if(cents === 'leer'){ mist('Betrag fehlt'); continue; }
     if(cents === 'minus' || cents === 0){ mist('Betrag muss größer als 0 sein'); continue; }
@@ -360,6 +376,7 @@ function deute(zeilen){
     }
     else {
       if(m.categories[kat].length >= MAX_ENTRIES_PER_KEY) m.zuViel++;
+      else if(kat === 'rueckzahlung') m.categories[kat].push({ name: name || KAT_NAME[kat], cents, gegen, karte });
       else m.categories[kat].push({ name: name || KAT_NAME[kat], cents });
     }
   }
@@ -433,7 +450,7 @@ function zeigeVorschau(){
     };
     let ausgaben = 0, posten = m.fixkosten.length + m.sparen.length;
     categoryDefs.forEach(d => {
-      ausgaben += (d.key === 'aufloesung' ? -1 : 1) * summe(m.categories[d.key]);
+      ausgaben += vorzeichen(d.key) * summe(m.categories[d.key]);
       posten += m.categories[d.key].length;
     });
     zeile('Gehalt', m.salary === null ? '–' : formatCents(m.salary));
