@@ -46,6 +46,7 @@ let state = leererStand();
 let storageOk = true;
 let saveTimer = null;
 let msgTimer = null;
+let auswahlOffen = false;   // Bereich "Im Widget anzeigen" aufgeklappt?
 let dialogNeu = null;   // zeichnet die gerade offene Dialog-Ansicht neu
 
 function leererStand(){ return { v: 1, year: new Date().getFullYear(), cats: [] }; }
@@ -206,6 +207,7 @@ function pruefe(roh){
       name: name,
       color: FARBEN.includes(c.color) ? c.color : FARBEN[0],
       collapsed: c.collapsed === true,
+      widget: c.widget !== false,   // false = im Widget ausgeblendet
       goals: []
     };
     (Array.isArray(c.goals) ? c.goals : []).slice(0, MAX_ZIELE).forEach(g => {
@@ -356,7 +358,7 @@ function renderWidget(){
     return;
   }
   const kreise = el('span', 'jzw-kreise');
-  state.cats.forEach(c => {
+  state.cats.filter(c => c.widget !== false).forEach(c => {
     const f = schnitt(c.goals);
     const k = el('span', 'jzw-kreis');
     k.dataset.pct = String(Math.round(f * 100));
@@ -364,7 +366,7 @@ function renderWidget(){
     k.append(ring(46, 5, f, c.color, [el('span', 'jzw-pct', String(Math.round(f * 100)))]), el('span', 'jzw-name', c.name));
     kreise.appendChild(k);
   });
-  frag.appendChild(kreise);
+  if(kreise.childElementCount) frag.appendChild(kreise);
 
   const gesamt = schnitt(ziele);
   const fertig = ziele.filter(zielErreicht).length;
@@ -467,6 +469,40 @@ function render(){
   imp.id = 'jz-import';
   datei.append(exp, imp);
   frag.append(datei, el('p', 'jz-klein jz-datei-hinweis', '„Sichern“ speichert alle Ziele als Datei, „Laden“ spielt eine solche Datei wieder ein.'));
+
+  // Auswahl fürs Widget: ganz unten, zum Ausklappen.
+  if(state.cats.length){
+    const det = el('details', 'jz-karte jz-auswahl');
+    det.id = 'jz-auswahl';
+    det.open = auswahlOffen;
+    det.addEventListener('toggle', () => { auswahlOffen = det.open; });
+    const an = state.cats.filter(c => c.widget !== false).length;
+    const sumr = el('summary', 'jz-auswahl-kopf');
+    sumr.append(el('span', 'jz-auswahl-titel', 'Im Widget anzeigen'),
+      el('span', 'jz-klein jz-auswahl-zahl', an + ' von ' + state.cats.length), el('span', 'jz-pfeil', '›'));
+    det.appendChild(sumr);
+    const alleAn = an === state.cats.length;
+    const alle = knopf('jz-auswahl-alle', alleAn ? 'Alle abwählen' : 'Alle auswählen', () => {
+      state.cats.forEach(c => { c.widget = !alleAn; });
+      geaendert();
+    });
+    alle.id = 'jz-auswahl-alle';
+    det.appendChild(alle);
+    state.cats.forEach(c => {
+      const z = el('label', 'jz-auswahl-zeile');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = c.widget !== false;
+      cb.dataset.id = c.id;
+      cb.addEventListener('change', () => { c.widget = cb.checked; geaendert(); });
+      const punkt = el('span', 'jz-punkt');
+      punkt.style.backgroundColor = c.color;
+      z.append(punkt, el('span', 'jz-auswahl-name', c.name), cb);
+      det.appendChild(z);
+    });
+    det.appendChild(el('p', 'jz-klein jz-hinweis', 'Bestimmt nur die Kreise im Widget. Der Balken darunter zeigt immer den Füllgrad über alle Ziele.'));
+    frag.appendChild(det);
+  }
 
   jzApp.replaceChildren(frag);
 }
@@ -775,7 +811,7 @@ function zeigeKategorie(katId){
       const n = text(name.value, 40);
       if(!n){ fehler.textContent = 'Bitte einen Namen eingeben.'; return; }
       if(alt){ alt.name = n; alt.color = farbe; }
-      else state.cats.push({ id: neueId('k'), name: n, color: farbe, collapsed: false, goals: [] });
+      else state.cats.push({ id: neueId('k'), name: n, color: farbe, collapsed: false, widget: true, goals: [] });
       dialogZu();
       geaendert();
     });

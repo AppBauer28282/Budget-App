@@ -3981,3 +3981,17 @@
   .jzw-zeile{ display:flex; justify-content:space-between; gap: 8px; font-size: 12px; }
   .jzw-text{ color: var(--ink-soft); min-width: 0; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
   .jzw-gesamt-pct{ font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* Jahresziele: Auswahl, welche Kategorien das Widget zeigt (ganz unten) */
+  .jz-auswahl{ margin-top: 16px; padding: 4px 16px; }
+  .jz-auswahl[open]{ padding-bottom: 14px; }
+  .jz-auswahl-kopf{ display:flex; align-items:center; gap: 10px; min-height: 46px; cursor: pointer; list-style: none; }
+  .jz-auswahl-kopf::-webkit-details-marker{ display:none; }
+  .jz-auswahl-titel{ flex: 1 1 0; min-width: 0; font-size: 15px; font-weight: 600; }
+  .jz-auswahl .jz-auswahl-kopf .jz-pfeil{ transform: none; }
+  .jz-auswahl[open] .jz-auswahl-kopf .jz-pfeil{ transform: rotate(90deg); }
+  .jz-auswahl-alle{ background: none; border: none; padding: 6px 0 10px; color: var(--brass); font-size: 14px; font-weight: 600; }
+  .jz-auswahl-zeile{ display:flex; align-items:center; gap: 10px; min-height: 46px; border-top: 1px solid var(--line); cursor: pointer; font-size: 15px; }
+  .jz-auswahl-name{ flex: 1 1 0; min-width: 0; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #jahresziele-overlay .jz-auswahl-zeile input[type="checkbox"]{ width: 22px; height: 22px; margin: 0; flex-shrink: 0; accent-color: var(--brass); }
+  .jz-auswahl .jz-hinweis{ margin-top: 10px; }
