@@ -3995,3 +3995,39 @@
   .jz-auswahl-name{ flex: 1 1 0; min-width: 0; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
   #jahresziele-overlay .jz-auswahl-zeile input[type="checkbox"]{ width: 22px; height: 22px; margin: 0; flex-shrink: 0; accent-color: var(--brass); }
   .jz-auswahl .jz-hinweis{ margin-top: 10px; }
+
+  /* =========================================================================
+     AUS EXCEL EINLESEN (v62): Knöpfe im Bereich "Sichern" + Vorschau-Fenster
+     ========================================================================= */
+  .xls-box{ margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .xls-box a.receipt-btn{ display: block; text-decoration: none; text-transform: none; letter-spacing: normal; }
+  #xls-overlay .receipt-card{ max-width: 440px; }
+  #xls-overlay .receipt-body{ font-size: 14px; }
+  .xls-kopf{ margin: 0 0 12px; font-weight: 600; font-size: 15px; }
+  .xls-liste{ display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; }
+  .xls-monat{ border: 1px solid var(--line); border-radius: var(--radius-klein); padding: 10px 12px; }
+  .xls-monat-kopf{ display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .xls-monat-name{ font-weight: 600; font-size: 15px; min-width: 0; overflow-wrap: anywhere; }
+  .xls-marke{ flex-shrink: 0; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; color: var(--ok); background: rgba(26,127,55,0.12); }
+  .xls-marke.da{ color: #b25e00; background: rgba(255,149,0,0.16); }
+  .xls-zeile{ display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; color: var(--ink-soft); }
+  .xls-wert{ color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+  .xls-hinweis{ margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-soft); }
+  .xls-fehler{ margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius-klein); padding: 10px 12px; }
+  .xls-fehler summary{ cursor: pointer; font-weight: 600; color: var(--error); }
+  .xls-fehler-zeile{ margin: 6px 0 0; font-size: 12.5px; line-height: 1.4; overflow-wrap: anywhere; }
+  .xls-frage{ margin: 16px 0 8px; font-weight: 600; }
+  .xls-wahl{ display: flex; gap: 2px; padding: 2px; background: #e8e8ed; border-radius: var(--radius-klein); }
+  #xls-overlay .xls-wahl-btn{ flex: 1 1 0; min-width: 0; min-height: 40px; border: none; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+  #xls-overlay .xls-wahl-btn[aria-pressed="true"]{ background: #fff; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .xls-knoepfe{ display: flex; gap: 10px; margin-top: 18px; }
+  #xls-overlay .xls-btn{ flex: 1 1 0; min-width: 0; min-height: 46px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  #xls-overlay .xls-btn.primary{ background: var(--brass); border-color: var(--brass); color: #fff; }
+  #xls-overlay .xls-btn:disabled{ opacity: 0.45; cursor: default; }
+  [data-theme="dark"] #xls-overlay .receipt-card,
+  [data-theme="dark"] #xls-overlay .receipt-head{ background: #1c1c1e; }
+  [data-theme="dark"] #xls-overlay .xls-btn:not(.primary){ background: #2c2c2e; border-color: #48484a; }
+  [data-theme="dark"] .xls-wahl{ background: #2c2c2e; }
+  [data-theme="dark"] #xls-overlay .xls-wahl-btn[aria-pressed="true"]{ background: #636366; color: #fff; }
+  [data-theme="dark"] .xls-marke{ color: #30d158; background: rgba(48,209,88,0.16); }
+  [data-theme="dark"] .xls-marke.da{ color: #ff9f0a; background: rgba(255,159,10,0.18); }

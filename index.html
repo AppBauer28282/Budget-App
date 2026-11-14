@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=61">
+<link rel="stylesheet" href="styles.css?v=62">
 </head>
 <body>
 
@@ -293,6 +293,13 @@
         <label class="receipt-btn" for="import-file">Wiederherstellen</label>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
         <div class="backup-msg" id="backup-msg" role="status"></div>
+        <div class="xls-box">
+          <p class="backup-hint">Monate aus einer Excel-Tabelle laden: Vorlage ausfüllen, speichern und hier einlesen. Vor dem Übernehmen siehst du eine Vorschau.</p>
+          <a class="receipt-btn" id="xls-vorlage" href="assets/monatsbudget-vorlage.xlsx" download="monatsbudget-vorlage.xlsx">Excel-Vorlage laden</a>
+          <label class="receipt-btn" for="xls-file">Aus Excel einlesen</label>
+          <input type="file" id="xls-file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden>
+          <div class="backup-msg" id="xls-msg" role="status"></div>
+        </div>
       </div>
     </div>
   </details>
@@ -1047,6 +1054,17 @@
     </div>
   </div>
 </div>
+<!-- Vorschau für "Aus Excel einlesen" (js/excel-import.js). -->
+<div class="receipt-overlay xls-overlay" id="xls-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="xls-title">
+    <div class="receipt-head">
+      <h2 id="xls-title">Aus Excel einlesen</h2>
+      <button type="button" class="receipt-close" id="xls-close" aria-label="Fenster schließen">✕</button>
+    </div>
+    <div class="receipt-body" id="xls-body"></div>
+  </div>
+</div>
+
 <div class="receipt-overlay jz-dialog" id="jz-dialog" hidden>
   <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="jz-dialog-title">
     <div class="receipt-head">
@@ -1258,7 +1276,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=61"></script>
+<script type="module" src="js/app.js?v=62"></script>
 
 </body>
 </html>

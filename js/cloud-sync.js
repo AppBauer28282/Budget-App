@@ -15,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=61';
+import { el } from './dom.js?v=62';
 import {
   allData, currentMonthKey, writeStorage, fixkostenUebernahmeAbholen,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=61';
-import { renderMonth } from './render.js?v=61';
-import { renderOverview } from './navigation.js?v=61';
+} from './storage.js?v=62';
+import { renderMonth } from './render.js?v=62';
+import { renderOverview } from './navigation.js?v=62';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).
@@ -638,7 +638,7 @@ auth.onAuthStateChanged(async (user) => {
     document.body.style.overflow = '';
     ['receipt-overlay','chart-overlay','pin-overlay','analysis-overlay','fc-edit-overlay','budget-overlay','rt-overlay','mb-overlay',
      'salary-calc-overlay','konsum-overlay','pentracker-overlay',
-     'auszahlung-overlay','vermoegen-overlay','jahresziele-overlay','jz-dialog'].forEach(id => {
+     'auszahlung-overlay','vermoegen-overlay','jahresziele-overlay','jz-dialog','xls-overlay'].forEach(id => {
       const ov = document.getElementById(id);
       if(ov) ov.hidden = true;
     });
