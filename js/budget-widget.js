@@ -13,7 +13,7 @@
    gearbeitet wird; ein schon angelegter Folgemonat ist noch leer); ohne
    offenen der zuletzt abgeschlossene. Reine Anzeige; alle Texte per textContent.
    ============================================================================= */
-import { alleEintraege, monatsWerte, schnitt, dreiteilung } from './auswertung.js?v=60';
+import { alleEintraege, monatsWerte, schnitt, dreiteilung } from './auswertung.js?v=61';
 
 const box = document.getElementById('budget-widget');
 const kachel = document.getElementById('budget-tile');

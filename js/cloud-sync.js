@@ -15,13 +15,13 @@
    window.__onLocalSave wird von storage.js bei jeder lokalen Änderung
    aufgerufen (unabhängig vom Internetzugang).
    ============================================================================= */
-import { el } from './dom.js?v=60';
+import { el } from './dom.js?v=61';
 import {
   allData, currentMonthKey, writeStorage, fixkostenUebernahmeAbholen,
   replaceAllData as storeReplaceAllData
-} from './storage.js?v=60';
-import { renderMonth } from './render.js?v=60';
-import { renderOverview } from './navigation.js?v=60';
+} from './storage.js?v=61';
+import { renderMonth } from './render.js?v=61';
+import { renderOverview } from './navigation.js?v=61';
 
 // Deine Firebase-Projektdaten (kein Geheimnis — Schutz läuft über die
 // Security Rules + PIN-Login, nicht über diesen Config-Block).
@@ -218,6 +218,30 @@ window.__onVermoegenLocalSave = function(data){
   setVmLocalUpdatedAt(ts);
   if(!auth.currentUser) return;
   vermoegenDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: data })
+    .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
+};
+
+// ---------- Jahresziele-Sync ----------
+// Gleicher Mechanismus, eigenes Dokument (jahresziele/{uid}). Im Quellcode
+// stehen keine Ziele; sie liegen nur hinter dem PIN-Login in Firestore.
+const jahreszieleDocRef = (uid) => db.collection('jahresziele').doc(uid);
+const JZ_LOCAL_UPDATED_KEY = 'kontor_jahresziele_updated_at';
+function getJzLocalUpdatedAt(){
+  const raw = localStorage.getItem(JZ_LOCAL_UPDATED_KEY);
+  const n = raw ? parseInt(raw, 10) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+function setJzLocalUpdatedAt(ts){
+  try{ localStorage.setItem(JZ_LOCAL_UPDATED_KEY, String(ts)); }catch(e){}
+}
+let suppressJahreszielePush = false;
+
+window.__onJahreszieleLocalSave = function(data){
+  if(suppressJahreszielePush) return;
+  const ts = Date.now();
+  setJzLocalUpdatedAt(ts);
+  if(!auth.currentUser) return;
+  jahreszieleDocRef(auth.currentUser.uid).set({ updatedAt: ts, data: JSON.parse(JSON.stringify(data)) })
     .catch(() => { /* nächste Änderung versucht es erneut zu pushen */ });
 };
 
@@ -569,6 +593,36 @@ auth.onAuthStateChanged(async (user) => {
       }catch(err){ /* Tracker bleibt lokal nutzbar, auch ohne Cloud */ }
     }
 
+    // Gleicher Abgleich für die Jahresziele, ebenfalls als eigener Versuch.
+    // Fehlt die Firestore-Regel für "jahresziele", bleibt alles lokal nutzbar.
+    if(window.__jahreszieleCloud){
+      try{
+        const jzSnap = await jahreszieleDocRef(user.uid).get();
+        if(jzSnap.exists){
+          const raw = jzSnap.data() || {};
+          const isNewFormat = raw.data && typeof raw.data === 'object';
+          const cloudPayload = isNewFormat ? raw.data : raw;
+          const cloudUpdatedAt = Number(raw.updatedAt) || 0;
+          const localUpdatedAt = getJzLocalUpdatedAt();
+          const cloudWins = localUpdatedAt === 0 || cloudUpdatedAt > localUpdatedAt;
+
+          if(cloudWins){
+            suppressJahreszielePush = true;
+            window.__jahreszieleCloud.replaceAllData(cloudPayload);
+            suppressJahreszielePush = false;
+            setJzLocalUpdatedAt(cloudUpdatedAt || Date.now());
+          } else {
+            const ts = localUpdatedAt;
+            await jahreszieleDocRef(user.uid).set({ updatedAt: ts, data: window.__jahreszieleCloud.getSnapshot() });
+          }
+        } else {
+          const ts = Date.now();
+          setJzLocalUpdatedAt(ts);
+          await jahreszieleDocRef(user.uid).set({ updatedAt: ts, data: window.__jahreszieleCloud.getSnapshot() });
+        }
+      }catch(err){ suppressJahreszielePush = false; /* bleibt lokal nutzbar, auch ohne Cloud */ }
+    }
+
     lockPin.value = '';
     lockStatus.textContent = '';
     lockSubmit.disabled = false;
@@ -584,7 +638,7 @@ auth.onAuthStateChanged(async (user) => {
     document.body.style.overflow = '';
     ['receipt-overlay','chart-overlay','pin-overlay','analysis-overlay','fc-edit-overlay','budget-overlay','rt-overlay','mb-overlay',
      'salary-calc-overlay','konsum-overlay','pentracker-overlay',
-     'auszahlung-overlay','vermoegen-overlay'].forEach(id => {
+     'auszahlung-overlay','vermoegen-overlay','jahresziele-overlay','jz-dialog'].forEach(id => {
       const ov = document.getElementById(id);
       if(ov) ov.hidden = true;
     });

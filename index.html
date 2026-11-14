@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=60">
+<link rel="stylesheet" href="styles.css?v=61">
 </head>
 <body>
 
@@ -179,6 +179,22 @@
         </span>
         <!-- Widget: Anlageklassen als Gleichung + nächster Meilenstein (js/vermoegen.js) -->
         <span class="home-widget vtw" id="vt-widget"></span>
+      </button>
+      <button type="button" class="home-tile" id="jahresziele-btn" aria-label="Jahresziele öffnen">
+        <span class="home-tile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="8.5"/>
+          <circle cx="12" cy="12" r="4.6"/>
+          <circle cx="12" cy="12" r="0.9"/>
+          </svg>
+        </span>
+        <span class="home-tile-text">
+          <span class="home-tile-name">Jahresziele</span>
+          <span class="home-tile-sub">Ziele und Füllgrad</span>
+        </span>
+        <!-- Widget: ein Kreis je Kategorie, darunter der Gesamt-Füllgrad (js/jahresziele.js) -->
+        <span class="home-widget jzw" id="jz-widget"></span>
       </button>
   </div>
 
@@ -1014,6 +1030,33 @@
   </div>
 </div>
 
+<!-- Jahresziele: eigener Bildschirm (wie die anderen Werkzeuge) und ein
+     kleines Fenster für Ziel, Formulare, Jahr und Rückfragen. Der Inhalt
+     entsteht in js/jahresziele.js; im Quellcode stehen keine Ziele. -->
+<div class="receipt-overlay jz-overlay" id="jahresziele-overlay" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="jahresziele-title">
+    <div class="receipt-head">
+      <h2 id="jahresziele-title">Jahresziele</h2>
+      <button type="button" class="receipt-close" id="jahresziele-close" aria-label="Jahresziele schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <div id="jz-warn" hidden></div>
+      <div id="jz-app"></div>
+      <p class="jz-msg" id="jz-msg" role="status"></p>
+      <input type="file" id="jz-file" accept="application/json,.json" class="visually-hidden">
+    </div>
+  </div>
+</div>
+<div class="receipt-overlay jz-dialog" id="jz-dialog" hidden>
+  <div class="receipt-card" role="dialog" aria-modal="true" aria-labelledby="jz-dialog-title">
+    <div class="receipt-head">
+      <h2 id="jz-dialog-title">Ziel</h2>
+      <button type="button" class="receipt-close" id="jz-dialog-close" aria-label="Fenster schließen">✕</button>
+    </div>
+    <div class="receipt-body" id="jz-dialog-body"></div>
+  </div>
+</div>
+
 <!-- Vermögens-Tracker: eigenständiges Werkzeug hinter dem Trendpfeil rechts
      oben. Erfasst je Monat Positionen mit Anlageklasse, Bezeichnung und
      Betrag und wertet daraus Gesamtvermögen, Meilensteine und die Aufteilung
@@ -1215,7 +1258,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=60"></script>
+<script type="module" src="js/app.js?v=61"></script>
 
 </body>
 </html>

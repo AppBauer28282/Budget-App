@@ -2793,7 +2793,7 @@
      an denselben Klassen hängt und hier keine einzige Eigenschaft davon
      angefasst wird. Deshalb genügt dieser eine zusätzliche Block, statt
      die fünf Werkzeuge einzeln umzuschreiben. */
-  .salary-calc-overlay, .konsum-overlay, .pt-overlay, .az-overlay, .vt-overlay{
+  .salary-calc-overlay, .konsum-overlay, .pt-overlay, .az-overlay, .vt-overlay, .jz-overlay{
     position: static;
     background: none;
     padding: 8px 0 24px;   /* wie .sheet */
@@ -2802,7 +2802,7 @@
     width: 100%;
   }
   .salary-calc-overlay .receipt-card, .konsum-overlay .receipt-card,
-  .pt-overlay .receipt-card, .az-overlay .receipt-card, .vt-overlay .receipt-card{
+  .pt-overlay .receipt-card, .az-overlay .receipt-card, .vt-overlay .receipt-card, .jz-overlay .receipt-card{
     box-shadow: none;
     border-radius: 0;
     overflow: visible;
@@ -2813,7 +2813,7 @@
      kleinen Dialoge (Beleg, Diagramm, Analyse) behalten die klebende Zeile,
      dort scrollt der Dialog selbst. */
   .salary-calc-overlay .receipt-head, .konsum-overlay .receipt-head,
-  .pt-overlay .receipt-head, .az-overlay .receipt-head, .vt-overlay .receipt-head{
+  .pt-overlay .receipt-head, .az-overlay .receipt-head, .vt-overlay .receipt-head, .jz-overlay .receipt-head{
     position: static;
   }
 
@@ -3138,10 +3138,10 @@
   .home-widget-kopf{ display:none; }
   /* Kachel mit Widget: kompakter Kopf (kleines Symbol, ohne Untertitel).
      :is() fasst die drei Widget-Kacheln zusammen. */
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn){ gap: 10px 10px; padding: 12px; }
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn) .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn) .home-tile-icon svg{ width: 18px; height: 18px; }
-  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn) .home-tile-sub{ display:none; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn, #jahresziele-btn){ gap: 10px 10px; padding: 12px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn, #jahresziele-btn) .home-tile-icon{ width: 30px; height: 30px; border-radius: 9px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn, #jahresziele-btn) .home-tile-icon svg{ width: 18px; height: 18px; }
+  :root:not([data-home="basis"]) :is(#salary-calc-btn, #pentracker-btn, #auszahlung-btn, #vermoegen-btn, #jahresziele-btn) .home-tile-sub{ display:none; }
   /* Reihenfolge der Widgets: Gehalt, Pen-Tracker, Auszahlungen, dann die übrigen. */
   :root:not([data-home="basis"]) #salary-calc-btn{ order: -3; }
   :root:not([data-home="basis"]) #pentracker-btn{ order: -2; }
@@ -3807,3 +3807,177 @@
   [data-theme="dark"] #fc-edit-overlay .receipt-card,
   [data-theme="dark"] #fc-edit-overlay .receipt-head{ background: #1c1c1e; }
   [data-theme="dark"] .fc-edit-zeile input{ background: #2c2c2e; border-color: #48484a; }
+
+  /* =========================================================
+     JAHRESZIELE (js/jahresziele.js)
+     Eigener Bildschirm + kleines Fenster (#jz-dialog) + Widget.
+     Kategoriefarben setzt das Skript (feste Liste); alles andere
+     kommt aus den Farbvariablen und passt sich hell/dunkel an.
+     ========================================================= */
+  .jz-overlay .receipt-body, .jz-dialog .receipt-body{ font-size: 14px; }
+  .jz-overlay button, .jz-dialog button{ font-family: inherit; cursor: pointer; }
+  .jz-klein{ font-size: 12.5px; color: var(--ink-soft); }
+  .jz-msg{ font-size: 13px; color: var(--ink-soft); margin: 10px 0 0; min-height: 18px; }
+  .jz-warn{ background: rgba(192,57,43,0.1); color: var(--error); border-radius: var(--radius-klein); padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
+
+  .jz-btn{
+    font-size: 15px; font-weight: 600; padding: 10px 14px; min-height: 42px;
+    background: var(--paper-2); color: var(--ink); border: 1px solid var(--line-stark);
+  }
+  .jz-btn:hover{ background: var(--line); }
+  .jz-btn.primary{ background: var(--brass); border-color: var(--brass); color: #fff; }
+  .jz-btn.primary:hover{ background: var(--brass-deep); border-color: var(--brass-deep); }
+  .jz-btn.gefahr{ color: var(--error); }
+  .jz-btn.gefahr-voll{ background: var(--error); border-color: var(--error); color: #fff; }
+  .jz-btn.breit{ width: 100%; }
+
+  .jz-kopf{ display:flex; justify-content:space-between; align-items:center; gap: 10px; margin-bottom: 14px; }
+  .jz-karte{ background: var(--paper-2); border-radius: var(--radius); box-shadow: var(--schatten); padding: 16px; margin-bottom: 14px; }
+
+  /* Ring */
+  .jz-ring{ position: relative; display:inline-flex; flex-shrink: 0; }
+  .jz-ring svg{ display:block; }
+  .jz-ring-spur{ stroke: var(--line); }
+  .jz-ring-wert{ stroke: var(--brass); }
+  .jz-ring-mitte{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; line-height: 1.15; }
+  .jz-ring-zahl{ font-size: 19px; font-weight: 700; letter-spacing: -0.3px; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .jz-ring-zahl.gross{ font-size: 28px; }
+
+  /* Balken */
+  .jz-track{ display:block; height: 8px; border-radius: 4px; background: var(--line); overflow:hidden; }
+  .jz-track.duenn{ height: 6px; border-radius: 3px; }
+  .jz-fill{ display:block; height:100%; border-radius: inherit; background: var(--brass); }
+  .jz-track.jahr .jz-fill{ background: var(--ink-soft); }
+  .jz-segs{ display:flex; gap: 3px; }
+  .jz-seg{ flex: 1 1 0; height: 6px; border-radius: 3px; background: var(--line); }
+
+  /* Zusammenfassung */
+  .jz-summe{ display:flex; align-items:center; gap: 16px; }
+  .jz-summe-text{ flex: 1 1 0; min-width: 0; }
+  .jz-summe-zahl{ font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+  .jz-jahrbox{ margin-top: 12px; display:flex; flex-direction:column; gap: 5px; }
+  .jz-leer{ text-align:center; padding: 26px 18px; }
+  .jz-leer-titel{ font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+
+  /* Kategorie */
+  .jz-kat{ padding: 12px 16px 14px; }
+  .jz-kat-kopf{ display:flex; align-items:center; gap: 6px; margin-bottom: 10px; }
+  .jz-kat-auf{
+    flex: 1 1 0; min-width: 0; display:flex; align-items:center; gap: 9px; text-align:left;
+    background: none; border: none; padding: 6px 0; min-height: 40px; color: var(--ink); font-size: 16px;
+  }
+  .jz-punkt{ width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; display:inline-block; }
+  .jz-kat-name{ flex: 1 1 0; min-width: 0; font-weight: 700; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jz-kat-pct{ font-weight: 700; font-variant-numeric: tabular-nums; }
+  .jz-pfeil{ color: var(--ink-soft); font-size: 18px; transform: rotate(90deg); display:inline-block; width: 14px; text-align:center; }
+  .jz-pfeil.zu{ transform: none; }
+  .jz-kat-mehr{
+    width: 38px; height: 38px; flex-shrink: 0; background: var(--paper); border: none; color: var(--ink);
+    font-size: 18px; line-height: 1; display:flex; align-items:center; justify-content:center;
+  }
+  .jz-ziele{ margin-top: 8px; }
+  .jz-ziel{
+    display:flex; flex-direction:column; gap: 5px; width: 100%; text-align:left;
+    background: none; border: none; border-top: 1px solid var(--line); padding: 12px 0; color: var(--ink); font-size: 15px;
+  }
+  #jahresziele-overlay .jz-ziel{ border-radius: 0; }
+  .jz-ziel-oben{ display:flex; justify-content:space-between; gap: 10px; }
+  .jz-ziel-titel{ font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .jz-ziel-pct{ font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .jz-ohne{ border-top: 1px solid var(--line); padding: 12px 0 4px; }
+  .jz-ziel-neu{
+    width: 100%; margin-top: 6px; padding: 10px; min-height: 42px; background: none; border: 1px dashed var(--line-stark);
+    color: var(--brass); font-size: 15px; font-weight: 600;
+  }
+  .jz-datei{ display:flex; gap: 10px; margin-top: 6px; }
+  .jz-datei .jz-btn{ flex: 1 1 0; }
+  .jz-datei-hinweis{ margin: 8px 0 0; }
+
+  /* Fenster */
+  .jz-form, .jz-detail{ display:flex; flex-direction:column; gap: 14px; }
+  .jz-feld{ display:flex; flex-direction:column; gap: 6px; min-width: 0; }
+  .jz-feld-label{ font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  #jz-dialog input[type="text"]{ font-size: 16px; padding: 10px 12px; width: 100%; min-width: 0; font-family: inherit; color: var(--ink); }
+  .jz-paar{ display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+  .jz-chips{ display:flex; flex-wrap:wrap; gap: 6px; margin-top: -6px; }
+  .jz-chip{ font-size: 13px; padding: 6px 11px; background: var(--paper-2); border: 1px solid var(--line-stark); color: var(--ink); }
+  #jz-dialog .jz-chip{ border-radius: 999px; }
+  .jz-chip[aria-pressed="true"]{ background: var(--brass); border-color: var(--brass); color: #fff; }
+  .jz-ms-kopf{ display:flex; justify-content:space-between; align-items:center; gap: 10px; }
+  .jz-stepper{ display:flex; align-items:center; gap: 12px; }
+  .jz-stepper.gross{ justify-content:center; gap: 22px; padding: 6px 0; }
+  .jz-ms-anzahl{ min-width: 18px; text-align:center; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .jz-jahr-wert{ font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .jz-rund{
+    width: 42px; height: 42px; flex-shrink: 0; background: var(--paper-2); border: 1px solid var(--line-stark);
+    color: var(--ink); font-size: 20px; line-height: 1; display:flex; align-items:center; justify-content:center; padding: 0;
+  }
+  #jz-dialog .jz-rund{ border-radius: 50%; }
+  .jz-ms-liste{ display:grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+  .jz-ms-liste:empty{ display:none; }
+  .jz-farben{ display:flex; flex-wrap:wrap; gap: 10px; }
+  .jz-farbe{ width: 36px; height: 36px; border: 3px solid transparent; padding: 0; background-clip: padding-box; }
+  #jz-dialog .jz-farbe{ border-radius: 50%; }
+  .jz-farbe[aria-pressed="true"]{ box-shadow: 0 0 0 2px var(--ink); }
+  .jz-fehler{ margin: 0; font-size: 13px; color: var(--error); min-height: 0; }
+  .jz-fehler:empty{ display:none; }
+  .jz-hinweis{ margin: 0; }
+  .jz-frage{ margin: 4px 0; font-size: 15px; overflow-wrap: anywhere; }
+  .jz-aktionen{ display:flex; gap: 10px; }
+  .jz-aktionen .jz-btn{ flex: 1 1 0; }
+
+  .jz-detail-kat{ display:flex; align-items:center; gap: 7px; font-size: 13px; color: var(--ink-soft); }
+  .jz-detail-titel{ margin: -8px 0 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; overflow-wrap: anywhere; }
+  .jz-detail-ring{ display:flex; justify-content:center; padding: 4px 0; }
+  .jz-fakten{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+  .jz-fakt{ background: var(--paper-2); border-radius: var(--radius-klein); padding: 9px 8px; display:flex; flex-direction:column; gap: 2px; text-align:center; min-width: 0; }
+  .jz-fakt-wert{ font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .jz-fakt.aktuell .jz-fakt-wert{ color: var(--brass); }
+  .jz-abschnitt{ font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); margin-top: 6px; }
+  .jz-stand{ display:flex; align-items:center; gap: 8px; }
+  .jz-stand input{ flex: 1 1 0; text-align:center; font-variant-numeric: tabular-nums; }
+  .jz-stufen{ display:flex; flex-direction:column; background: var(--paper-2); border-radius: var(--radius-klein); overflow:hidden; }
+  .jz-stufe{
+    display:flex; align-items:center; gap: 10px; text-align:left; width: 100%; background: none; border: none;
+    padding: 11px 12px; min-height: 44px; color: var(--ink); font-size: 15px;
+  }
+  #jz-dialog .jz-stufe{ border-radius: 0; }
+  .jz-stufe + .jz-stufe{ border-top: 1px solid var(--line); }
+  .jz-stufe:disabled{ cursor: default; opacity: 1; color: var(--ink); }
+  .jz-haken{ width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-stark); flex-shrink: 0; display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 700; color: #fff; }
+  .jz-stufe.erreicht .jz-haken{ border-color: transparent; }
+  .jz-stufe-wert{ flex: 1 1 0; min-width: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .jz-spark{ width: 100%; height: auto; background: var(--paper-2); border-radius: var(--radius-klein); }
+  .jz-spark-linie{ stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .jz-spark-ziel{ stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 4 4; }
+  .jz-verlauf{ background: var(--paper-2); border-radius: var(--radius-klein); padding: 2px 12px; }
+  .jz-verlauf-zeile{ display:flex; justify-content:space-between; gap: 10px; padding: 8px 0; }
+  .jz-verlauf-zeile + .jz-verlauf-zeile{ border-top: 1px solid var(--line); }
+  .jz-verlauf-wert{ font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  [data-theme="dark"] #jz-dialog .receipt-card,
+  [data-theme="dark"] #jz-dialog .receipt-head{ background: #1c1c1e; }
+  [data-theme="dark"] #jz-dialog input[type="text"],
+  [data-theme="dark"] #jz-dialog .jz-btn:not(.primary):not(.gefahr-voll),
+  [data-theme="dark"] #jz-dialog .jz-rund,
+  [data-theme="dark"] #jz-dialog .jz-chip:not([aria-pressed="true"]),
+  [data-theme="dark"] #jz-dialog .jz-fakt,
+  [data-theme="dark"] #jz-dialog .jz-stufen,
+  [data-theme="dark"] #jz-dialog .jz-spark,
+  [data-theme="dark"] #jz-dialog .jz-verlauf{ background: #2c2c2e; }
+  [data-theme="dark"] #jz-dialog input[type="text"]{ border-color: #48484a; }
+  [data-theme="dark"] .jz-btn:not(.primary):not(.gefahr-voll):hover{ background: #3a3a3c; }
+  [data-theme="dark"] .jz-kat-mehr{ background: #2c2c2e; }
+  [data-theme="dark"] .jz-warn{ background: rgba(255,69,58,0.16); }
+
+  /* Widget: ein Kreis je Kategorie, darunter der Gesamt-Füllgrad */
+  :root:not([data-home="basis"]) .home-widget.jzw{ display:flex; flex-direction:column; gap: 12px; }
+  .jzw-leer{ font-size: 12px; color: var(--ink-soft); }
+  .jzw-kreise{ display:grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 10px 6px; }
+  .jzw-kreis{ display:flex; flex-direction:column; align-items:center; gap: 4px; min-width: 0; }
+  .jzw-pct{ font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .jzw-name{ font-size: 10.5px; color: var(--ink-soft); max-width: 100%; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jzw-gesamt{ display:flex; flex-direction:column; gap: 5px; }
+  .jzw-zeile{ display:flex; justify-content:space-between; gap: 8px; font-size: 12px; }
+  .jzw-text{ color: var(--ink-soft); min-width: 0; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jzw-gesamt-pct{ font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
