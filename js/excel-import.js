@@ -17,13 +17,13 @@ import {
   categoryDefs, savingDefs, MONTHS, MAX_IMPORT_BYTES, AMOUNT_MAX_CENTS,
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH,
   MAX_MONTH_ENTRIES, RUECK_ZIELE, vorzeichen
-} from './constants.js?v=63';
+} from './constants.js?v=64';
 import {
   allData, saveAll, setAllData, sanitizeMonthEntry, fixkostenVorlage, MAX_FIXKOSTEN
-} from './storage.js?v=63';
-import { showOverview } from './navigation.js?v=63';
-import { openOverlay, closeOverlay } from './overlays.js?v=63';
-import { formatCents, monthKey } from './utils.js?v=63';
+} from './storage.js?v=64';
+import { showOverview } from './navigation.js?v=64';
+import { openOverlay, closeOverlay } from './overlays.js?v=64';
+import { formatCents, monthKey } from './utils.js?v=64';
 
 const MAX_ZEILEN = 5000;
 const MAX_ENTPACKT = 20 * 1024 * 1024;   // Schutz vor ZIP-Bomben

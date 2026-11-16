@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=63">
+<link rel="stylesheet" href="styles.css?v=64">
 </head>
 <body>
 
@@ -268,6 +268,7 @@
   </button>
   <button type="button" class="receipt-btn" id="budget-toepfe-btn">Budget Töpfe</button>
   <button type="button" class="receipt-btn" id="rt-btn">Rücklagen Topf</button>
+  <button type="button" class="receipt-btn" id="jfp-btn">Jahresfix</button>
 
   <!-- Fixkosten einstellen (js/fixkosten.js): gilt für neue und alle offenen
        Monate, abgeschlossene Monate behalten ihre damaligen Fixkosten. -->
@@ -603,6 +604,33 @@
       <p class="categories-hint bt-erbt" id="budget-erbt" hidden></p>
       <div id="budget-gesamt"></div>
       <div id="budget-liste"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Jahresfix-Tracking (js/jahresfix-plan.js): je Jahr geplante
+     Jahresfix-Ausgaben als Textliste zum Abhaken. Nur Planung. -->
+<div class="receipt-overlay" id="jfp-overlay" hidden>
+  <div class="receipt-card bt-card" role="dialog" aria-modal="true" aria-labelledby="jfp-title">
+    <div class="receipt-head">
+      <h2 id="jfp-title">Jahresfix</h2>
+      <button type="button" class="receipt-close" id="jfp-close" aria-label="Jahresfix schließen">✕</button>
+    </div>
+    <div class="receipt-body">
+      <div class="analysis-filter-row">
+        <label for="jfp-jahr" class="month-label">Jahr</label>
+        <select id="jfp-jahr"></select>
+      </div>
+      <div class="jfp-liste" id="jfp-liste"></div>
+      <div class="jfp-eingabe">
+        <label class="visually-hidden" for="jfp-name">Bezeichnung</label>
+        <input type="text" id="jfp-name" placeholder="Bezeichnung" maxlength="80" autocomplete="off" enterkeyhint="done">
+        <label class="visually-hidden" for="jfp-betrag">Betrag in Euro</label>
+        <input type="text" id="jfp-betrag" placeholder="€" inputmode="decimal" autocomplete="off" enterkeyhint="done">
+        <label class="jfp-monat-feld" for="jfp-monat"><span>Monat</span><select id="jfp-monat"></select></label>
+        <button type="button" class="jfp-add" id="jfp-add">Hinzufügen</button>
+      </div>
+      <p class="cat-error" id="jfp-fehler" role="alert"></p>
     </div>
   </div>
 </div>
@@ -1276,7 +1304,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=63"></script>
+<script type="module" src="js/app.js?v=64"></script>
 
 </body>
 </html>

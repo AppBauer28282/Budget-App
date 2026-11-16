@@ -4115,3 +4115,49 @@
   .kk-block .cat-error:empty{ display: none; }
   .kk-block .cat-error{ margin-top: 8px; }
   .kk-block > .cat-entry-row:last-of-type{ margin-bottom: 0; }
+
+  /* =========================================================================
+     v64: Jahresfix-Tracking — Textliste zum Abhaken
+     ========================================================================= */
+  #jfp-overlay .receipt-body{ max-height: calc(100vh - 140px); overflow-y: auto; font-size: 14px; }
+  .jfp-liste{ margin: 14px 0 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 14px; }
+  .jfp-zeile{ display: grid; grid-template-columns: 20px 2.2ch minmax(0,1fr) auto 26px; gap: 8px; align-items: center; padding: 9px 0; border-bottom: 1px dashed var(--line-stark, var(--line)); }
+  .jfp-zeile.letzte{ border-bottom: none; }
+  #jfp-overlay .jfp-haken{ width: 18px; height: 18px; margin: 0; accent-color: var(--brass); cursor: pointer; }
+  .jfp-monat{ color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .jfp-name{ min-width: 0; overflow-wrap: anywhere; color: var(--ink); }
+  .jfp-betrag{ font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; color: var(--ink); }
+  /* Erledigt: blasser und kursiv, bewusst nicht durchgestrichen. */
+  .jfp-zeile.erledigt .jfp-monat,
+  .jfp-zeile.erledigt .jfp-name,
+  .jfp-zeile.erledigt .jfp-betrag{ font-style: italic; opacity: 0.5; }
+  #jfp-overlay .jfp-weg{ width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--ink-soft); font-size: 12px; cursor: pointer; }
+  #jfp-overlay .jfp-weg:hover{ color: var(--error); }
+  /* Doppelstrich (Ergebnisstrich) zwischen letztem Eintrag und Summe. */
+  .jfp-summe{ border-top: 4px double var(--ink); padding-top: 8px; }
+  .jfp-summe-zeile{ display: flex; justify-content: space-between; gap: 10px; padding: 3px 34px 3px calc(28px + 2.2ch + 8px); color: var(--ink-soft); }
+  .jfp-summe-zeile .jfp-betrag{ color: inherit; }
+  .jfp-summe-zeile.gesamt{ font-weight: 700; color: var(--ink); }
+  .jfp-leer{ margin: 6px 0 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--ink-soft); }
+  .jfp-liste .jfp-uebernehmen{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .jfp-eingabe{ display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+  #jfp-overlay .jfp-eingabe input,
+  #jfp-overlay .jfp-eingabe select{ min-width: 0; width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--radius-klein); background: var(--paper); color: var(--ink); }
+  #jfp-overlay .jfp-eingabe input:focus,
+  #jfp-overlay .jfp-eingabe select:focus{ outline: none; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(10,132,255,0.25); }
+  .jfp-monat-feld{ display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); min-width: 0; }
+  .jfp-monat-feld select{ flex: 1 1 0; }
+  #jfp-overlay .jfp-add{ min-height: 42px; padding: 0 10px; border: 1px solid var(--brass); border-radius: var(--radius-klein); background: var(--brass); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #jfp-fehler:empty{ display: none; }
+  [data-theme="dark"] #jfp-overlay .receipt-card,
+  [data-theme="dark"] #jfp-overlay .receipt-head{ background: #1c1c1e; }
+  [data-theme="dark"] #jfp-overlay .jfp-eingabe input,
+  [data-theme="dark"] #jfp-overlay .jfp-eingabe select{ background: #2c2c2e; border-color: #48484a; }
+  .jfp-name{ hyphens: auto; -webkit-hyphens: auto; }
+  @media (max-width: 360px){
+    .jfp-liste{ font-size: 12.5px; }
+    .jfp-zeile{ grid-template-columns: 18px 2.2ch minmax(0,1fr) auto 20px; gap: 6px; }
+    #jfp-overlay .jfp-weg{ width: 20px; height: 26px; }
+    .jfp-summe-zeile{ padding: 3px 26px 3px calc(24px + 2.2ch + 6px); }
+    .jfp-summe-zeile span:first-child{ white-space: nowrap; }
+  }

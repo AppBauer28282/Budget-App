@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=63';
-import { clamp, monthKey } from './utils.js?v=63';
+} from './constants.js?v=64';
+import { clamp, monthKey } from './utils.js?v=64';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=63';
+import { showBackupMsg } from './backup.js?v=64';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -304,14 +304,35 @@ export function sanitizeRuecklagenTopf(raw){
   return out;
 }
 
+// Jahresfix-Tracking (js/jahresfix-plan.js): je Jahr eine Liste geplanter
+// Jahresfix-Ausgaben mit Monat (1–12), Bezeichnung, Betrag und Haken.
+export const JFP_MAX = 100;
+function sanitizeJahresfixPlan(raw){
+  const out = Object.create(null);
+  if(!raw || typeof raw !== 'object') return out;
+  Object.keys(raw).filter(k => /^\d{4}$/.test(k) && +k >= 2000 && +k <= 2100).slice(0, 50).forEach(jahr => {
+    if(!Array.isArray(raw[jahr])) return;
+    const liste = [];
+    raw[jahr].forEach(r => {
+      if(liste.length >= JFP_MAX || !r || typeof r !== 'object') return;
+      const e = sanitizeEntries([r], true)[0];
+      if(!e || !Number.isInteger(r.monat) || r.monat < 1 || r.monat > 12) return;
+      liste.push({ monat: r.monat, name: e.name, cents: e.cents, erledigt: r.erledigt === true });
+    });
+    if(liste.length) out[jahr] = liste;
+  });
+  return out;
+}
+
 // Nur gültige Monats-Einträge werden übernommen — alles andere (inkl. des
 // alten Datenformats ohne Jahr) wird verworfen.
 export function sanitizeAll(raw){
-  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [], budgetToepfe: Object.create(null), ruecklagenTopf: sanitizeRuecklagenTopf(null) };
+  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [], budgetToepfe: Object.create(null), ruecklagenTopf: sanitizeRuecklagenTopf(null), jahresfixPlan: Object.create(null) };
   if(!raw || typeof raw !== 'object') return clean;
   clean.ruecklagenTopf = sanitizeRuecklagenTopf(raw.ruecklagenTopf);
   clean.fixkostenVorlage = sanitizeEntries(raw.fixkostenVorlage, true).slice(0, MAX_FIXKOSTEN);
   clean.budgetToepfe = sanitizeBudgetToepfe(raw.budgetToepfe);
+  clean.jahresfixPlan = sanitizeJahresfixPlan(raw.jahresfixPlan);
   if(!clean.fixkostenVorlage.length && raw.monthEntries && Object.keys(raw.monthEntries).length){
     clean.fixkostenVorlage = festeListeKopie();
     fixkostenUebernahmeOffen = true;
