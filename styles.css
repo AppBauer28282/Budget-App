@@ -3169,6 +3169,10 @@
     row-gap: 4px;
     margin-top: 2px;
   }
+  /* Bei 0 % entfällt die Prozent-Spalte: dann zwei breitere Spalten. */
+  :root:not([data-home="basis"]) .home-widget.gw-box[data-spalten="2"]{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .gw-reihe-titel{
     grid-column: 1 / -1;
     font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;

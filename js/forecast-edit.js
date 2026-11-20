@@ -13,11 +13,11 @@
    getippt), erscheint dieser Betrag als ein Posten "Bisher" — so geht beim
    Speichern nichts verloren.
    ============================================================================= */
-import { fcKeys, FC_LABELS, FC_MAX, MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY } from './constants.js?v=64';
-import { formatCents, parseEuroInputToCents } from './utils.js?v=64';
-import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=64';
-import { refreshTotals, renderForecastListe } from './render.js?v=64';
-import { openOverlay, closeOverlay } from './overlays.js?v=64';
+import { fcKeys, FC_LABELS, FC_MAX, MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY } from './constants.js?v=65';
+import { formatCents, parseEuroInputToCents } from './utils.js?v=65';
+import { getMonthData, currentMonthKey, saveAll } from './storage.js?v=65';
+import { refreshTotals, renderForecastListe } from './render.js?v=65';
+import { openOverlay, closeOverlay } from './overlays.js?v=65';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('fc-edit-btn');

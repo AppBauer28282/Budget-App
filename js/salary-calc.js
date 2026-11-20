@@ -14,8 +14,8 @@
    vorangestellt, damit sie nicht mit den gleichnamigen Feldern der Budget-
    Oberfläche kollidieren (z. B. gibt es dort bereits ein #salary-slider).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=64';
-import { clamp } from './utils.js?v=64';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=65';
+import { clamp } from './utils.js?v=65';
 
 // Grenzen der beiden Textfelder (früher Regler-Grenzen). Werden beim
 // Berechnen angewandt, nicht beim Tippen — so kann man zwischendurch auch
@@ -206,11 +206,13 @@ export function renderGehaltWidget(){
   const kvz = parseKomma(scKvz.defaultValue);
   const proz = gespeicherterProzent();
   // Vergleichsbasis des Rechners: KT5 / +7 bei 0 %.
-  const stufen = [
-    { cap: 'Heute · +7', w: szenario('+7', 'KT5', 0, std, kvz) },
-    { cap: 'Stufe +9', w: szenario('+9', 'KT5', 0, std, kvz) },
-    { cap: '+' + nf(proz, proz % 1 ? 1 : 0) + ' %', w: szenario('+9', 'KT5', proz, std, kvz) }
-  ];
+  // Reihenfolge: erst die Prozent-Erhöhung auf die heutige Stufe, danach die
+  // Hochstufung (mit demselben Prozentsatz). Bei 0 % entfällt die
+  // Prozent-Spalte, dann zeigt das Widget nur Heute → Hochstufung.
+  const stufen = [{ cap: 'Heute · +7', w: szenario('+7', 'KT5', 0, std, kvz) }];
+  if(proz > 0) stufen.push({ cap: '+' + nf(proz, proz % 1 ? 1 : 0) + ' %', w: szenario('+7', 'KT5', proz, std, kvz) });
+  stufen.push({ cap: 'Stufe +9', w: szenario('+9', 'KT5', proz, std, kvz) });
+  gehaltWidget.dataset.spalten = String(stufen.length);
   // Zwei Reihen in EINEM Raster (#gehalt-widget, siehe styles.css): so sind
   // die Kacheln beider Reihen gleich hoch. Pro Monat steht das Netto groß,
   // pro Jahr das Brutto; die kleinen Kästen zeigen jeweils den Zuwachs der
@@ -254,10 +256,9 @@ export function renderGehaltWidget(){
   reihe('Pro Jahr · brutto', 'jahr', 'brutto');
   gehaltWidget.replaceChildren(frag);
   if(scOpenBtn){
-    scOpenBtn.setAttribute('aria-label', 'Gehaltsrechner öffnen. Netto pro Monat: heute ' + euroGanz(stufen[0].w.monat.netto) +
-      ', Stufe 9 ' + euroGanz(stufen[1].w.monat.netto) + ', mit ' + stufen[2].cap + ' ' + euroGanz(stufen[2].w.monat.netto) +
-      '. Brutto pro Jahr: heute ' + euroGanz(stufen[0].w.jahr.brutto) + ', Stufe 9 ' + euroGanz(stufen[1].w.jahr.brutto) +
-      ', mit ' + stufen[2].cap + ' ' + euroGanz(stufen[2].w.jahr.brutto) + '.');
+    const liste = (z, g) => stufen.map(st => st.cap + ' ' + euroGanz(st.w[z][g])).join(', ');
+    scOpenBtn.setAttribute('aria-label', 'Gehaltsrechner öffnen. Netto pro Monat: ' + liste('monat', 'netto') +
+      '. Brutto pro Jahr: ' + liste('jahr', 'brutto') + '.');
   }
 }
 
