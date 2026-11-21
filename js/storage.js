@@ -17,14 +17,14 @@ import {
   STORAGE_KEY, SALARY_MIN_CENTS, SALARY_MAX_CENTS, AMOUNT_MAX_CENTS,
   MAX_ENTRIES_PER_KEY, MAX_TEXT_LENGTH, MAX_NOTE_LENGTH, MAX_MONTH_ENTRIES,
   CARD_TOTAL_CENTS
-} from './constants.js?v=65';
-import { clamp, monthKey } from './utils.js?v=65';
+} from './constants.js?v=66';
+import { clamp, monthKey } from './utils.js?v=66';
 // Zirkulärer Import: backup.js importiert umgekehrt allData/saveAll/sanitizeAll
 // aus diesem Modul. Das ist sicher, weil beide Seiten die importierten
 // Funktionen erst später (in Event-Handlern bzw. hier im catch-Block) und nie
 // beim Modul-Start selbst aufrufen — zu diesem Zeitpunkt sind beide Module
 // bereits vollständig ausgewertet.
-import { showBackupMsg } from './backup.js?v=65';
+import { showBackupMsg } from './backup.js?v=66';
 
 // Fixkosten eines Monats: jeder Monat hat seine eigene Kopie (data.fixkosten),
 // damit eine spätere Änderung der Einstellung abgeschlossene Monate nicht
@@ -324,15 +324,36 @@ function sanitizeJahresfixPlan(raw){
   return out;
 }
 
+// Gehaltstracker (js/gehalt-tracker.js): Jahresbrutto je Jahr (Ist) und
+// höchstens GT_MAX_PROGNOSE Prognosejahre. Je Liste ein Eintrag pro Jahr.
+export const GT_MAX_IST = 100, GT_MAX_PROGNOSE = 5;
+export function sanitizeGehaltTracker(raw){
+  const liste = (arr, max) => {
+    const out = [], jahre = new Set();
+    (Array.isArray(arr) ? arr : []).forEach(r => {
+      if(out.length >= max || !r || typeof r !== 'object') return;
+      const jahr = r.jahr, cents = r.cents;
+      if(!Number.isInteger(jahr) || jahr < 1970 || jahr > 2100 || jahre.has(jahr)) return;
+      if(!Number.isInteger(cents) || cents <= 0 || cents > AMOUNT_MAX_CENTS) return;
+      jahre.add(jahr);
+      out.push({ jahr, cents });
+    });
+    return out.sort((a, b) => a.jahr - b.jahr);
+  };
+  const r = raw && typeof raw === 'object' ? raw : {};
+  return { ist: liste(r.ist, GT_MAX_IST), prognose: liste(r.prognose, GT_MAX_PROGNOSE) };
+}
+
 // Nur gültige Monats-Einträge werden übernommen — alles andere (inkl. des
 // alten Datenformats ohne Jahr) wird verworfen.
 export function sanitizeAll(raw){
-  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [], budgetToepfe: Object.create(null), ruecklagenTopf: sanitizeRuecklagenTopf(null), jahresfixPlan: Object.create(null) };
+  const clean = { monthEntries: Object.create(null), fixkostenVorlage: [], budgetToepfe: Object.create(null), ruecklagenTopf: sanitizeRuecklagenTopf(null), jahresfixPlan: Object.create(null), gehaltTracker: sanitizeGehaltTracker(null) };
   if(!raw || typeof raw !== 'object') return clean;
   clean.ruecklagenTopf = sanitizeRuecklagenTopf(raw.ruecklagenTopf);
   clean.fixkostenVorlage = sanitizeEntries(raw.fixkostenVorlage, true).slice(0, MAX_FIXKOSTEN);
   clean.budgetToepfe = sanitizeBudgetToepfe(raw.budgetToepfe);
   clean.jahresfixPlan = sanitizeJahresfixPlan(raw.jahresfixPlan);
+  clean.gehaltTracker = sanitizeGehaltTracker(raw.gehaltTracker);
   if(!clean.fixkostenVorlage.length && raw.monthEntries && Object.keys(raw.monthEntries).length){
     clean.fixkostenVorlage = festeListeKopie();
     fixkostenUebernahmeOffen = true;

@@ -12,8 +12,8 @@
    deshalb die Jahresfix-Summe eines Kalenderjahres gleichmäßig auf seine
    12 Monate verteilt (÷ 12) — jeder Monat des Jahres trägt denselben Anteil.
    ============================================================================= */
-import { categoryDefs, istMinus, zielVon, minusPosten } from './constants.js?v=65';
-import { allData, fixkostenVon } from './storage.js?v=65';
+import { categoryDefs, istMinus, zielVon, minusPosten } from './constants.js?v=66';
+import { allData, fixkostenVon } from './storage.js?v=66';
 
 // Schlüssel wie in der Analyse: Fixkosten, alle Ausgaben-Kategorien (ohne
 // die verrechnete "Auflösung"), Sparen.

@@ -8,10 +8,10 @@
    Cloud-Abgleich und Sichern/Wiederherstellen). Abhaken legt keine Ausgabe
    an und ändert keine andere Zahl der App.
    ============================================================================= */
-import { MAX_TEXT_LENGTH } from './constants.js?v=65';
-import { formatCents, parseEuroInputToCents } from './utils.js?v=65';
-import { allData, saveAll, JFP_MAX } from './storage.js?v=65';
-import { openOverlay, closeOverlay } from './overlays.js?v=65';
+import { MAX_TEXT_LENGTH } from './constants.js?v=66';
+import { formatCents, parseEuroInputToCents } from './utils.js?v=66';
+import { allData, saveAll, JFP_MAX } from './storage.js?v=66';
+import { openOverlay, closeOverlay } from './overlays.js?v=66';
 
 const $ = (id) => document.getElementById(id);
 const oeffnenBtn = $('jfp-btn');

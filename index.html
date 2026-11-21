@@ -38,7 +38,7 @@
     }
   }catch(e){ /* ohne Speicher: heller Modus, Widgets */ }
 </script>
-<link rel="stylesheet" href="styles.css?v=65">
+<link rel="stylesheet" href="styles.css?v=66">
 </head>
 <body>
 
@@ -767,6 +767,62 @@
       <button type="button" class="receipt-close" id="salary-calc-close" aria-label="Gehaltsrechner schließen">✕</button>
     </div>
     <div class="receipt-body">
+      <!-- Reiter: Gehaltstracker (js/gehalt-tracker.js) | Gehaltsrechner -->
+      <div class="gt-reiter" role="tablist" aria-label="Ansicht">
+        <button type="button" role="tab" id="gt-tab-tracker" aria-controls="gt-tracker" aria-selected="true">Tracker</button>
+        <button type="button" role="tab" id="gt-tab-rechner" aria-controls="sc-rechner" aria-selected="false">Rechner</button>
+      </div>
+
+      <div id="gt-tracker" role="tabpanel" aria-labelledby="gt-tab-tracker">
+        <div class="gt-kpis" id="gt-kpis"></div>
+
+        <section class="gt-karte">
+          <h3 class="gt-titel">Gehaltsentwicklung</h3>
+          <div id="gt-chart"></div>
+          <div class="gt-legende" id="gt-legende"></div>
+        </section>
+
+        <section class="gt-karte">
+          <h3 class="gt-titel">Übersicht</h3>
+          <div class="gt-tblwrap"><table class="gt-tbl" id="gt-tbl"></table></div>
+        </section>
+
+        <div class="gt-formen">
+          <section class="gt-karte">
+            <h3 class="gt-titel">Gehalt eintragen</h3>
+            <form class="gt-form" id="gt-form-ist" novalidate>
+              <label>Jahr<input type="text" name="jahr" inputmode="numeric" autocomplete="off" maxlength="4"></label>
+              <label>Brutto (€)<input type="text" name="gehalt" inputmode="decimal" autocomplete="off"></label>
+              <button type="submit" class="gt-btn">Speichern</button>
+            </form>
+            <p class="gt-hint">Gleiches Jahr erneut speichern überschreibt den Eintrag.</p>
+            <p class="gt-fehler" id="gt-fehler-ist" aria-live="polite"></p>
+          </section>
+          <section class="gt-karte">
+            <h3 class="gt-titel">Prognose eintragen</h3>
+            <form class="gt-form" id="gt-form-prog" novalidate>
+              <label>Jahr<input type="text" name="jahr" inputmode="numeric" autocomplete="off" maxlength="4"></label>
+              <label>Brutto (€)<input type="text" name="gehalt" inputmode="decimal" autocomplete="off"></label>
+              <button type="submit" class="gt-btn">Speichern</button>
+            </form>
+            <p class="gt-hint">Höchstens 5 Prognosejahre.</p>
+            <p class="gt-fehler" id="gt-fehler-prog" aria-live="polite"></p>
+          </section>
+        </div>
+
+        <section class="gt-karte">
+          <h3 class="gt-titel">Daten</h3>
+          <div class="gt-aktionen">
+            <button type="button" class="gt-btn sek" id="gt-export">Export</button>
+            <label class="gt-btn sek" for="gt-import">Import</label>
+            <input type="file" id="gt-import" accept=".json,application/json" hidden>
+          </div>
+          <p class="gt-hint">Import ersetzt alle Tracker-Daten. Gespeichert wird bei deinen Budgetdaten (Cloud und Sicherung).</p>
+          <p class="gt-meldung" id="gt-meldung" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <div id="sc-rechner" role="tabpanel" aria-labelledby="gt-tab-rechner" hidden>
       <p class="sc-lead">Entgelttabelle KT1–KT5 · Brutto-Netto nach Rechtsstand 2026
         (NRW, Steuerklasse 1, kinderlos, ohne Kirchensteuer)</p>
 
@@ -845,6 +901,7 @@
       <p class="sc-note">Lohnsteuer nach dem Programmablaufplan 2026 (Vorsorgepauschale,
         § 39b EStG). Ohne individuelle Freibeträge – Näherungswert, keine verbindliche
         Abrechnung.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1304,7 +1361,7 @@
 <!-- Eigener App-Code als ES-Module (js/app.js und seine Imports) — möglich,
      da die App ausschließlich über eine gehostete URL (GitHub Pages) läuft,
      nicht per file://-Doppelklick geöffnet wird. -->
-<script type="module" src="js/app.js?v=65"></script>
+<script type="module" src="js/app.js?v=66"></script>
 
 </body>
 </html>

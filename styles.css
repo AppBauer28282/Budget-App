@@ -4165,3 +4165,95 @@
     .jfp-summe-zeile{ padding: 3px 26px 3px calc(24px + 2.2ch + 6px); }
     .jfp-summe-zeile span:first-child{ white-space: nowrap; }
   }
+
+  /* =========================================================
+     v66 · GEHALTSTRACKER (Reiter im Gehaltsrechner)
+     ========================================================= */
+  #salary-calc-overlay .gt-reiter{
+    display:grid; grid-template-columns: 1fr 1fr; gap: 3px;
+    background: #e8e8ed; border-radius: 12px; padding: 3px; margin: 0 0 18px;
+  }
+  #salary-calc-overlay .gt-reiter button{
+    font: inherit; font-size: 16px; font-weight: 600; color: var(--ink-soft);
+    background: transparent; border: none; border-radius: 10px; padding: 10px 8px; cursor: pointer;
+  }
+  #salary-calc-overlay .gt-reiter button[aria-selected="true"]{
+    background: var(--paper-2); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+  #salary-calc-overlay .gt-reiter button:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  [data-theme="dark"] #salary-calc-overlay .gt-reiter{ background: #2c2c2e; }
+  [data-theme="dark"] #salary-calc-overlay .gt-reiter button[aria-selected="true"]{ background: #636366; color: #fff; }
+
+  #gt-tracker{ --gt-karte: var(--paper-2); --gt-trend: #ff9f0a; --gt-trend2: #bf5af2; }
+  [data-theme="dark"] #gt-tracker{ --gt-karte: #1c1c1e; }
+  .gt-kpis{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 12px; }
+  .gt-kpi{ background: var(--gt-karte); border-radius: var(--radius); padding: 11px 12px; min-width: 0; }
+  .gt-kpi-l{ font-size: 12px; color: var(--ink-soft); }
+  .gt-kpi-v{ font-size: 20px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.3px; }
+  .gt-kpi-s{ font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; min-height: 1.3em; }
+  .gt-kpi-v.pos, #gt-tracker .pos{ color: var(--ok); }
+  .gt-kpi-v.neg, #gt-tracker .neg{ color: var(--error); }
+
+  .gt-karte{ background: var(--gt-karte); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; min-width: 0; }
+  .gt-titel{ font-size: 16px; font-weight: 700; margin: 0 0 10px; color: var(--ink); }
+  #gt-chart{ width: 100%; min-height: 60px; }
+  #gt-chart svg{ display:block; overflow: visible; }
+  #gt-chart .gt-gitter{ stroke: var(--line); stroke-width: 1; }
+  #gt-chart .gt-achse{ fill: var(--ink-soft); font-size: 10px; font-variant-numeric: tabular-nums; }
+  #gt-chart .gt-wert{ fill: var(--ink); font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  #gt-chart .gt-balken{ fill: var(--brass); }
+  #gt-chart .gt-balken.prog{ fill-opacity: 0.35; stroke: var(--brass); stroke-dasharray: 4 3; }
+  #gt-chart .gt-trend{ stroke: var(--gt-trend); stroke-width: 2.5; stroke-dasharray: 7 5; stroke-linecap: round; fill: none; }
+  #gt-chart .gt-trend.prog{ stroke: var(--gt-trend2); }
+  [data-theme="dark"] #gt-chart .gt-balken.prog{ fill-opacity: 0.5; }
+  .gt-legende{ display:flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+  .gt-legende i{ display:inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .gt-legende i.gt-lg-ist{ background: var(--brass); }
+  .gt-legende i.gt-lg-prog{ background: var(--brass); opacity: 0.35; }
+  .gt-legende i.gt-lg-ln{ height: 0; width: 16px; border-top: 2px dashed var(--gt-trend); border-radius: 0; vertical-align: 3px; }
+  .gt-legende i.gt-lg-ln.prog{ border-top-color: var(--gt-trend2); }
+  .gt-leer{ color: var(--ink-soft); font-size: 14px; text-align: center; padding: 16px 0; margin: 0; }
+
+  .gt-tblwrap{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .gt-tbl{ width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+  .gt-tbl th, .gt-tbl td{ padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  .gt-tbl th:first-child, .gt-tbl td:first-child{ text-align: left; }
+  .gt-tbl th{ color: var(--ink-soft); font-weight: 500; font-size: 12px; }
+  .gt-tbl tr:last-child td{ border-bottom: none; }
+  .gt-tbl tr.prog td{ color: var(--ink-soft); font-style: italic; }
+  .gt-tag{ display:block; width: max-content; font-size: 9.5px; line-height: 1.3; padding: 0 5px; border-radius: 5px; background: var(--line); margin-top: 2px; font-style: normal; color: var(--ink-soft); }
+  .gt-tbl td.gt-akt{ padding-left: 2px; padding-right: 0; }
+  #salary-calc-overlay .gt-icon{ font: inherit; font-size: 14px; background: none; border: none; color: var(--ink-soft); padding: 4px 3px; cursor: pointer; min-width: 22px; }
+  #salary-calc-overlay .gt-icon.scharf{ background: var(--error); color: #fff; font-size: 12px; font-weight: 600; }
+
+  .gt-formen{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 12px; }
+  .gt-form{ display:grid; grid-template-columns: minmax(68px,0.8fr) minmax(0,1.3fr) auto; gap: 8px; align-items: end; }
+  .gt-form label{ display:flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-soft); min-width: 0; }
+  #salary-calc-overlay .gt-form input{ font: inherit; font-size: 16px; color: var(--ink); padding: 9px 10px; width: 100%; min-width: 0; background: var(--paper-2); }
+  #salary-calc-overlay .gt-btn{
+    font: inherit; font-size: 15px; font-weight: 600; border: none; border-radius: var(--radius-klein);
+    padding: 10px 14px; background: var(--brass); color: #fff; cursor: pointer; text-align: center; display:inline-block;
+  }
+  #salary-calc-overlay .gt-btn.sek{ background: var(--line); color: var(--ink); }
+  #salary-calc-overlay .gt-btn:focus-visible, #salary-calc-overlay .gt-icon:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  .gt-aktionen{ display:flex; gap: 8px; }
+  .gt-hint{ font-size: 12px; color: var(--ink-soft); margin: 8px 0 0; }
+  .gt-fehler{ font-size: 12.5px; color: var(--error); margin: 4px 0 0; }
+  .gt-fehler:empty, .gt-meldung:empty{ display: none; }
+  .gt-meldung{ font-size: 13px; color: var(--ok); margin: 8px 0 0; }
+  .gt-meldung.fehler{ color: var(--error); }
+
+  @media (max-width: 360px){
+    #salary-calc-overlay .gt-reiter button{ font-size: 15px; padding: 9px 6px; }
+    .gt-kpis{ gap: 8px; }
+    .gt-kpi{ padding: 9px 10px; }
+    .gt-kpi-v{ font-size: 17px; }
+    .gt-kpi-s{ font-size: 10.5px; }
+    .gt-karte{ padding: 12px 8px; }
+    .gt-tbl{ font-size: 11.5px; }
+    .gt-tbl th, .gt-tbl td{ padding: 6px 2px; }
+    #salary-calc-overlay .gt-icon{ font-size: 13px; min-width: 20px; padding: 4px 2px; }
+    #salary-calc-overlay .gt-btn{ padding: 10px 10px; }
+    #salary-calc-overlay .gt-form input{ padding: 9px 7px; }
+    .gt-form{ gap: 6px; }
+  }
