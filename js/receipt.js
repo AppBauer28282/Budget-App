@@ -7,15 +7,15 @@
    Wird auch für abgeschlossene Monate genutzt — dort ist es die einzige
    noch zugängliche Ansicht (siehe navigation.js openMonthDetail).
    ============================================================================= */
-import { categoryDefs, savingDefs, fcKeys, FC_LABELS, istMinus, minusPosten, minusLabel } from './constants.js?v=66';
-import { el } from './dom.js?v=66';
-import { formatCents } from './utils.js?v=66';
-import { computeTotals } from './compute.js?v=66';
-import { getMonthData, currentMonthKey, currentMonthLabelText, fixkostenVon } from './storage.js?v=66';
-import { openOverlay, closeOverlay } from './overlays.js?v=66';
+import { categoryDefs, savingDefs, fcKeys, FC_LABELS, istMinus, minusPosten, minusLabel } from './constants.js?v=67';
+import { el } from './dom.js?v=67';
+import { formatCents } from './utils.js?v=67';
+import { computeTotals } from './compute.js?v=67';
+import { getMonthData, currentMonthKey, currentMonthLabelText, fixkostenVon } from './storage.js?v=67';
+import { openOverlay, closeOverlay } from './overlays.js?v=67';
 // Zirkulärer Import: navigation.js importiert umgekehrt openReceipt aus
 // diesem Modul. Sicher, siehe Kommentar in navigation.js.
-import { showOverview } from './navigation.js?v=66';
+import { showOverview } from './navigation.js?v=67';
 
 function addReceiptSectionTitle(container, text){
   const h = document.createElement('p');

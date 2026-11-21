@@ -4257,3 +4257,77 @@
     #salary-calc-overlay .gt-form input{ padding: 9px 7px; }
     .gt-form{ gap: 6px; }
   }
+
+  /* =========================================================================
+     v67 · VERMÖGEN: Positionen in Gruppen (Stil wie Budget-Töpfe)
+     Links blaue Kachel mit Gruppenname, Summe und Anteil, rechts die
+     Unterpositionen; Gruppe je Position unten wählbar.
+     ========================================================================= */
+  #vermoegen-overlay .pos-list{ gap: 0; background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 2px 12px; }
+  #vermoegen-overlay .pos-list:has(> .empty){ background: none; border: none; padding: 0; }
+  #vermoegen-overlay .vtg{
+    display: grid; grid-template-columns: 96px minmax(0,1fr); gap: 8px; align-items: start;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+  }
+  #vermoegen-overlay .vtg:last-child{ border-bottom: none; }
+  #vermoegen-overlay .vtg-kachel{
+    display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; min-width: 0;
+    border-radius: 10px; background: rgba(10,132,255,0.10); border: 1px solid rgba(10,132,255,0.25);
+    position: sticky; top: 8px; box-shadow: inset 3px 0 0 var(--vtg-farbe, var(--brass));
+  }
+  #vermoegen-overlay .vtg-name{ font-size: 13px; font-weight: 700; color: var(--brass); overflow-wrap: break-word; hyphens: auto; }
+  #vermoegen-overlay .vtg-summe{ font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  #vermoegen-overlay .vtg-anteil{ font-size: 11px; color: var(--ink-soft); line-height: 1.3; }
+  #vermoegen-overlay .vtg-liste{ display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  #vermoegen-overlay .vtg-pos{
+    display: grid; grid-template-columns: minmax(0,1fr) 28px; gap: 4px; align-items: center;
+    padding: 6px 4px 6px 6px; border-radius: 10px; background: var(--paper);
+  }
+  #vermoegen-overlay .vtg-pos input, #vermoegen-overlay .vtg-pos select{ font-size: 16px; font-family: inherit; color: var(--ink); min-width: 0; }
+  #vermoegen-overlay .vtg-text{
+    width: 100%; padding: 4px 6px; border: 1px solid transparent; border-radius: 8px; background: transparent; font-weight: 600;
+  }
+  #vermoegen-overlay .vtg-text::placeholder{ font-weight: 400; color: var(--ink-soft); }
+  #vermoegen-overlay .vtg-text:focus, #vermoegen-overlay .vtg-betrag:focus, #vermoegen-overlay .vtg-gruppe:focus{
+    outline: none; outline-offset: 0; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(10,132,255,0.22); background: var(--paper-2);
+  }
+  #vermoegen-overlay .vtg-pos .del{ height: 28px; width: 28px; border-radius: 50%; font-size: 17px; }
+  #vermoegen-overlay .vtg-fuss{ grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; min-width: 0; }
+  #vermoegen-overlay .vtg-gruppe{
+    flex: 0 1 auto; width: auto; max-width: 42%; appearance: none; -webkit-appearance: none;
+    padding: 5px 20px 5px 9px; border: 1px solid transparent; border-radius: 99px;
+    background: rgba(10,132,255,0.10) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%230a84ff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 9px center;
+    color: var(--brass) !important; font-size: 13px !important; font-weight: 600; text-overflow: ellipsis; cursor: pointer;
+  }
+  #vermoegen-overlay .vtg-betrag{
+    flex: 1 1 0; width: 0; min-width: 0; margin-left: auto; padding: 5px 6px; text-align: right;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--paper-2);
+    font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  #vermoegen-overlay .vtg-add{
+    align-self: flex-start; border: none; background: none; padding: 4px 2px; font: inherit;
+    font-size: 13px; font-weight: 600; color: var(--brass); cursor: pointer;
+  }
+  #vermoegen-overlay .vtg-add:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 6px; }
+  #vermoegen-overlay .vtg-pos.locked{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 10px; }
+  #vermoegen-overlay .vtg-ltext{ min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
+  #vermoegen-overlay .vtg-lbetrag{ font-weight: 600; white-space: nowrap; font-size: 14px; }
+  [data-theme="dark"] #vermoegen-overlay .pos-list{ background: #1c1c1e; border-color: #38383a; }
+  [data-theme="dark"] #vermoegen-overlay .vtg-kachel{ background: rgba(10,132,255,0.16); border-color: rgba(10,132,255,0.35); }
+  [data-theme="dark"] #vermoegen-overlay .vtg-pos{ background: #2c2c2e; }
+  [data-theme="dark"] #vermoegen-overlay .vtg-betrag{ background: #1c1c1e; border-color: #48484a; }
+  [data-theme="dark"] #vermoegen-overlay .vtg-gruppe{ background-color: rgba(10,132,255,0.20); }
+  [data-theme="dark"] #vermoegen-overlay .vtg-text:focus,
+  [data-theme="dark"] #vermoegen-overlay .vtg-betrag:focus{ background: #1c1c1e; }
+  @media (max-width: 360px){
+    #vermoegen-overlay .pos-list{ padding: 2px 8px; }
+    #vermoegen-overlay .vtg{ grid-template-columns: 80px minmax(0,1fr); gap: 6px; }
+    #vermoegen-overlay .vtg{ grid-template-columns: 76px minmax(0,1fr); }
+    #vermoegen-overlay .vtg-pos{ padding: 5px 2px 5px 4px; gap: 3px; }
+    #vermoegen-overlay .vtg-fuss{ gap: 4px; }
+    #vermoegen-overlay .vtg-betrag{ padding: 5px 4px; font-weight: 500; }
+    #vermoegen-overlay .vtg-gruppe{ max-width: 38%; padding-left: 7px; padding-right: 17px; background-position: right 6px center; }
+    #vermoegen-overlay .vtg-kachel{ padding: 7px 8px; }
+    #vermoegen-overlay .vtg-name{ font-size: 12px; }
+    #vermoegen-overlay .vtg-summe{ font-size: 13px; }
+  }

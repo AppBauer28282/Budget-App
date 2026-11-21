@@ -9,9 +9,9 @@
    Echte Werte stehen nie im Code — sie kommen per Import oder Eingabe.
    Aufbau nur per DOM-API (textContent, createElementNS), kein innerHTML.
    ============================================================================= */
-import { MAX_IMPORT_BYTES } from './constants.js?v=66';
-import { parseEuroInputToCents } from './utils.js?v=66';
-import { allData, saveAll, sanitizeGehaltTracker, GT_MAX_PROGNOSE } from './storage.js?v=66';
+import { MAX_IMPORT_BYTES } from './constants.js?v=67';
+import { parseEuroInputToCents } from './utils.js?v=67';
+import { allData, saveAll, sanitizeGehaltTracker, GT_MAX_PROGNOSE } from './storage.js?v=67';
 
 const $ = (id) => document.getElementById(id);
 const tabTracker = $('gt-tab-tracker');

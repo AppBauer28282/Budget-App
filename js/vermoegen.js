@@ -23,7 +23,7 @@
    Alle IDs sind mit "vt-" vorangestellt. Die kleinen Dialoge hängen an
    document.body und liegen über dem Fenster (siehe styles.css).
    ============================================================================= */
-import { openAppScreen, closeAppScreen } from './overlays.js?v=66';
+import { openAppScreen, closeAppScreen } from './overlays.js?v=67';
 
 const STORE_KEY = 'vermoegen.v1';
 
@@ -109,6 +109,8 @@ const nfPct = new Intl.NumberFormat("de-DE",{minimumFractionDigits:1,maximumFrac
 
 const eur = c => nfEur.format((c||0)/100);
 const eurKurz = c => nfEur.format(Math.round((c||0)/100));
+const nfEurGanz = new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+const eurGanz = c => nfEurGanz.format(Math.round((c||0)/100));
 const uid = () => Math.random().toString(36).slice(2,10);
 
 function parseBetrag(s){
@@ -641,15 +643,8 @@ function zeigeMonat(id){
 
   if(m.offen){
     const act = el("div","actions");
-    const add = el("button","btn","+ Position");
-    add.onclick = ()=>{
-      m.pos.push({ id: uid(), klasse: state.klassen[0], text:"", cents:0 });
-      sichern();
-      zeichnePositionen(m);
-      aktualisiere(m);
-      const inputs = liste.querySelectorAll(".pos .text");
-      if(inputs.length) inputs[inputs.length-1].focus();
-    };
+    const add = el("button","btn","+ Gruppe");
+    add.onclick = ()=> dialogNeueKlasse(m, null);
     const speichern = el("button","btn btn-sm","Speichern");
     speichern.onclick = ()=>{
       flush();
@@ -679,6 +674,80 @@ function zeigeMonat(id){
   zeichneAnalysen(m);
 }
 
+/* Positionen gruppiert nach Anlageklasse (= Gruppe), im Stil der Budget-Töpfe:
+   links eine blaue Kachel mit Gruppenname, Summe und Anteil, rechts die
+   Unterpositionen. Die Gruppe einer Position wird unten in der Zeile gewählt;
+   ein Wechsel sortiert sie sofort in die neue Gruppe um. Reihenfolge der
+   Gruppen wie die Liste der Anlageklassen, innerhalb einer Gruppe bleibt die
+   Eintragsreihenfolge. */
+function gruppenVon(m){
+  const reihe = state.klassen.slice();
+  m.pos.forEach(p => { if(reihe.indexOf(p.klasse) < 0) reihe.push(p.klasse); });
+  return reihe.map(k => ({ klasse: k, pos: m.pos.filter(p => p.klasse === k) })).filter(g => g.pos.length);
+}
+function anteilText(teil, ganz){
+  return ganz > 0 ? nfPct.format(teil / ganz * 100) + " %" : "–";
+}
+function gruppenKachel(g, m){
+  const k = el("div","vtg-kachel");
+  k.style.setProperty("--vtg-farbe", klasseFarbe(g.klasse));
+  k.appendChild(el("div","vtg-name", g.klasse || "Ohne Gruppe"));
+  const s = g.pos.reduce((x,p)=> x + (p.cents||0), 0);
+  k.appendChild(el("div","vtg-summe num", eurGanz(s)));
+  k.appendChild(el("div","vtg-anteil", anteilText(s, summe(m)) + " · " + g.pos.length + (g.pos.length === 1 ? " Position" : " Positionen")));
+  return k;
+}
+function aktualisiereKacheln(m){
+  const liste = document.getElementById("posListe");
+  if(!liste) return;
+  gruppenVon(m).forEach(g =>{
+    const block = Array.from(liste.querySelectorAll(".vtg")).find(b => b.dataset.klasse === g.klasse);
+    if(!block) return;
+    const s = g.pos.reduce((x,p)=> x + (p.cents||0), 0);
+    block.querySelector(".vtg-summe").textContent = eurGanz(s);
+    block.querySelector(".vtg-anteil").textContent = anteilText(s, summe(m)) + " · " + g.pos.length + (g.pos.length === 1 ? " Position" : " Positionen");
+  });
+}
+function gruppenAuswahl(m, p){
+  const sel = document.createElement("select");
+  sel.className = "vtg-gruppe";
+  sel.setAttribute("aria-label", "Gruppe der Position");
+  const namen = state.klassen.slice();
+  if(namen.indexOf(p.klasse) < 0) namen.unshift(p.klasse);
+  namen.forEach(k =>{
+    const o = document.createElement("option");
+    o.value = k; o.textContent = k || "Ohne Gruppe";
+    if(k === p.klasse) o.selected = true;
+    sel.appendChild(o);
+  });
+  const neu = document.createElement("option");
+  neu.value = "__neu"; neu.textContent = "+ Neue Gruppe …";
+  sel.appendChild(neu);
+  sel.onchange = ()=>{
+    if(sel.value === "__neu"){ sel.value = p.klasse; dialogNeueKlasse(m, p); return; }
+    p.klasse = sel.value;
+    // Ans Ende der neuen Gruppe stellen (Reihenfolge innerhalb der Gruppe
+    // = Reihenfolge im Array).
+    m.pos = m.pos.filter(x => x !== p).concat(p);
+    sichern();
+    zeichnePositionen(m);
+    aktualisiere(m);
+    const ziel = document.querySelector('#posListe .vtg-pos[data-id="' + p.id + '"] .vtg-gruppe');
+    if(ziel) ziel.focus();
+  };
+  return sel;
+}
+function neuePosition(m, klasse){
+  if(m.pos.length >= MAX_POS){ toast("Höchstens " + MAX_POS + " Positionen je Monat."); return; }
+  const p = { id: uid(), klasse: klasse, text:"", cents:0 };
+  m.pos.push(p);
+  sichern();
+  zeichnePositionen(m);
+  aktualisiere(m);
+  const f = document.querySelector('#posListe .vtg-pos[data-id="' + p.id + '"] .vtg-text');
+  if(f) f.focus();
+}
+
 function zeichnePositionen(m){
   const liste = document.getElementById("posListe");
   liste.textContent = "";
@@ -687,95 +756,99 @@ function zeichnePositionen(m){
     const leer = el("div","empty");
     leer.appendChild(el("strong", null, "Noch keine Positionen"));
     leer.appendChild(document.createTextNode(m.offen
-      ? "Füge deine erste Anlage hinzu: Klasse, Beschreibung, Betrag."
+      ? "Füge deine erste Anlage hinzu: Beschreibung, Betrag und Gruppe."
       : "Öffne den Monat wieder, um Positionen einzutragen."));
     liste.appendChild(leer);
     return;
   }
 
-  m.pos.forEach(p =>{
-    if(!m.offen){
-      const row = el("div","pos locked");
-      const links = el("div","l-links");
-      links.appendChild(el("div","l-klasse", p.klasse));
-      if(p.text) links.appendChild(el("div","l-text", p.text));
-      row.append(links, el("div","l-betrag num", eur(p.cents)));
-      liste.appendChild(row);
-      return;
-    }
+  gruppenVon(m).forEach(g =>{
+    const block = el("div","vtg" + (m.offen ? "" : " locked"));
+    block.dataset.klasse = g.klasse;
+    block.appendChild(gruppenKachel(g, m));
+    const rechts = el("div","vtg-liste");
 
-    const row = el("div","pos");
+    g.pos.forEach(p =>{
+      if(!m.offen){
+        const row = el("div","vtg-pos locked");
+        row.dataset.id = p.id;
+        row.append(el("span","vtg-ltext", p.text || "Ohne Beschreibung"), el("span","vtg-lbetrag num", eur(p.cents)));
+        rechts.appendChild(row);
+        return;
+      }
+      const row = el("div","vtg-pos");
+      row.dataset.id = p.id;
 
-    const sel = document.createElement("select");
-    sel.className = "klasse";
-    state.klassen.forEach(k =>{
-      const o = document.createElement("option");
-      o.value = k; o.textContent = k;
-      if(k === p.klasse) o.selected = true;
-      sel.appendChild(o);
+      const txt = document.createElement("input");
+      txt.className = "vtg-text";
+      txt.type = "text";
+      txt.placeholder = "Beschreibung, z. B. MSCI World";
+      txt.setAttribute("aria-label", "Beschreibung");
+      txt.maxLength = MAX_TEXT;
+      txt.value = p.text || "";
+      txt.oninput = ()=>{ p.text = txt.value; sichern(); spaeter(m); };
+
+      const del = el("button","del","×");
+      del.type = "button";
+      del.title = "Position löschen";
+      del.setAttribute("aria-label","Position löschen");
+      del.onclick = ()=>{
+        m.pos = m.pos.filter(x => x.id !== p.id);
+        sichern();
+        zeichnePositionen(m);
+        aktualisiere(m);
+      };
+
+      const bet = document.createElement("input");
+      bet.className = "vtg-betrag betrag num";
+      bet.type = "text";
+      bet.inputMode = "decimal";
+      bet.placeholder = "0,00";
+      bet.setAttribute("aria-label", "Betrag in Euro");
+      bet.value = p.cents ? nfNum.format(p.cents/100) : "";
+      bet.oninput = ()=>{ p.cents = parseBetrag(bet.value); sichern(); aktualisiereKacheln(m); spaeter(m); };
+      bet.onblur = ()=>{ bet.value = p.cents ? nfNum.format(p.cents/100) : ""; };
+      bet.onfocus = ()=> bet.select();
+
+      const fuss = el("div","vtg-fuss");
+      fuss.append(gruppenAuswahl(m, p), bet);
+      row.append(txt, del, fuss);
+      rechts.appendChild(row);
     });
-    if(state.klassen.indexOf(p.klasse) < 0){
-      const o = document.createElement("option");
-      o.value = p.klasse; o.textContent = p.klasse; o.selected = true;
-      sel.insertBefore(o, sel.firstChild);
+
+    if(m.offen){
+      const add = el("button","vtg-add","+ Position");
+      add.type = "button";
+      add.setAttribute("aria-label", "Position in " + (g.klasse || "Ohne Gruppe") + " hinzufügen");
+      add.onclick = ()=> neuePosition(m, g.klasse);
+      rechts.appendChild(add);
     }
-    const neu = document.createElement("option");
-    neu.value = "__neu"; neu.textContent = "+ Neue Klasse …";
-    sel.appendChild(neu);
-    sel.onchange = ()=>{
-      if(sel.value === "__neu"){ sel.value = p.klasse; dialogNeueKlasse(m, p); return; }
-      p.klasse = sel.value;
-      sichern();
-      aktualisiere(m);
-    };
-
-    const txt = document.createElement("input");
-    txt.className = "text";
-    txt.type = "text";
-    txt.placeholder = "Beschreibung, z. B. MSCI World";
-    txt.value = p.text || "";
-    txt.oninput = ()=>{ p.text = txt.value; sichern(); spaeter(m); };
-
-    const bet = document.createElement("input");
-    bet.className = "betrag num";
-    bet.type = "text";
-    bet.inputMode = "decimal";
-    bet.placeholder = "0,00";
-    bet.value = p.cents ? nfNum.format(p.cents/100) : "";
-    bet.oninput = ()=>{ p.cents = parseBetrag(bet.value); sichern(); spaeter(m); };
-    bet.onblur = ()=>{ bet.value = p.cents ? nfNum.format(p.cents/100) : ""; };
-    bet.onfocus = ()=> bet.select();
-
-    const del = el("button","del","×");
-    del.title = "Position löschen";
-    del.setAttribute("aria-label","Position löschen");
-    del.onclick = ()=>{
-      m.pos = m.pos.filter(x => x.id !== p.id);
-      sichern();
-      zeichnePositionen(m);
-      aktualisiere(m);
-    };
-
-    row.append(sel, txt, bet, del);
-    liste.appendChild(row);
+    block.appendChild(rechts);
+    liste.appendChild(block);
   });
 }
 
 function dialogNeueKlasse(m, p){
   const f = el("label","field");
-  f.appendChild(el("span", null, "Name der Anlageklasse"));
+  f.appendChild(el("span", null, "Name der Gruppe"));
   const inp = document.createElement("input");
   inp.type = "text";
   inp.placeholder = "z. B. Immobilien";
+  inp.maxLength = MAX_TEXT;
   f.appendChild(inp);
   modal({
-    titel:"Neue Anlageklasse",
+    titel:"Neue Gruppe",
+    text: p ? "Die Position wird in die neue Gruppe verschoben." : "Die Gruppe startet mit einer leeren Position.",
     ok:"Hinzufügen",
     inhalt:f,
     aktion(){
       const name = inp.value.trim();
       if(!name){ toast("Bitte einen Namen eingeben."); return false; }
-      if(state.klassen.indexOf(name) < 0) state.klassen.push(name);
+      if(state.klassen.indexOf(name) < 0){
+        if(state.klassen.length >= MAX_KLASSEN){ toast("Höchstens " + MAX_KLASSEN + " Gruppen."); return false; }
+        state.klassen.push(name);
+      }
+      if(!p){ neuePosition(m, name); return; }
       p.klasse = name;
       sichern();
       zeichnePositionen(m);

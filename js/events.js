@@ -8,11 +8,11 @@ import {
   SALARY_MIN_CENTS, SALARY_MAX_CENTS, CARD_TOTAL_CENTS,
   MAX_TEXT_LENGTH, MAX_ENTRIES_PER_KEY, MAX_NOTE_LENGTH,
   items, categoryDefs, savingDefs, fcKeys, FC_MAX, RUECK_ZIELE
-} from './constants.js?v=66';
-import { el } from './dom.js?v=66';
-import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=66';
-import { getMonthData, currentMonthKey, saveAll, fixkostenVon } from './storage.js?v=66';
-import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=66';
+} from './constants.js?v=67';
+import { el } from './dom.js?v=67';
+import { clamp, parseAmountToCents, parseNonNegativeAmountToCents, parseEuroInputToCents, formatCents } from './utils.js?v=67';
+import { getMonthData, currentMonthKey, saveAll, fixkostenVon } from './storage.js?v=67';
+import { refreshTotals, renderCatList, renderSavList, renderCardElternList, renderCardRausList, showSalaryFixed, showSalarySlider } from './render.js?v=67';
 
 // --- Gehalt (Textfeld statt Regler: exakte Eingabe) ---
 el.salarySlider.addEventListener('input', () => {

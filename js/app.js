@@ -4,32 +4,32 @@
    die sich selbst um ihre Event-Listener kümmern (Navigation, Ereignisse,
    Beleg-/Diagrammansicht, Sichern/Wiederherstellen, Cloud-Sync/Login).
    ============================================================================= */
-import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=66';
-import { el } from './dom.js?v=66';
-import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=66';
+import { categoryDefs, savingDefs, APP_VERSION, APP_VERSION_DATE } from './constants.js?v=67';
+import { el } from './dom.js?v=67';
+import { buildAddMonthSelects, buildCostList, fillSelect } from './render.js?v=67';
 
-import './navigation.js?v=66';
-import './home.js?v=66';
-import './events.js?v=66';
-import './receipt.js?v=66';
-import './charts.js?v=66';
-import './backup.js?v=66';
-import './excel-import.js?v=66';
-import './analysis.js?v=66';
-import './budget-toepfe.js?v=66';
-import './monats-balken.js?v=66';
-import './budget-widget.js?v=66';
-import './ruecklagen-topf.js?v=66';
-import './jahresfix-plan.js?v=66';
-import './forecast-edit.js?v=66';
-import './fixkosten.js?v=66';
-import './salary-calc.js?v=66';
-import './gehalt-tracker.js?v=66';
-import './pentracker.js?v=66';
-import './auszahlung.js?v=66';
-import './vermoegen.js?v=66';
-import './jahresziele.js?v=66';
-import './cloud-sync.js?v=66';
+import './navigation.js?v=67';
+import './home.js?v=67';
+import './events.js?v=67';
+import './receipt.js?v=67';
+import './charts.js?v=67';
+import './backup.js?v=67';
+import './excel-import.js?v=67';
+import './analysis.js?v=67';
+import './budget-toepfe.js?v=67';
+import './monats-balken.js?v=67';
+import './budget-widget.js?v=67';
+import './ruecklagen-topf.js?v=67';
+import './jahresfix-plan.js?v=67';
+import './forecast-edit.js?v=67';
+import './fixkosten.js?v=67';
+import './salary-calc.js?v=67';
+import './gehalt-tracker.js?v=67';
+import './pentracker.js?v=67';
+import './auszahlung.js?v=67';
+import './vermoegen.js?v=67';
+import './jahresziele.js?v=67';
+import './cloud-sync.js?v=67';
 
 buildAddMonthSelects();
 fillSelect(el.catSelect, categoryDefs);
